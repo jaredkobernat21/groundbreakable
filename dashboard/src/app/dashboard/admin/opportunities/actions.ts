@@ -1,0 +1,96 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+function str(formData: FormData, key: string): string | null {
+  const value = formData.get(key);
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+function num(formData: FormData, key: string): number | null {
+  const value = str(formData, key);
+  return value !== null ? Number(value) : null;
+}
+
+export async function createOpportunity(formData: FormData) {
+  const supabase = createClient();
+
+  const marketId = str(formData, "market_id");
+  const address = str(formData, "address");
+  const opportunityType = str(formData, "opportunity_type");
+  const latitude = num(formData, "latitude");
+  const longitude = num(formData, "longitude");
+  const whyFlagged = str(formData, "why_flagged");
+  const sourceAgency = str(formData, "source_agency");
+  const sourceUrl = str(formData, "source_url");
+
+  // RLS (is_admin()) is the real gate; these just avoid a confusing
+  // partial insert if a required field was skipped client-side.
+  if (!marketId || !address || !opportunityType || latitude === null || longitude === null) {
+    throw new Error("Market, address, opportunity type, and coordinates are required.");
+  }
+  if (!whyFlagged) {
+    throw new Error("Why Groundbreakable flagged it is required — every opportunity must state its rationale.");
+  }
+  if (!sourceAgency || !sourceUrl) {
+    throw new Error("Source agency and source URL are required — every opportunity must cite a source.");
+  }
+
+  const { data: source, error: sourceError } = await supabase
+    .from("sources")
+    .insert({
+      agency: sourceAgency,
+      title: str(formData, "source_title"),
+      source_type: str(formData, "source_type") ?? "other",
+      url: sourceUrl,
+      published_date: str(formData, "source_published_date"),
+    })
+    .select("id")
+    .single();
+
+  if (sourceError || !source) {
+    throw new Error(sourceError?.message ?? "Failed to save source.");
+  }
+
+  const distressRaw = str(formData, "distress_indicators");
+  const distressIndicators = distressRaw
+    ? distressRaw
+        .split(",")
+        .map((s) => s.trim().toLowerCase().replace(/\s+/g, "_"))
+        .filter(Boolean)
+    : null;
+
+  const { error: opportunityError } = await supabase.from("opportunities").insert({
+    market_id: marketId,
+    address,
+    latitude,
+    longitude,
+    opportunity_type: opportunityType,
+    listing_status: str(formData, "listing_status"),
+    owner_name: str(formData, "owner_name"),
+    is_absentee: formData.get("is_absentee") === "on",
+    years_owned: num(formData, "years_owned"),
+    estimated_equity: num(formData, "estimated_equity"),
+    assessed_value: num(formData, "assessed_value"),
+    distress_indicators: distressIndicators,
+    opportunity_score: num(formData, "opportunity_score"),
+    why_flagged: whyFlagged,
+    date_identified: str(formData, "date_identified"),
+    asking_price: num(formData, "asking_price"),
+    estimated_resale_value: num(formData, "estimated_resale_value"),
+    zoning_district: str(formData, "zoning_district"),
+    permitted_uses: str(formData, "permitted_uses"),
+    rezoning_potential: str(formData, "rezoning_potential"),
+    buildability_notes: str(formData, "buildability_notes"),
+    source_id: source.id,
+    confidence: str(formData, "confidence") ?? "reported",
+  });
+
+  if (opportunityError) {
+    throw new Error(opportunityError.message);
+  }
+
+  revalidatePath("/dashboard/development-map");
+  revalidatePath("/dashboard/admin/opportunities");
+}

@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #0b0e14;
+  color: #e5e7eb;
+}
+
+.roq-dev-map .mapboxgl-ctrl-top-right {
+  top: 8px;
+  right: 8px;
+}
+
+.roq-marker {
+  position: absolute;
+  display: flex;
+  width: max-content;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+/* A plain dark drop-shadow for depth, not a colored glow -- works
+   correctly regardless of a marker's actual fill color (Activity markers
+   now vary by phase: orange/near-white/gray), and reads as restrained per
+   the product's "sophisticated, not glowing" direction. */
+.roq-marker-pin {
+  transform-origin: bottom center;
+  transition: transform 0.15s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.roq-marker:hover .roq-marker-pin,
+.roq-marker.is-selected .roq-marker-pin {
+  transform: scale(1.18);
+}
+
+/* Circle marker has no natural tip -- scale from its own center, not the
+   bottom-anchored origin the pin/bulb markers use. */
+.roq-marker-catalyst .roq-marker-pin {
+  transform-origin: center;
+}
+
+.roq-marker-line {
+  width: 1px;
+  height: 0px;
+  background: #f97316;
+  opacity: 0.75;
+  transition: height 0.15s ease;
+}
+
+.roq-marker-card {
+  margin-bottom: 2px;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.75);
+  padding: 6px 10px;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.roq-marker-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.roq-marker-card-sub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.roq-marker-card-metric {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fdba74;
+}
+
+.roq-marker:hover .roq-marker-card,
+.roq-marker.is-selected .roq-marker-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.roq-marker:hover .roq-marker-line,
+.roq-marker.is-selected .roq-marker-line {
+  height: 22px;
+}
