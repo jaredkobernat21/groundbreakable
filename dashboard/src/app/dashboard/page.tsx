@@ -1,14 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import StatCard from "@/components/StatCard";
 import NewsSection from "@/components/NewsSection";
 import CatalystSpotlight from "@/components/CatalystSpotlight";
-import UpcomingDecisions from "@/components/UpcomingDecisions";
 import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
 import { selectMarket } from "@/lib/selectMarket";
 import type {
   CatalystWithSource,
   Market,
-  MarketMetrics,
   OpportunityWithSource,
   Parcel,
   ProjectUpdateWithProject,
@@ -46,7 +43,6 @@ export default async function DashboardPage({
     : "all";
 
   const [
-    { data: metrics },
     { data: projects },
     { data: parcels },
     { data: opportunities },
@@ -54,13 +50,6 @@ export default async function DashboardPage({
     { data: recentActivity },
     { data: decisions },
   ] = await Promise.all([
-    supabase
-      .from("market_metrics")
-      .select("*")
-      .eq("market_id", market.id)
-      .order("period", { ascending: false })
-      .limit(1)
-      .returns<MarketMetrics[]>(),
     supabase
       .from("projects")
       .select("*, source:sources(*)")
@@ -100,8 +89,6 @@ export default async function DashboardPage({
       .returns<UpcomingDecisionWithSource[]>(),
   ]);
 
-  const latestMetrics = metrics?.[0];
-
   // New Opportunities news headlines -- newest-added first, reusing the
   // same fetch as the map (no extra query needed).
   const newOpportunities = [...(opportunities ?? [])]
@@ -122,30 +109,13 @@ export default async function DashboardPage({
         {market.name}, {market.state}
       </h1>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
-          label="Population Growth"
-          value={latestMetrics?.population_growth_pct != null ? `${latestMetrics.population_growth_pct}%` : "—"}
-        />
-        <StatCard
-          label="Permit Activity"
-          value={latestMetrics?.permit_activity_index?.toString() ?? "—"}
-        />
-        <StatCard
-          label="Price Momentum"
-          value={latestMetrics?.price_momentum_index?.toString() ?? "—"}
-        />
-        <StatCard
-          label="Days on Market"
-          value={latestMetrics?.days_on_market?.toString() ?? "—"}
-        />
-      </div>
-
-      <NewsSection recentActivity={recentActivity ?? []} newOpportunities={newOpportunities} />
+      <NewsSection
+        recentActivity={recentActivity ?? []}
+        newOpportunities={newOpportunities}
+        decisions={decisions ?? []}
+      />
 
       <CatalystSpotlight catalyst={spotlightCatalyst} />
-
-      <UpcomingDecisions decisions={decisions ?? []} />
 
       <DevelopmentIntelligenceView
         key={`${market.id}-${category}`}

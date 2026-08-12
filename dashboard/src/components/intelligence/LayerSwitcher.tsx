@@ -1,28 +1,24 @@
-import { ACTIVITY_COLOR, CATALYSTS_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
+import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
 
-export type MapSegment = "all" | "activity" | "opportunities" | "none";
+export type MapSegment = "all" | "activity" | "opportunities";
 
-const SEGMENTS: { key: "all" | "activity" | "opportunities"; label: string }[] = [
+const SEGMENTS: { key: MapSegment; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "activity", label: "Planned Activity" },
+  { key: "activity", label: "Planning" },
   { key: "opportunities", label: "Opportunities" },
 ];
 
-// Lives inside the map itself (top-center overlay), not as a separate bar
-// above it -- kept small and quiet so it reads as a control on the map,
-// not another content block competing with it.
+// The only filter control on the map -- deliberately just one small,
+// minimal toggle. "All" shows everything at once (including catalysts, and
+// every Activity phase); "Planning" and "Opportunities" narrow to just
+// that layer. Lives inside the map itself (top-center overlay), not as a
+// separate bar above it.
 export default function LayerSwitcher({
   segment,
   onSelectSegment,
-  showCatalysts,
-  onToggleCatalysts,
-  catalystCount,
 }: {
   segment: MapSegment;
-  onSelectSegment: (segment: "all" | "activity" | "opportunities") => void;
-  showCatalysts: boolean;
-  onToggleCatalysts: () => void;
-  catalystCount: number;
+  onSelectSegment: (segment: MapSegment) => void;
 }) {
   return (
     <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/70 p-1 shadow-lg backdrop-blur-xl">
@@ -43,23 +39,6 @@ export default function LayerSwitcher({
           </button>
         );
       })}
-
-      <span className="mx-0.5 h-4 w-px bg-white/10" />
-
-      <button
-        type="button"
-        onClick={onToggleCatalysts}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
-          showCatalysts ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80"
-        }`}
-      >
-        <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: CATALYSTS_COLOR, opacity: showCatalysts ? 1 : 0.5 }}
-        />
-        Catalysts
-        {catalystCount > 0 && <span className="text-white/30">{catalystCount}</span>}
-      </button>
     </div>
   );
 }

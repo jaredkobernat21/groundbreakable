@@ -2,51 +2,40 @@
 
 import { useMemo, useState } from "react";
 import type {
-  ActivityPhase,
   CatalystWithSource,
   Market,
-  OpportunityType,
   OpportunityWithSource,
   Parcel,
   ProjectCategory,
-  ProjectStatus,
   ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
 import DevelopmentMap from "./DevelopmentMap";
-import DevelopmentFilterBar from "./DevelopmentFilterBar";
 import DevelopmentLegend from "./DevelopmentLegend";
 import ProjectDetailPanel from "./ProjectDetailPanel";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import CatalystDetailPanel, { findNearbySignals } from "./CatalystDetailPanel";
-import LayerSwitcher from "./LayerSwitcher";
-import ActivitySubBar from "./ActivitySubBar";
-import PropertyTypeTabs from "./PropertyTypeTabs";
+import LayerSwitcher, { type MapSegment } from "./LayerSwitcher";
 
 export type MapCategory = "all" | "activity" | "opportunities" | "catalysts";
 
-// Activity and Opportunities are driven by a single All/Activity/
-// Opportunities segment (All shows both, and is the default); Catalysts is
-// a separate, independent overlay toggle. initialCategory lets the header
-// nav land here pre-filtered -- e.g. the "Catalysts" tab lands with only
-// catalysts showing.
-function initialFlags(category: MapCategory) {
-  switch (category) {
-    case "activity":
-      return { activity: true, opportunities: false, catalysts: false };
-    case "opportunities":
-      return { activity: false, opportunities: true, catalysts: false };
-    case "catalysts":
-      return { activity: false, opportunities: false, catalysts: true };
-    default:
-      return { activity: true, opportunities: true, catalysts: false };
-  }
+// Single All/Planning/Opportunities toggle -- that's the whole filter
+// surface now (no per-phase, per-category, or per-property-type chips, and
+// no separate Catalysts toggle). Catalysts, and every phase within
+// Planning (planning/active/completed), always show together whenever
+// their segment is visible -- "All" shows everything at once, including
+// catalysts; "Planning" or "Opportunities" narrows to just that layer.
+// initialCategory lets the header nav land here pre-filtered; a
+// "catalysts"-only landing has no equivalent segment anymore, so it falls
+// back to "all" (the only place catalysts appear).
+function initialSegment(category: MapCategory): MapSegment {
+  if (category === "activity") return "activity";
+  if (category === "opportunities") return "opportunities";
+  return "all";
 }
 
-// Orchestrates the map + view toggles + filters + legend + detail panel as
-// one reusable unit, each with its own sub-filters -- phase (multi-select)
-// for Activity, property type for Opportunities. Market-agnostic -- nothing
-// here is Topeka-specific.
+// Orchestrates the map + segment toggle + legend + detail panel as one
+// reusable unit. Market-agnostic -- nothing here is Topeka-specific.
 export default function DevelopmentIntelligenceView({
   market,
   projects,
@@ -62,29 +51,21 @@ export default function DevelopmentIntelligenceView({
   catalysts: CatalystWithSource[];
   initialCategory?: MapCategory;
 }) {
-  const init = initialFlags(initialCategory);
-  const [showActivity, setShowActivity] = useState(init.activity);
-  const [showOpportunities, setShowOpportunities] = useState(init.opportunities);
-  const [activePhases, setActivePhases] = useState<Set<ActivityPhase>>(new Set());
-  const [showCatalysts, setShowCatalysts] = useState(init.catalysts);
-  const [activeCategories, setActiveCategories] = useState<Set<ProjectCategory>>(new Set());
-  const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set());
-  const [activePropertyTypes, setActivePropertyTypes] = useState<Set<OpportunityType>>(new Set());
-
-  // Derived for the segmented control -- "none" only happens via a
-  // Catalysts-only nav landing, where neither Activity nor Opportunities
-  // has a button to represent it.
-  const segment = showActivity && showOpportunities ? "all" : showActivity ? "activity" : showOpportunities ? "opportunities" : "none";
-  function selectSegment(next: "all" | "activity" | "opportunities") {
-    setShowActivity(next === "all" || next === "activity");
-    setShowOpportunities(next === "all" || next === "opportunities");
-    selectProject(null);
-    selectOpportunity(null);
-  }
+  const [segment, setSegment] = useState<MapSegment>(initialSegment(initialCategory));
+  const showActivity = segment === "all" || segment === "activity";
+  const showOpportunities = segment === "all" || segment === "opportunities";
+  const showCatalysts = segment === "all";
 
   const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityIdRaw] = useState<string | null>(null);
   const [selectedCatalystId, setSelectedCatalystIdRaw] = useState<string | null>(null);
+
+  function selectSegment(next: MapSegment) {
+    setSegment(next);
+    selectProject(null);
+    selectOpportunity(null);
+    selectCatalyst(null);
+  }
 
   // Only one signal is ever selected at a time, regardless of which
   // marker collection it came from -- selecting one clears the others.
@@ -110,97 +91,22 @@ export default function DevelopmentIntelligenceView({
     }
   }
 
-  function togglePhase(phase: ActivityPhase) {
-    setActivePhases((prev) => {
-      const next = new Set(prev);
-      next.has(phase) ? next.delete(phase) : next.add(phase);
-      return next;
-    });
-    selectProject(null);
-  }
-
-  // Phase is Activity's primary grouping axis (multi-select -- empty
-  // selection means "show all phases"); category/status filter further
-  // within whichever phases are active.
+  // Every phase (planning/active/completed) shows at once -- excludes only
+  // on_hold/cancelled/stale-completed, which resolveActivityPhase already
+  // filters out.
   const phaseProjects = useMemo(() => {
-    return projects.filter((p) => {
-      const phase = resolveActivityPhase(p.status, p.date_updated);
-      if (!phase) return false;
-      return activePhases.size === 0 || activePhases.has(phase);
-    });
-  }, [projects, activePhases]);
-
-  const phaseCounts = useMemo(() => {
-    const counts: Record<ActivityPhase, number> = { planning: 0, active: 0, completed: 0 };
-    projects.forEach((p) => {
-      const phase = resolveActivityPhase(p.status, p.date_updated);
-      if (phase) counts[phase] += 1;
-    });
-    return counts;
+    return projects.filter((p) => resolveActivityPhase(p.status, p.date_updated) !== null);
   }, [projects]);
-
-  const availableCategories = useMemo(
-    () => Array.from(new Set(phaseProjects.map((p) => p.category))),
-    [phaseProjects]
-  );
-  const availableStatuses = useMemo(
-    () => Array.from(new Set(phaseProjects.map((p) => p.status))),
-    [phaseProjects]
-  );
-
-  const filteredProjects = useMemo(() => {
-    return phaseProjects.filter((project) => {
-      if (activeCategories.size > 0 && !activeCategories.has(project.category)) return false;
-      if (activeStatuses.size > 0 && !activeStatuses.has(project.status)) return false;
-      return true;
-    });
-  }, [phaseProjects, activeCategories, activeStatuses]);
 
   const categoryCounts = useMemo(() => {
     const result: Partial<Record<ProjectCategory, number>> = {};
-    filteredProjects.forEach((p) => {
+    phaseProjects.forEach((p) => {
       result[p.category] = (result[p.category] ?? 0) + 1;
     });
     return result;
-  }, [filteredProjects]);
+  }, [phaseProjects]);
 
-  function toggleCategory(category: ProjectCategory) {
-    setActiveCategories((prev) => {
-      const next = new Set(prev);
-      next.has(category) ? next.delete(category) : next.add(category);
-      return next;
-    });
-  }
-  function toggleStatus(status: ProjectStatus) {
-    setActiveStatuses((prev) => {
-      const next = new Set(prev);
-      next.has(status) ? next.delete(status) : next.add(status);
-      return next;
-    });
-  }
-
-  const filteredOpportunities = useMemo(() => {
-    if (activePropertyTypes.size === 0) return opportunities;
-    return opportunities.filter((o) => activePropertyTypes.has(o.opportunity_type));
-  }, [opportunities, activePropertyTypes]);
-
-  const propertyTypeCounts = useMemo(() => {
-    const result: Partial<Record<OpportunityType, number>> = {};
-    opportunities.forEach((o) => {
-      result[o.opportunity_type] = (result[o.opportunity_type] ?? 0) + 1;
-    });
-    return result;
-  }, [opportunities]);
-
-  function togglePropertyType(type: OpportunityType) {
-    setActivePropertyTypes((prev) => {
-      const next = new Set(prev);
-      next.has(type) ? next.delete(type) : next.add(type);
-      return next;
-    });
-  }
-
-  const selectedProject = filteredProjects.find((p) => p.id === selectedProjectId) ?? null;
+  const selectedProject = phaseProjects.find((p) => p.id === selectedProjectId) ?? null;
   const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
 
@@ -210,41 +116,14 @@ export default function DevelopmentIntelligenceView({
 
   return (
     <div className="space-y-3">
-      {showActivity && (
-        <>
-          <ActivitySubBar activePhases={activePhases} onTogglePhase={togglePhase} phaseCounts={phaseCounts} />
-          <DevelopmentFilterBar
-            availableCategories={availableCategories}
-            availableStatuses={availableStatuses}
-            activeCategories={activeCategories}
-            activeStatuses={activeStatuses}
-            onToggleCategory={toggleCategory}
-            onToggleStatus={toggleStatus}
-            onReset={() => {
-              setActiveCategories(new Set());
-              setActiveStatuses(new Set());
-            }}
-          />
-        </>
-      )}
-
-      {showOpportunities && (
-        <PropertyTypeTabs
-          activeTypes={activePropertyTypes}
-          onToggleType={togglePropertyType}
-          onReset={() => setActivePropertyTypes(new Set())}
-          typeCounts={propertyTypeCounts}
-        />
-      )}
-
       <div className="relative h-[640px]">
         <DevelopmentMap
           market={market}
           showActivity={showActivity}
           showOpportunities={showOpportunities}
-          projects={filteredProjects}
+          projects={phaseProjects}
           parcels={parcels}
-          opportunities={filteredOpportunities}
+          opportunities={opportunities}
           catalysts={catalysts}
           showCatalysts={showCatalysts}
           selectedProjectId={selectedProjectId}
@@ -257,13 +136,7 @@ export default function DevelopmentIntelligenceView({
 
         <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
           <div className="pointer-events-auto">
-            <LayerSwitcher
-              segment={segment}
-              onSelectSegment={selectSegment}
-              showCatalysts={showCatalysts}
-              onToggleCatalysts={() => setShowCatalysts((prev) => !prev)}
-              catalystCount={catalysts.length}
-            />
+            <LayerSwitcher segment={segment} onSelectSegment={selectSegment} />
           </div>
         </div>
 
@@ -293,9 +166,6 @@ export default function DevelopmentIntelligenceView({
         )}
       </div>
 
-      {!showActivity && !showOpportunities && !showCatalysts && (
-        <p className="text-sm text-white/40">Everything is hidden — toggle a category on to see signals.</p>
-      )}
       {showActivity && phaseProjects.length === 0 && (
         <p className="text-sm text-white/40">No matching Activity signals for {market.name} right now.</p>
       )}
