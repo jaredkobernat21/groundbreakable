@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CATALYST_STATUS_LABEL, CATALYST_TYPE_LABEL, type CatalystWithSource, type Market } from "@/lib/types";
-import { createCatalyst } from "./actions";
+import { clearCatalystSpotlight, createCatalyst, setCatalystSpotlight } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -178,23 +178,53 @@ export default async function AdminCatalystsPage() {
         <div className="space-y-3">
           {(catalysts ?? []).map((catalyst) => (
             <div key={catalyst.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="text-xs uppercase tracking-wide text-white/40">
-                {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/40">
+                    {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+                    {catalyst.is_spotlight && (
+                      <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-300">Spotlight</span>
+                    )}
+                  </div>
+                  <div className="font-medium text-white">{catalyst.title}</div>
+                  <div className="text-sm text-white/50">
+                    {CATALYST_STATUS_LABEL[catalyst.status]} · {catalyst.address ?? "no address on file"}
+                  </div>
+                  {catalyst.source && (
+                    <a
+                      href={catalyst.source.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-xs text-white/40 underline decoration-white/20 underline-offset-2 hover:text-white"
+                    >
+                      {catalyst.source.agency}
+                    </a>
+                  )}
+                </div>
+
+                {catalyst.is_spotlight ? (
+                  <form action={clearCatalystSpotlight} className="shrink-0">
+                    <input type="hidden" name="catalyst_id" value={catalyst.id} />
+                    <button
+                      type="submit"
+                      className="rounded border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                    >
+                      Remove Spotlight
+                    </button>
+                  </form>
+                ) : (
+                  <form action={setCatalystSpotlight} className="shrink-0">
+                    <input type="hidden" name="catalyst_id" value={catalyst.id} />
+                    <input type="hidden" name="market_id" value={catalyst.market_id} />
+                    <button
+                      type="submit"
+                      className="rounded border border-amber-500/30 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-500/10"
+                    >
+                      Set as Spotlight
+                    </button>
+                  </form>
+                )}
               </div>
-              <div className="font-medium text-white">{catalyst.title}</div>
-              <div className="text-sm text-white/50">
-                {CATALYST_STATUS_LABEL[catalyst.status]} · {catalyst.address ?? "no address on file"}
-              </div>
-              {catalyst.source && (
-                <a
-                  href={catalyst.source.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-xs text-white/40 underline decoration-white/20 underline-offset-2 hover:text-white"
-                >
-                  {catalyst.source.agency}
-                </a>
-              )}
             </div>
           ))}
           {(catalysts ?? []).length === 0 && (

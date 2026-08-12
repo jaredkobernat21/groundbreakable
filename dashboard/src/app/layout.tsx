@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ROQ Outlook",
+  title: "Groundbreakable",
   description: "Local market intelligence for real estate investors",
 };
 

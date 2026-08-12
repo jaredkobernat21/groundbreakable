@@ -23,32 +23,64 @@ import LayerSwitcher from "./LayerSwitcher";
 import ActivitySubBar from "./ActivitySubBar";
 import PropertyTypeTabs from "./PropertyTypeTabs";
 
+export type MapCategory = "all" | "activity" | "opportunities" | "catalysts";
+
+// Activity and Opportunities are driven by a single All/Activity/
+// Opportunities segment (All shows both, and is the default); Catalysts is
+// a separate, independent overlay toggle. initialCategory lets the header
+// nav land here pre-filtered -- e.g. the "Catalysts" tab lands with only
+// catalysts showing.
+function initialFlags(category: MapCategory) {
+  switch (category) {
+    case "activity":
+      return { activity: true, opportunities: false, catalysts: false };
+    case "opportunities":
+      return { activity: false, opportunities: true, catalysts: false };
+    case "catalysts":
+      return { activity: false, opportunities: false, catalysts: true };
+    default:
+      return { activity: true, opportunities: true, catalysts: false };
+  }
+}
+
 // Orchestrates the map + view toggles + filters + legend + detail panel as
-// one reusable unit. Activity and Opportunities are independent on/off
-// toggles (both default on, so the default view shows everything at
-// once), each with its own sub-filters -- phase (multi-select, plus the
-// Catalysts overlay toggle) for Activity, property type for Opportunities.
-// Market-agnostic -- nothing here is Topeka-specific.
+// one reusable unit, each with its own sub-filters -- phase (multi-select)
+// for Activity, property type for Opportunities. Market-agnostic -- nothing
+// here is Topeka-specific.
 export default function DevelopmentIntelligenceView({
   market,
   projects,
   parcels,
   opportunities,
   catalysts,
+  initialCategory = "all",
 }: {
   market: Market;
   projects: ProjectWithSource[];
   parcels: Parcel[];
   opportunities: OpportunityWithSource[];
   catalysts: CatalystWithSource[];
+  initialCategory?: MapCategory;
 }) {
-  const [showActivity, setShowActivity] = useState(true);
-  const [showOpportunities, setShowOpportunities] = useState(true);
+  const init = initialFlags(initialCategory);
+  const [showActivity, setShowActivity] = useState(init.activity);
+  const [showOpportunities, setShowOpportunities] = useState(init.opportunities);
   const [activePhases, setActivePhases] = useState<Set<ActivityPhase>>(new Set());
-  const [showCatalysts, setShowCatalysts] = useState(false);
+  const [showCatalysts, setShowCatalysts] = useState(init.catalysts);
   const [activeCategories, setActiveCategories] = useState<Set<ProjectCategory>>(new Set());
   const [activeStatuses, setActiveStatuses] = useState<Set<ProjectStatus>>(new Set());
   const [activePropertyTypes, setActivePropertyTypes] = useState<Set<OpportunityType>>(new Set());
+
+  // Derived for the segmented control -- "none" only happens via a
+  // Catalysts-only nav landing, where neither Activity nor Opportunities
+  // has a button to represent it.
+  const segment = showActivity && showOpportunities ? "all" : showActivity ? "activity" : showOpportunities ? "opportunities" : "none";
+  function selectSegment(next: "all" | "activity" | "opportunities") {
+    setShowActivity(next === "all" || next === "activity");
+    setShowOpportunities(next === "all" || next === "opportunities");
+    selectProject(null);
+    selectOpportunity(null);
+  }
 
   const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityIdRaw] = useState<string | null>(null);
@@ -178,23 +210,9 @@ export default function DevelopmentIntelligenceView({
 
   return (
     <div className="space-y-3">
-      <LayerSwitcher
-        showActivity={showActivity}
-        onToggleActivity={() => setShowActivity((prev) => !prev)}
-        showOpportunities={showOpportunities}
-        onToggleOpportunities={() => setShowOpportunities((prev) => !prev)}
-      />
-
       {showActivity && (
         <>
-          <ActivitySubBar
-            activePhases={activePhases}
-            onTogglePhase={togglePhase}
-            phaseCounts={phaseCounts}
-            showCatalysts={showCatalysts}
-            onToggleCatalysts={() => setShowCatalysts((prev) => !prev)}
-            catalystCount={catalysts.length}
-          />
+          <ActivitySubBar activePhases={activePhases} onTogglePhase={togglePhase} phaseCounts={phaseCounts} />
           <DevelopmentFilterBar
             availableCategories={availableCategories}
             availableStatuses={availableStatuses}
@@ -237,6 +255,18 @@ export default function DevelopmentIntelligenceView({
           onSelectCatalyst={selectCatalyst}
         />
 
+        <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+          <div className="pointer-events-auto">
+            <LayerSwitcher
+              segment={segment}
+              onSelectSegment={selectSegment}
+              showCatalysts={showCatalysts}
+              onToggleCatalysts={() => setShowCatalysts((prev) => !prev)}
+              catalystCount={catalysts.length}
+            />
+          </div>
+        </div>
+
         {showActivity && (
           <div className="pointer-events-none absolute left-3 top-3">
             <div className="pointer-events-auto">
@@ -263,8 +293,8 @@ export default function DevelopmentIntelligenceView({
         )}
       </div>
 
-      {!showActivity && !showOpportunities && (
-        <p className="text-sm text-white/40">Both Activity and Opportunities are hidden — toggle one on to see signals.</p>
+      {!showActivity && !showOpportunities && !showCatalysts && (
+        <p className="text-sm text-white/40">Everything is hidden — toggle a category on to see signals.</p>
       )}
       {showActivity && phaseProjects.length === 0 && (
         <p className="text-sm text-white/40">No matching Activity signals for {market.name} right now.</p>

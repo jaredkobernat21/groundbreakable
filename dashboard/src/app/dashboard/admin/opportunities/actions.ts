@@ -91,6 +91,6 @@ export async function createOpportunity(formData: FormData) {
     throw new Error(opportunityError.message);
   }
 
-  revalidatePath("/dashboard/development-map");
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/admin/opportunities");
 }

@@ -1,50 +1,64 @@
-import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
+import { ACTIVITY_COLOR, CATALYSTS_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
 
-// Independent on/off toggles, not exclusive tabs -- both default on, so the
-// map shows everything at once ("one view that just shows the whole map"),
-// and each can be filtered/hidden separately.
+export type MapSegment = "all" | "activity" | "opportunities" | "none";
+
+const SEGMENTS: { key: "all" | "activity" | "opportunities"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "activity", label: "Planned Activity" },
+  { key: "opportunities", label: "Opportunities" },
+];
+
+// Lives inside the map itself (top-center overlay), not as a separate bar
+// above it -- kept small and quiet so it reads as a control on the map,
+// not another content block competing with it.
 export default function LayerSwitcher({
-  showActivity,
-  onToggleActivity,
-  showOpportunities,
-  onToggleOpportunities,
+  segment,
+  onSelectSegment,
+  showCatalysts,
+  onToggleCatalysts,
+  catalystCount,
 }: {
-  showActivity: boolean;
-  onToggleActivity: () => void;
-  showOpportunities: boolean;
-  onToggleOpportunities: () => void;
+  segment: MapSegment;
+  onSelectSegment: (segment: "all" | "activity" | "opportunities") => void;
+  showCatalysts: boolean;
+  onToggleCatalysts: () => void;
+  catalystCount: number;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/60 p-3 backdrop-blur-md">
+    <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/70 p-1 shadow-lg backdrop-blur-xl">
+      {SEGMENTS.map((s) => {
+        const active = segment === s.key;
+        const dotColor = s.key === "activity" ? ACTIVITY_COLOR : s.key === "opportunities" ? OPPORTUNITIES_COLOR : null;
+        return (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => onSelectSegment(s.key)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              active ? "bg-white text-black" : "text-white/55 hover:text-white/85"
+            }`}
+          >
+            {dotColor && <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: dotColor }} />}
+            {s.label}
+          </button>
+        );
+      })}
+
+      <span className="mx-0.5 h-4 w-px bg-white/10" />
+
       <button
         type="button"
-        onClick={onToggleActivity}
-        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-          showActivity
-            ? "border-white/30 bg-white/10 text-white"
-            : "border-white/10 text-white/50 hover:border-white/20 hover:text-white/80"
+        onClick={onToggleCatalysts}
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+          showCatalysts ? "bg-white/15 text-white" : "text-white/45 hover:text-white/80"
         }`}
       >
         <span
-          className="h-2 w-2 rounded-full"
-          style={{ backgroundColor: ACTIVITY_COLOR, opacity: showActivity ? 1 : 0.5 }}
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: CATALYSTS_COLOR, opacity: showCatalysts ? 1 : 0.5 }}
         />
-        Activity
-      </button>
-      <button
-        type="button"
-        onClick={onToggleOpportunities}
-        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-          showOpportunities
-            ? "border-white/30 bg-white/10 text-white"
-            : "border-white/10 text-white/50 hover:border-white/20 hover:text-white/80"
-        }`}
-      >
-        <span
-          className="h-2 w-2 rounded-full"
-          style={{ backgroundColor: OPPORTUNITIES_COLOR, opacity: showOpportunities ? 1 : 0.5 }}
-        />
-        Opportunities
+        Catalysts
+        {catalystCount > 0 && <span className="text-white/30">{catalystCount}</span>}
       </button>
     </div>
   );

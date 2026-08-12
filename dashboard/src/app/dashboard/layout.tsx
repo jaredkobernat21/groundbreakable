@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import MarketSwitcher from "@/components/MarketSwitcher";
+import DashboardNav from "@/components/DashboardNav";
 import type { Market } from "@/lib/types";
 
 export default async function DashboardLayout({
@@ -14,50 +15,21 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = user
-    ? await supabase.from("investor_profiles").select("role").eq("id", user.id).single()
-    : { data: null };
-  const isAdmin = profile?.role === "admin";
-
   // RLS scopes this to markets the signed-in investor has access to
   // (admins see every market).
   const { data: markets } = await supabase.from("markets").select("*").order("name").returns<Market[]>();
 
   return (
-    <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="text-sm font-semibold tracking-tight text-white">
-            ROQ Outlook
+    <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
+      <header className="flex items-center justify-between border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-6 py-4">
+        <div className="flex items-center gap-8">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
           </Link>
-          <nav className="flex gap-4 text-sm text-white/60">
-            <Link href="/dashboard" className="hover:text-white">
-              Overview
-            </Link>
-            <Link href="/dashboard/development-map" className="hover:text-white">
-              Development Map
-            </Link>
-            <Link href="/dashboard/leads" className="hover:text-white">
-              Leads
-            </Link>
-            {isAdmin && (
-              <Link href="/dashboard/admin/intelligence" className="hover:text-white">
-                Admin
-              </Link>
-            )}
-            {isAdmin && (
-              <Link href="/dashboard/admin/opportunities" className="hover:text-white">
-                Opportunities
-              </Link>
-            )}
-            {isAdmin && (
-              <Link href="/dashboard/admin/catalysts" className="hover:text-white">
-                Catalysts
-              </Link>
-            )}
-          </nav>
+          <DashboardNav />
         </div>
-        <div className="flex items-center gap-3 text-sm text-white/50">
+        <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
           <MarketSwitcher markets={markets ?? []} />
           <span>{user?.email}</span>
           <SignOutButton />

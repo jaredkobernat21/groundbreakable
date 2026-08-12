@@ -69,6 +69,51 @@ export async function createCatalyst(formData: FormData) {
     throw new Error(catalystError.message);
   }
 
-  revalidatePath("/dashboard/development-map");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/admin/catalysts");
+}
+
+// Catalyst Spotlight is a single editorial pick per market -- unset any
+// prior spotlight in the same market before setting the new one, so the
+// "one per market" rule holds even though the unique index only enforces
+// it at commit time.
+export async function setCatalystSpotlight(formData: FormData) {
+  const supabase = createClient();
+
+  const catalystId = str(formData, "catalyst_id");
+  const marketId = str(formData, "market_id");
+  if (!catalystId || !marketId) {
+    throw new Error("Catalyst and market are required.");
+  }
+
+  const { error: clearError } = await supabase
+    .from("catalysts")
+    .update({ is_spotlight: false })
+    .eq("market_id", marketId)
+    .eq("is_spotlight", true);
+  if (clearError) throw new Error(clearError.message);
+
+  const { error: setError } = await supabase
+    .from("catalysts")
+    .update({ is_spotlight: true })
+    .eq("id", catalystId);
+  if (setError) throw new Error(setError.message);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/admin/catalysts");
+}
+
+export async function clearCatalystSpotlight(formData: FormData) {
+  const supabase = createClient();
+
+  const catalystId = str(formData, "catalyst_id");
+  if (!catalystId) {
+    throw new Error("Catalyst is required.");
+  }
+
+  const { error } = await supabase.from("catalysts").update({ is_spotlight: false }).eq("id", catalystId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/admin/catalysts");
 }

@@ -166,6 +166,13 @@ export type ProjectUpdate = {
   created_at: string;
 };
 
+// Joined shape used by the Home dashboard's "Recent Activity" news feed --
+// project_updates is already an append-only log of admin-made changes, so
+// no separate "news" table is needed for this.
+export type ProjectUpdateWithProject = ProjectUpdate & {
+  project: Pick<Project, "id" | "title" | "category" | "market_id"> | null;
+};
+
 // Joined shape returned by the development-map query (project + its source).
 export type ProjectWithSource = Project & { source: Source | null };
 
@@ -323,6 +330,7 @@ export type Catalyst = {
   influence_radius_meters: number;
   status: CatalystStatus;
   estimated_value: number | null;
+  is_spotlight: boolean;
   date_announced: string | null;
   source_id: string;
   confidence: Confidence;
@@ -331,3 +339,50 @@ export type Catalyst = {
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
+
+// --- Upcoming Decisions ---
+// Genuinely distinct from project_updates (which logs what already
+// happened) -- this is what's scheduled: planning commission meetings,
+// rezoning votes, agendas.
+
+export type DecisionType =
+  | "planning_commission"
+  | "rezoning_vote"
+  | "city_council"
+  | "zoning_board"
+  | "public_hearing"
+  | "other";
+
+export const DECISION_TYPE_LABEL: Record<DecisionType, string> = {
+  planning_commission: "Planning Commission",
+  rezoning_vote: "Rezoning Vote",
+  city_council: "City Council",
+  zoning_board: "Zoning Board",
+  public_hearing: "Public Hearing",
+  other: "Other",
+};
+
+export type DecisionStatus = "scheduled" | "decided" | "postponed" | "cancelled";
+
+export const DECISION_STATUS_LABEL: Record<DecisionStatus, string> = {
+  scheduled: "Scheduled",
+  decided: "Decided",
+  postponed: "Postponed",
+  cancelled: "Cancelled",
+};
+
+export type UpcomingDecision = {
+  id: string;
+  market_id: string;
+  project_id: string | null;
+  title: string;
+  decision_type: DecisionType;
+  description: string | null;
+  decision_date: string;
+  status: DecisionStatus;
+  outcome: string | null;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type UpcomingDecisionWithSource = UpcomingDecision & { source: Source | null };

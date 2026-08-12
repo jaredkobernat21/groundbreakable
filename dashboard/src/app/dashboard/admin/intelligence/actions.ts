@@ -88,7 +88,7 @@ export async function createSignal(formData: FormData) {
     occurred_on: dateAnnounced ?? new Date().toISOString().slice(0, 10),
   });
 
-  revalidatePath("/dashboard/development-map");
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/admin/intelligence");
 }
 
@@ -119,6 +119,6 @@ export async function logStatusUpdate(formData: FormData) {
 
   if (historyError) throw new Error(historyError.message);
 
-  revalidatePath("/dashboard/development-map");
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/admin/intelligence");
 }

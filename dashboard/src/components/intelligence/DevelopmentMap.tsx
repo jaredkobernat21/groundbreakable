@@ -229,37 +229,39 @@ export default function DevelopmentMap({
           el.style.opacity = !selectedProjectId || project.id === selectedProjectId ? "1" : "0.35";
           el.classList.toggle("is-selected", project.id === selectedProjectId);
         });
+      }
 
-        if (showCatalysts) {
-          catalysts.forEach((catalyst) => {
-            const el = document.createElement("div");
-            el.className = "roq-marker roq-marker-catalyst";
+      // Catalysts are an independent overlay -- relevant regardless of
+      // whether Activity or Opportunities is the active segment.
+      if (showCatalysts) {
+        catalysts.forEach((catalyst) => {
+          const el = document.createElement("div");
+          el.className = "roq-marker roq-marker-catalyst";
 
-            const metric = formatCurrency(catalyst.estimated_value);
+          const metric = formatCurrency(catalyst.estimated_value);
 
-            el.innerHTML = `
-              <div class="roq-marker-card">
-                <span class="roq-marker-card-title">${escapeHtml(catalyst.title)}</span>
-                <span class="roq-marker-card-sub">${escapeHtml(CATALYST_TYPE_LABEL[catalyst.catalyst_type])} · ${escapeHtml(CATALYST_STATUS_LABEL[catalyst.status])}</span>
-                ${metric ? `<span class="roq-marker-card-metric" style="color:${CATALYSTS_COLOR}">${escapeHtml(metric)}</span>` : ""}
-              </div>
-              <div class="roq-marker-line" style="background:${CATALYSTS_COLOR}"></div>
-              <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ fill: CATALYSTS_COLOR })}</div>
-            `;
-            el.addEventListener("click", (event) => {
-              event.stopPropagation();
-              onSelectCatalyst(catalyst.id);
-            });
-
-            // Circle marker has no natural "tip" -- anchor at its center.
-            const marker = new mapboxgl.default.Marker({ element: el, anchor: "center" })
-              .setLngLat([catalyst.longitude, catalyst.latitude])
-              .addTo(map);
-            markersRef.current.set(catalyst.id, marker);
-            el.style.opacity = !selectedCatalystId || catalyst.id === selectedCatalystId ? "1" : "0.35";
-            el.classList.toggle("is-selected", catalyst.id === selectedCatalystId);
+          el.innerHTML = `
+            <div class="roq-marker-card">
+              <span class="roq-marker-card-title">${escapeHtml(catalyst.title)}</span>
+              <span class="roq-marker-card-sub">${escapeHtml(CATALYST_TYPE_LABEL[catalyst.catalyst_type])} · ${escapeHtml(CATALYST_STATUS_LABEL[catalyst.status])}</span>
+              ${metric ? `<span class="roq-marker-card-metric" style="color:${CATALYSTS_COLOR}">${escapeHtml(metric)}</span>` : ""}
+            </div>
+            <div class="roq-marker-line" style="background:${CATALYSTS_COLOR}"></div>
+            <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ fill: CATALYSTS_COLOR })}</div>
+          `;
+          el.addEventListener("click", (event) => {
+            event.stopPropagation();
+            onSelectCatalyst(catalyst.id);
           });
-        }
+
+          // Circle marker has no natural "tip" -- anchor at its center.
+          const marker = new mapboxgl.default.Marker({ element: el, anchor: "center" })
+            .setLngLat([catalyst.longitude, catalyst.latitude])
+            .addTo(map);
+          markersRef.current.set(catalyst.id, marker);
+          el.style.opacity = !selectedCatalystId || catalyst.id === selectedCatalystId ? "1" : "0.35";
+          el.classList.toggle("is-selected", catalyst.id === selectedCatalystId);
+        });
       }
 
       if (showOpportunities) {

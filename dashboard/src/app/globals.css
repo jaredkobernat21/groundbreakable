@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 body {
-  background: #0b0e14;
-  color: #e5e7eb;
+  background: #f4f2ee;
+  color: #1c1c1c;
 }
 
 .roq-dev-map .mapboxgl-ctrl-top-right {

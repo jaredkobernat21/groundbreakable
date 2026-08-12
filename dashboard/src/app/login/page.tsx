@@ -30,13 +30,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#0b0e14] px-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-lg border border-white/10 bg-white/5 p-8"
       >
         <h1 className="mb-1 text-xl font-semibold tracking-tight text-white">
-          ROQ Outlook
+          Groundbreakable
         </h1>
         <p className="mb-6 text-sm text-white/50">Sign in to your investor dashboard.</p>
 
@@ -75,7 +75,7 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-6 text-xs text-white/40">
-          Accounts are created by ROQ — reach out if you need access.
+          Accounts are created by Groundbreakable — reach out if you need access.
         </p>
       </form>
     </main>

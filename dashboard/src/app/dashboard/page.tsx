@@ -1,26 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/StatCard";
-import MarketMap from "@/components/MarketMap";
-import SubmarketList from "@/components/SubmarketList";
-import EventFeed from "@/components/EventFeed";
-import PropertyList from "@/components/PropertyList";
-import CompetitorList from "@/components/CompetitorList";
+import NewsSection from "@/components/NewsSection";
+import CatalystSpotlight from "@/components/CatalystSpotlight";
+import UpcomingDecisions from "@/components/UpcomingDecisions";
+import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
 import { selectMarket } from "@/lib/selectMarket";
 import type {
-  Competitor,
+  CatalystWithSource,
   Market,
-  MarketEvent,
   MarketMetrics,
-  Property,
-  Submarket,
+  OpportunityWithSource,
+  Parcel,
+  ProjectUpdateWithProject,
+  ProjectWithSource,
+  UpcomingDecisionWithSource,
 } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts"];
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { market?: string };
+  searchParams: { market?: string; category?: string };
 }) {
   const supabase = createClient();
 
@@ -31,55 +34,93 @@ export default async function DashboardPage({
 
   if (!market) {
     return (
-      <p className="text-sm text-white/50">
+      <p className="text-sm text-[#1c1c1c]/50">
         You don't have access to a market yet — an admin needs to grant you access
         in Supabase.
       </p>
     );
   }
 
-  const [{ data: metrics }, { data: submarkets }, { data: events }, { data: properties }, { data: competitors }] =
-    await Promise.all([
-      supabase
-        .from("market_metrics")
-        .select("*")
-        .eq("market_id", market.id)
-        .order("period", { ascending: false })
-        .limit(1)
-        .returns<MarketMetrics[]>(),
-      supabase
-        .from("submarkets")
-        .select("*")
-        .eq("market_id", market.id)
-        .order("sort_order")
-        .returns<Submarket[]>(),
-      supabase
-        .from("market_events")
-        .select("*")
-        .eq("market_id", market.id)
-        .order("event_date", { ascending: false })
-        .limit(20)
-        .returns<MarketEvent[]>(),
-      supabase.from("properties").select("*").order("created_at", { ascending: false }).returns<Property[]>(),
-      supabase
-        .from("competitors")
-        .select("*")
-        .eq("market_id", market.id)
-        .order("purchase_date", { ascending: false })
-        .limit(10)
-        .returns<Competitor[]>(),
-    ]);
+  const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
+    ? (searchParams.category as MapCategory)
+    : "all";
+
+  const [
+    { data: metrics },
+    { data: projects },
+    { data: parcels },
+    { data: opportunities },
+    { data: catalysts },
+    { data: recentActivity },
+    { data: decisions },
+  ] = await Promise.all([
+    supabase
+      .from("market_metrics")
+      .select("*")
+      .eq("market_id", market.id)
+      .order("period", { ascending: false })
+      .limit(1)
+      .returns<MarketMetrics[]>(),
+    supabase
+      .from("projects")
+      .select("*, source:sources(*)")
+      .eq("market_id", market.id)
+      .order("date_updated", { ascending: false })
+      .returns<ProjectWithSource[]>(),
+    supabase.from("parcels").select("*").eq("market_id", market.id).returns<Parcel[]>(),
+    supabase
+      .from("opportunities")
+      .select("*, source:sources(*)")
+      .eq("market_id", market.id)
+      .order("last_verified_at", { ascending: false })
+      .returns<OpportunityWithSource[]>(),
+    supabase
+      .from("catalysts")
+      .select("*, source:sources(*)")
+      .eq("market_id", market.id)
+      .order("last_verified_at", { ascending: false })
+      .returns<CatalystWithSource[]>(),
+    // Recent Activity news headlines -- project_updates is already an
+    // append-only log of admin-made status changes, so News needs no
+    // separate data-entry step of its own.
+    supabase
+      .from("project_updates")
+      .select("*, project:projects!inner(id, title, category, market_id)")
+      .eq("project.market_id", market.id)
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .returns<ProjectUpdateWithProject[]>(),
+    supabase
+      .from("upcoming_decisions")
+      .select("*, source:sources(*)")
+      .eq("market_id", market.id)
+      .eq("status", "scheduled")
+      .order("decision_date", { ascending: true })
+      .limit(6)
+      .returns<UpcomingDecisionWithSource[]>(),
+  ]);
 
   const latestMetrics = metrics?.[0];
 
+  // New Opportunities news headlines -- newest-added first, reusing the
+  // same fetch as the map (no extra query needed).
+  const newOpportunities = [...(opportunities ?? [])]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
+
+  // Catalyst Spotlight is an editorial pick (admin-flagged via
+  // is_spotlight); fall back to the highest-value catalyst so the section
+  // isn't empty before an admin has made a pick.
+  const spotlightCatalyst =
+    (catalysts ?? []).find((c) => c.is_spotlight) ??
+    [...(catalysts ?? [])].sort((a, b) => (b.estimated_value ?? 0) - (a.estimated_value ?? 0))[0] ??
+    null;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-white">
-          {market.name}, {market.state}
-        </h1>
-        <p className="text-sm text-white/40">Local market intelligence</p>
-      </div>
+      <h1 className="text-2xl font-semibold text-[#1c1c1c]">
+        {market.name}, {market.state}
+      </h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
@@ -100,41 +141,21 @@ export default async function DashboardPage({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Development &amp; Opportunity Map
-          </h2>
-          <MarketMap market={market} events={events ?? []} />
-        </div>
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Submarkets
-          </h2>
-          <SubmarketList submarkets={submarkets ?? []} />
-        </div>
-      </div>
+      <NewsSection recentActivity={recentActivity ?? []} newOpportunities={newOpportunities} />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Latest Market Events
-          </h2>
-          <EventFeed events={events ?? []} />
-        </div>
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Your Properties
-          </h2>
-          <PropertyList properties={properties ?? []} />
-        </div>
-        <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-white/40">
-            Competitor Activity
-          </h2>
-          <CompetitorList competitors={competitors ?? []} />
-        </div>
-      </div>
+      <CatalystSpotlight catalyst={spotlightCatalyst} />
+
+      <UpcomingDecisions decisions={decisions ?? []} />
+
+      <DevelopmentIntelligenceView
+        key={`${market.id}-${category}`}
+        market={market}
+        projects={projects ?? []}
+        parcels={parcels ?? []}
+        opportunities={opportunities ?? []}
+        catalysts={catalysts ?? []}
+        initialCategory={category}
+      />
     </div>
   );
 }
