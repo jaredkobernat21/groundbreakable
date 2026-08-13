@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Groundbreakable — Development Intelligence by ROQ</title>
-<meta name="description" content="Groundbreakable is a development intelligence platform by ROQ. See what's coming, know what's buildable, find the opportunity.">
+<meta name="description" content="Groundbreakable is a development intelligence platform by ROQ. Track activity, score opportunities, and watch the catalysts moving your market — all on one map.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' rx='44' fill='%231C1D1A'/%3E%3Cg fill='none' stroke='%23E6E4DF' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M120 18 L120 2'/%3E%3Cpath d='M84 29 L73 17'/%3E%3Cpath d='M156 29 L167 17'/%3E%3Cpath d='M120 42C89 42 66 65 66 95 66 119 80 136 93 151 103 162 110 173 114 184L126 184C130 173 137 162 147 151 160 136 174 119 174 95 174 65 151 42 120 42Z'/%3E%3Ccircle cx='120' cy='94' r='13' fill='%23E6E4DF' stroke='none'/%3E%3Cpath d='M103 193H137'/%3E%3Cpath d='M108 205H132'/%3E%3Cpath d='M114 215H126L120 222Z' fill='%23E6E4DF' stroke='none'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,13 +13,11 @@
 </head>
 <body>
 
-<div class="grain"></div>
-
 <header class="nav" id="nav">
   <div class="wrap nav__inner">
     <a href="#top" class="brand">
       <span class="brand__mark">
-        <svg viewBox="0 0 240 240" width="28" height="28" aria-hidden="true">
+        <svg viewBox="0 0 240 240" width="26" height="26" aria-hidden="true">
           <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M120 18 L120 2" stroke-width="6"/>
             <path d="M84 29 L73 17" stroke-width="6"/>
@@ -34,15 +32,14 @@
       </span>
       <span class="brand__text">
         GROUNDBREAKABLE
-        <em>Development Intelligence</em>
+        <em>Development Intelligence &middot; by ROQ</em>
       </span>
     </a>
 
     <nav class="nav__links" aria-label="Primary">
       <a href="#product">Product</a>
-      <a href="#opportunities">Opportunities</a>
-      <a href="#how-it-works">How it works</a>
-      <a href="#access">Access</a>
+      <a href="#markets">Markets</a>
+      <a href="#about">About</a>
     </nav>
 
     <div class="nav__cta">
@@ -57,9 +54,8 @@
 
   <div class="nav__mobile" id="navMobile">
     <a href="#product">Product</a>
-    <a href="#opportunities">Opportunities</a>
-    <a href="#how-it-works">How it works</a>
-    <a href="#access">Access</a>
+    <a href="#markets">Markets</a>
+    <a href="#about">About</a>
     <a href="#access" class="btn btn--solid">Request Access</a>
   </div>
 </header>
@@ -68,231 +64,174 @@
 
   <!-- HERO -->
   <section class="hero" id="top">
-    <div class="hero__field" aria-hidden="true">
-      <svg class="hero__grid" width="100%" height="100%" preserveAspectRatio="none">
-        <defs>
-          <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
-            <path d="M 56 0 L 0 0 0 56" fill="none" stroke="rgba(230,228,223,0.06)" stroke-width="1"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)"/>
-      </svg>
-      <div class="hero__pulse">
-        <span class="ring ring--1"></span>
-        <span class="ring ring--2"></span>
-        <span class="ring ring--3"></span>
-        <svg viewBox="0 0 240 240" width="50" height="50" aria-hidden="true">
-          <g fill="none" stroke="#E6E4DF" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M120 18 L120 2" stroke-width="6"/>
-            <path d="M84 29 L73 17" stroke-width="6"/>
-            <path d="M156 29 L167 17" stroke-width="6"/>
-            <path d="M120 42C89 42 66 65 66 95C66 119 80 136 93 151C103 162 110 173 114 184L126 184C130 173 137 162 147 151C160 136 174 119 174 95C174 65 151 42 120 42Z" stroke-width="6"/>
-            <circle cx="120" cy="94" r="13" fill="#E6E4DF" stroke="none"/>
-            <path d="M103 193H137" stroke-width="6"/>
-            <path d="M108 205H132" stroke-width="6"/>
-            <path d="M114 215H126L120 222Z" fill="#E6E4DF" stroke="none"/>
-          </g>
-        </svg>
-      </div>
-      <span class="pin pin--a"></span>
-      <span class="pin pin--b"></span>
-      <span class="pin pin--c"></span>
-      <span class="pin pin--d"></span>
+    <div class="wrap hero__copy">
+      <h1 class="hero__title reveal">Shape your market.</h1>
     </div>
 
-    <div class="wrap hero__inner">
-      <p class="eyebrow reveal">Development Intelligence &nbsp;·&nbsp; by ROQ</p>
-      <h1 class="hero__title reveal">
-        See what&rsquo;s coming.<br>
-        Know what&rsquo;s buildable.<br>
-        <span class="accent">Find the opportunity.</span>
-      </h1>
-      <p class="hero__sub reveal">
-        Groundbreakable turns scattered permits, parcels, and market signals into one
-        clear map of what&rsquo;s about to happen — so you can move before the market catches on.
+    <div class="hero__still reveal">
+      <picture>
+        <source media="(max-width: 760px)" srcset="images/mobile-preview.webp">
+        <img
+          class="heroshot"
+          src="images/desktop-preview.webp"
+          alt="Aerial view of a city at dusk with development activity and property opportunity signals overlaid on the map — tax liens, pre-foreclosures, zoning changes, and active development."
+          loading="lazy"
+        >
+      </picture>
+    </div>
+
+    <div class="wrap hero__midcopy reveal">
+      <p class="hero__sub">
+        Groundbreakable connects early development signals with off-market opportunities to keep you
+        a step ahead of your market. Built for investors, developers, brokers &amp; realtors, and
+        contractors.
       </p>
-      <div class="hero__cta reveal">
-        <a href="#access" class="btn btn--solid btn--lg">Request Access</a>
-        <a href="#product" class="btn btn--line btn--lg">See the platform &darr;</a>
-      </div>
+    </div>
+
+    <div class="hero__shot reveal">
+      <picture>
+        <source media="(max-width: 760px)" srcset="images/mobile-map.webp">
+        <img
+          class="heroshot"
+          src="images/desktop-map.webp"
+          alt="Groundbreakable map view showing Activity, Opportunities, and Catalyst layers with a property detail panel open"
+          loading="lazy"
+        >
+      </picture>
+      <p class="heroshot__caption">Illustrative preview — addresses, owners, and figures shown are sample data, not real properties.</p>
+    </div>
+
+    <div class="wrap hero__cta reveal">
+      <a href="#access" class="btn btn--solid btn--lg">Request Access</a>
     </div>
   </section>
 
-  <!-- LOGO / CREDIBILITY STRIP -->
-  <section class="strip">
-    <div class="wrap strip__inner">
-      <p>Built for developers, investors &amp; land brokers who need to see the market before it moves</p>
-    </div>
-  </section>
-
-  <!-- PRODUCT -->
-  <section class="product" id="product">
+  <!-- PILLARS / PRODUCT -->
+  <section class="pillars" id="product">
     <div class="wrap">
       <p class="eyebrow">The Platform</p>
-      <h2 class="section__title">Every signal, one map.</h2>
+      <h2 class="section__title">Three layers. One map.</h2>
       <p class="section__sub">
-        Tax liens, pre-foreclosures, entitlements, zoning changes, infrastructure plans —
-        Groundbreakable pulls them all into a single live view of your market.
+        Every market view is built from the same three signal types — filtered, scored, and colored
+        consistently so you always know what you're looking at.
       </p>
 
-      <div class="dash reveal">
-        <div class="dash__bar">
-          <div class="dash__brand">
-            <svg viewBox="0 0 240 240" width="20" height="20"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M120 18 L120 2" stroke-width="6"/><path d="M84 29 L73 17" stroke-width="6"/><path d="M156 29 L167 17" stroke-width="6"/><path d="M120 42C89 42 66 65 66 95C66 119 80 136 93 151C103 162 110 173 114 184L126 184C130 173 137 162 147 151C160 136 174 119 174 95C174 65 151 42 120 42Z" stroke-width="6"/><circle cx="120" cy="94" r="13" fill="currentColor" stroke="none"/><path d="M103 193H137" stroke-width="6"/><path d="M108 205H132" stroke-width="6"/><path d="M114 215H126L120 222Z" fill="currentColor" stroke="none"/></g></svg>
-            GROUNDBREAKABLE
-          </div>
-          <div class="dash__tabs">
-            <span class="active">Pipeline</span>
-            <span>Buildability</span>
-            <span>Opportunities</span>
-            <span>Catalysts</span>
-          </div>
-          <div class="dash__avatar"></div>
-        </div>
-
-        <div class="dash__body">
-          <div class="dash__rail">
-            <span class="active" data-label="Pipeline"></span>
-            <span data-label="Buildability"></span>
-            <span data-label="Opportunities"></span>
-            <span data-label="Catalysts"></span>
-            <span data-label="Map Layers"></span>
-            <span data-label="Reports"></span>
-            <span data-label="Settings"></span>
-          </div>
-
-          <div class="dash__map">
-            <svg class="dash__map-grid" width="100%" height="100%" preserveAspectRatio="none">
-              <defs>
-                <pattern id="mgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(230,228,223,0.07)" stroke-width="1"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#mgrid)"/>
-            </svg>
-            <div class="mpin mpin--1"></div>
-            <div class="mpin mpin--2"></div>
-            <div class="mpin mpin--3"></div>
-            <div class="mpin mpin--4"></div>
-            <div class="mpin mpin--5"></div>
-            <div class="mpin mpin--6"></div>
-            <div class="mpin mpin--core">
-              <span class="mpin__ring"></span>
-            </div>
-            <div class="dash__filters">
-              <span>All Project Types</span>
-              <span>All Statuses</span>
-              <span>Filters</span>
-            </div>
-          </div>
-
-          <div class="dash__side">
-            <div class="dash__card">
-              <p class="label">Development Pipeline</p>
-              <p class="big">127</p>
-              <p class="delta">Active Projects &nbsp;<b>+18%</b> vs last 30 days</p>
-              <ul class="legend">
-                <li><span></span>Planning<b>42</b></li>
-                <li><span></span>Entitled<b>31</b></li>
-                <li><span></span>Under Construction<b>28</b></li>
-                <li><span></span>Completed<b>26</b></li>
-              </ul>
-              <a href="#access" class="dash__link">View Pipeline &rarr;</a>
-            </div>
-            <div class="dash__card">
-              <p class="label">Opportunity Score</p>
-              <p class="big big--sm">82 <em>High Opportunity</em></p>
-              <p class="delta">SW 21st &amp; Topeka Blvd</p>
-              <p class="delta delta--muted">2.4 AC · Mixed Use</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- OPPORTUNITIES -->
-  <section class="opportunities" id="opportunities">
-    <div class="wrap">
-      <p class="eyebrow">What Groundbreakable tracks</p>
-      <h2 class="section__title">Opportunity and activity, side by side.</h2>
-
-      <div class="opp-grid">
-        <div class="opp-col reveal">
-          <h3>Property Opportunities</h3>
-          <ul class="opp-list">
-            <li><i data-icon="doc"></i>Tax Liens</li>
-            <li><i data-icon="house"></i>Pre-Foreclosures</li>
-            <li><i data-icon="person"></i>Off Market</li>
-            <li><i data-icon="tag"></i>Listings</li>
-            <li><i data-icon="doc2"></i>Tax Delinquent</li>
-          </ul>
-        </div>
-        <div class="opp-col reveal">
-          <h3>Development Activity</h3>
-          <ul class="opp-list">
-            <li><i data-icon="crane"></i>Active Development</li>
-            <li><i data-icon="shield"></i>Entitlement Filed</li>
-            <li><i data-icon="key"></i>Zoning Change</li>
-            <li><i data-icon="signal"></i>Infrastructure Plan</li>
-            <li><i data-icon="plot"></i>Land Sale</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="pillars" id="how-it-works">
-    <div class="wrap">
       <div class="pillars__grid">
-        <div class="pillar reveal">
-          <i data-icon="layers" class="pillar__icon"></i>
-          <h3>See what&rsquo;s coming</h3>
-          <p>Live signals across permits, filings, and infrastructure plans surface before they hit the headlines.</p>
+        <div class="pillar pillar--activity reveal">
+          <span class="pillar__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V6l6-3 6 3v15"/><path d="M3 21h18"/></svg></span>
+          <h3>Activity</h3>
+          <p>Track proposed, filed, and under-construction projects — from zoning changes to infrastructure spend — across three phases: Planning, Active, and Completed.</p>
+          <div class="pillar__tags">
+            <span>Active Development</span><span>Zoning &amp; Rezoning</span><span>Infrastructure</span><span>Land Transaction</span>
+          </div>
         </div>
-        <div class="pillar reveal">
-          <i data-icon="target" class="pillar__icon"></i>
-          <h3>Know what&rsquo;s buildable</h3>
-          <p>Zoning, entitlement status, and parcel data resolved automatically — no manual research required.</p>
+        <div class="pillar pillar--opportunities reveal">
+          <span class="pillar__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></svg></span>
+          <h3>Opportunities</h3>
+          <p>Every property carries a 0–100 opportunity score from real signals — ownership, equity, and distress — and lights up brighter when two or more signals stack.</p>
+          <div class="pillar__tags">
+            <span>Pre-Foreclosure</span><span>Tax Lien</span><span>Absentee Owner</span><span>Code Violation</span>
+          </div>
         </div>
-        <div class="pillar reveal">
-          <i data-icon="bulb" class="pillar__icon"></i>
-          <h3>Find the opportunity</h3>
-          <p>An opportunity score ranks every parcel so you spend time on the sites worth chasing.</p>
+        <div class="pillar pillar--catalysts reveal">
+          <span class="pillar__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/></svg></span>
+          <h3>Catalysts</h3>
+          <p>Major employers, infrastructure investment, and institutional anchors — each with an intelligence radius that surfaces every signal building up around it.</p>
+          <div class="pillar__tags">
+            <span>Major Employer</span><span>Infrastructure Project</span><span>Mixed-Use Anchor</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA / ACCESS -->
-  <section class="access" id="access">
-    <div class="wrap access__inner">
-      <div class="access__copy reveal">
-        <p class="eyebrow">Get Started</p>
-        <h2 class="section__title">Request access to Groundbreakable.</h2>
+  <!-- MARKETS -->
+  <section class="markets" id="markets">
+    <div class="wrap markets__grid">
+      <div class="markets__copy reveal">
+        <p class="eyebrow">Coverage</p>
+        <h2 class="section__title">Built market by market.</h2>
         <p class="section__sub">
-          We&rsquo;re onboarding development teams, investors, and brokers market by market.
-          Tell us where you work and we&rsquo;ll reach out.
+          We research, verify, and maintain each market individually — sources, parcels, and catalysts
+          confirmed by hand — so what you see is signal, not noise.
         </p>
+        <a href="#access" class="btn btn--line">Request Your Market &rarr;</a>
       </div>
 
-      <form class="access__form reveal" id="accessForm">
-        <div class="field">
-          <label for="name">Full name</label>
-          <input id="name" name="name" type="text" required placeholder="Jordan Reyes">
+      <div class="market-cards reveal">
+        <div class="market-card market-card--live">
+          <span class="market-card__badge">Available</span>
+          <h4>Topeka, Kansas</h4>
+          <p class="market-card__state">Shawnee County</p>
+          <div class="market-card__illo" aria-hidden="true"></div>
+          <a href="#product" class="market-card__link">Explore Topeka <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         </div>
-        <div class="field">
-          <label for="email">Work email</label>
-          <input id="email" name="email" type="email" required placeholder="you@company.com">
+        <div class="market-card market-card--soon">
+          <span class="market-card__badge">Coming Soon</span>
+          <h4>Lawrence</h4>
+          <p class="market-card__state">Kansas</p>
+          <div class="market-card__illo" aria-hidden="true"></div>
+          <a href="#access" class="market-card__link">Notify Me &rarr;</a>
         </div>
-        <div class="field">
-          <label for="market">Primary market</label>
-          <input id="market" name="market" type="text" placeholder="Austin, TX">
+        <div class="market-card market-card--soon">
+          <span class="market-card__badge">Coming Soon</span>
+          <h4>Kansas City</h4>
+          <p class="market-card__state">Missouri</p>
+          <div class="market-card__illo" aria-hidden="true"></div>
+          <a href="#access" class="market-card__link">Notify Me &rarr;</a>
         </div>
-        <button type="submit" class="btn btn--solid btn--lg btn--full">Request Access</button>
-        <p class="access__note" id="accessNote">No spam. We&rsquo;ll reach out within a few business days.</p>
-      </form>
+        <div class="market-card market-card--soon">
+          <span class="market-card__badge">Coming Soon</span>
+          <h4>Wichita</h4>
+          <p class="market-card__state">Kansas</p>
+          <div class="market-card__illo" aria-hidden="true"></div>
+          <a href="#access" class="market-card__link">Notify Me &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA / ACCESS -->
+  <section class="access">
+    <div class="wrap">
+      <div class="access__banner reveal">
+        <div class="access__copy">
+          <p class="eyebrow" style="color:rgba(255,255,255,0.4);">Get Started</p>
+          <h2>See what's happening before it happens.</h2>
+          <p>We're onboarding development teams, investors, and brokers market by market. Tell us where you work and we'll reach out.</p>
+        </div>
+        <form class="access__form" id="accessForm">
+          <div class="field">
+            <label for="name">Full name</label>
+            <input id="name" name="name" type="text" required placeholder="Jordan Reyes">
+          </div>
+          <div class="field">
+            <label for="email">Work email</label>
+            <input id="email" name="email" type="email" required placeholder="you@company.com">
+          </div>
+          <div class="field field--full">
+            <label for="market">Primary market</label>
+            <input id="market" name="market" type="text" placeholder="Topeka, KS">
+          </div>
+          <button type="submit" class="btn btn--onDark btn--full field--full">Request Access</button>
+          <p class="access__note" id="accessNote">No spam. We&rsquo;ll reach out within a few business days.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about">
+    <div class="wrap about__inner">
+      <div class="reveal">
+        <p class="eyebrow">About</p>
+        <h2 class="section__title">A ROQ company.</h2>
+      </div>
+      <p class="section__sub reveal">
+        Groundbreakable is built by ROQ to turn scattered permits, parcels, and public records into one
+        clear intelligence layer for the people who move first on a market — investors, developers,
+        brokers, and land professionals.
+      </p>
     </div>
   </section>
 
@@ -323,8 +262,7 @@
 
     <nav class="footer__links" aria-label="Footer">
       <a href="#product">Product</a>
-      <a href="#opportunities">Opportunities</a>
-      <a href="#how-it-works">How it works</a>
+      <a href="#markets">Markets</a>
       <a href="#access">Request Access</a>
     </nav>
 
