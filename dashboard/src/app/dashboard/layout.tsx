@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import MarketSwitcher from "@/components/MarketSwitcher";
-import DashboardNav from "@/components/DashboardNav";
 import type { Market } from "@/lib/types";
 
 export default async function DashboardLayout({
@@ -22,13 +21,10 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
       <header className="flex items-center justify-between border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-6 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
-          </Link>
-          <DashboardNav />
-        </div>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+          <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+        </Link>
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
           <MarketSwitcher markets={markets ?? []} />
           <span>{user?.email}</span>
