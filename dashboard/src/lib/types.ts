@@ -246,15 +246,68 @@ export const ACTIVITY_PHASE_LABEL: Record<ActivityPhase, string> = {
 
 // --- Opportunities: Properties ---
 
-export type OpportunityType = "tax_lien" | "pre_foreclosure" | "absentee_owner" | "high_equity_owner" | "listing";
+export type OpportunityType =
+  | "pre_foreclosure"
+  | "tax_lien"
+  | "tax_delinquent"
+  | "absentee_owner"
+  | "high_equity_owner"
+  | "vacant"
+  | "code_violation"
+  | "listing"
+  | "price_drop"
+  | "underutilized_land"
+  | "zoning_upside";
 
 export const OPPORTUNITY_TYPE_LABEL: Record<OpportunityType, string> = {
-  tax_lien: "Tax Lien",
   pre_foreclosure: "Pre-Foreclosure",
+  tax_lien: "Tax Lien",
+  tax_delinquent: "Tax Delinquent",
   absentee_owner: "Absentee Owner",
-  high_equity_owner: "High-Equity Owner",
-  listing: "Listing",
+  high_equity_owner: "Long-Term / High-Equity Owner",
+  vacant: "Vacant",
+  code_violation: "Code Violation",
+  listing: "Active Listing",
+  price_drop: "Price Drop",
+  underutilized_land: "Underutilized Land",
+  zoning_upside: "Zoning Upside",
 };
+
+// Determines which signal's icon a multi-signal property shows on the map
+// -- earliest entry wins. Ordered roughly by urgency/actionability: legal
+// deadlines (foreclosure, tax) first, then owner/property condition
+// signals, then market signals, then long-horizon land-use signals.
+export const OPPORTUNITY_SIGNAL_PRIORITY: OpportunityType[] = [
+  "pre_foreclosure",
+  "tax_lien",
+  "tax_delinquent",
+  "code_violation",
+  "vacant",
+  "absentee_owner",
+  "high_equity_owner",
+  "price_drop",
+  "listing",
+  "zoning_upside",
+  "underutilized_land",
+];
+
+export function primarySignal(signals: OpportunityType[]): OpportunityType {
+  return OPPORTUNITY_SIGNAL_PRIORITY.find((type) => signals.includes(type)) ?? signals[0];
+}
+
+// A property with 2+ independent signals firing at once (e.g.
+// pre-foreclosure + favorable zoning) is a materially stronger lead than
+// any single signal alone -- the map gives these a distinct glow (see
+// bulbMarkerSvgMarkup) rather than requiring the investor to notice the
+// overlap themselves.
+export function isStackedOpportunity(signals: OpportunityType[]): boolean {
+  return signals.length >= 2;
+}
+
+// Reuses the Catalysts "premium/spotlight" gold rather than inventing a
+// new color -- a stacked opportunity is, in the same spirit, a signal
+// worth calling special attention to.
+export const STACKED_OPPORTUNITY_GLOW_COLOR = "#eab308";
 
 export type Opportunity = {
   id: string;
@@ -263,7 +316,7 @@ export type Opportunity = {
   address: string;
   latitude: number;
   longitude: number;
-  opportunity_type: OpportunityType;
+  signals: OpportunityType[];
   listing_status: string | null;
   owner_name: string | null;
   is_absentee: boolean | null;
@@ -277,6 +330,15 @@ export type Opportunity = {
   // Investment potential (shown as asking vs. resale gain when both present).
   asking_price: number | null;
   estimated_resale_value: number | null;
+  // Price-drop signal: original_list_price vs. asking_price (read as "current price").
+  original_list_price: number | null;
+  // Underutilized-land signal.
+  lot_size_acres: number | null;
+  // Code-violation signal.
+  code_violation_count: number | null;
+  code_violation_summary: string | null;
+  // Vacant signal.
+  vacant_since: string | null;
   // Buildability enrichment (shown on the property's own detail panel).
   zoning_district: string | null;
   permitted_uses: string | null;

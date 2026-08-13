@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type {
   CatalystWithSource,
   Market,
+  OpportunityType,
   OpportunityWithSource,
   Parcel,
   ProjectCategory,
@@ -12,6 +13,7 @@ import type {
 import { resolveActivityPhase } from "@/lib/activityPhase";
 import DevelopmentMap from "./DevelopmentMap";
 import DevelopmentLegend from "./DevelopmentLegend";
+import OpportunityLegend from "./OpportunityLegend";
 import ProjectDetailPanel from "./ProjectDetailPanel";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import CatalystDetailPanel, { findNearbySignals } from "./CatalystDetailPanel";
@@ -106,6 +108,19 @@ export default function DevelopmentIntelligenceView({
     return result;
   }, [phaseProjects]);
 
+  // A property can carry more than one signal at once, so this sums to
+  // more than opportunities.length -- same idea as categoryCounts above,
+  // just not mutually exclusive per row.
+  const signalCounts = useMemo(() => {
+    const result: Partial<Record<OpportunityType, number>> = {};
+    opportunities.forEach((o) => {
+      o.signals.forEach((signal) => {
+        result[signal] = (result[signal] ?? 0) + 1;
+      });
+    });
+    return result;
+  }, [opportunities]);
+
   const selectedProject = phaseProjects.find((p) => p.id === selectedProjectId) ?? null;
   const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
@@ -140,11 +155,18 @@ export default function DevelopmentIntelligenceView({
           </div>
         </div>
 
-        {showActivity && (
-          <div className="pointer-events-none absolute left-3 top-3">
-            <div className="pointer-events-auto">
-              <DevelopmentLegend counts={categoryCounts} />
-            </div>
+        {(showActivity || showOpportunities) && (
+          <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-3">
+            {showActivity && (
+              <div className="pointer-events-auto">
+                <DevelopmentLegend counts={categoryCounts} />
+              </div>
+            )}
+            {showOpportunities && (
+              <div className="pointer-events-auto">
+                <OpportunityLegend counts={signalCounts} />
+              </div>
+            )}
           </div>
         )}
 

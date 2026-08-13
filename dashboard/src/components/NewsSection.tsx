@@ -16,7 +16,7 @@ function activityHeadline(update: ProjectUpdateWithProject) {
 }
 
 function opportunityHeadline(opp: OpportunityWithSource) {
-  return `${OPPORTUNITY_TYPE_LABEL[opp.opportunity_type]}: ${opp.address}`;
+  return `${opp.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ")}: ${opp.address}`;
 }
 
 // A member should be able to see what changed since their last visit in a

@@ -1,4 +1,4 @@
-import type { ProjectCategory, ProjectStatus } from "./types";
+import { OPPORTUNITY_SIGNAL_PRIORITY, STACKED_OPPORTUNITY_GLOW_COLOR, type OpportunityType, type ProjectCategory, type ProjectStatus } from "./types";
 
 // Small hand-authored line-icon set (24x24 viewBox, stroke-based) shared by
 // the map's DOM markers, the legend, and the filter bar -- one glyph per
@@ -81,20 +81,108 @@ export function pinMarkerSvgMarkup(
   </svg>`;
 }
 
+// One glyph per Opportunity signal type, same hand-authored line-icon
+// convention as PROJECT_ICON_PATHS (24x24 viewBox, stroke-based) so a
+// signal reads clearly at the small size it renders inside a bulb's head.
+// pre_foreclosure/tax_lien/tax_delinquent intentionally reuse the Pipeline
+// document/hammer glyphs -- a gavel and a tax notice are the same concept
+// on a bulb as they are on a pin, and duplicating proven, legible paths
+// beats freehand-drawing new ones for closely related ideas.
+export type OpportunityIconKey =
+  | "gavel"
+  | "document"
+  | "clipboard"
+  | "envelope"
+  | "trendingUp"
+  | "trendingDown"
+  | "home"
+  | "alertTriangle"
+  | "tag"
+  | "map"
+  | "barChart";
+
+export const SIGNAL_ICON_PATHS: Record<OpportunityIconKey, string[]> = {
+  gavel: ["M13 3l8 8-3 3-8-8z", "M10.5 8.5L3 16l3 3 7.5-7.5"],
+  document: ["M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z", "M14 3v4h4", "M9 12h6M9 15.5h6M9 8.5h3"],
+  clipboard: ["M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1z", "M6 5h12v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z", "M9 11h6M9 15h6"],
+  envelope: ["M3 5h18v14H3z", "M3 5l9 7 9-7"],
+  trendingUp: ["M3 17l6-6 4 4 8-8", "M15 6h6v6"],
+  trendingDown: ["M23 18l-9.5-9.5-5 5L1 6", "M17 18h6v-6"],
+  home: ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10", "M9.5 14.5l5 5M14.5 14.5l-5 5"],
+  alertTriangle: ["M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z", "M12 9v4", "M12 17h.01"],
+  tag: ["M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z", "M7 7h.01"],
+  map: ["M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z", "M8 2v16", "M16 6v16"],
+  barChart: ["M18 20V10", "M12 20V4", "M6 20v-6"],
+};
+
+export const OPPORTUNITY_SIGNAL_ICON: Record<OpportunityType, OpportunityIconKey> = {
+  pre_foreclosure: "gavel",
+  tax_lien: "document",
+  tax_delinquent: "clipboard",
+  absentee_owner: "envelope",
+  high_equity_owner: "trendingUp",
+  vacant: "home",
+  code_violation: "alertTriangle",
+  listing: "tag",
+  price_drop: "trendingDown",
+  underutilized_land: "map",
+  zoning_upside: "barChart",
+};
+
+// Picks one icon to represent a (possibly multi-signal) property -- the
+// highest-priority signal present, same ordering as OPPORTUNITY_SIGNAL_PRIORITY.
+export function resolveOpportunityIcon(signals: OpportunityType[]): OpportunityIconKey {
+  const primary = OPPORTUNITY_SIGNAL_PRIORITY.find((type) => signals.includes(type)) ?? signals[0];
+  return OPPORTUNITY_SIGNAL_ICON[primary];
+}
+
+// Bare glyph, no bulb chrome -- for the Opportunities legend, same pattern
+// as projectIconSvgMarkup for the Activity legend.
+export function opportunityIconSvgMarkup(
+  key: OpportunityIconKey,
+  opts?: { size?: number; stroke?: string; strokeWidth?: number }
+): string {
+  const { size = 14, stroke = "#fff", strokeWidth = 1.8 } = opts ?? {};
+  const paths = SIGNAL_ICON_PATHS[key].map((d) => `<path d="${d}" />`).join("");
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+
 // Opportunities marker: a standalone lightbulb (not a pin) -- per spec,
 // "Pins tell you what's happening. Bulbs show you where the opportunity
 // is." Anchor at the bottom tip of the base, same anchor scheme as the
-// pin marker.
-export function bulbMarkerSvgMarkup(opts?: { size?: number; fill?: string }): string {
-  const { size = 28, fill = "#22c55e" } = opts ?? {};
-  const height = Math.round((size * 32) / 24);
-  return `<svg width="${size}" height="${height}" viewBox="0 0 24 32" fill="none">
-    <path d="M12 2C7.58 2 4 5.58 4 10c0 3.06 1.72 5.24 3.02 6.9.78 1 1.48 1.9 1.48 2.6v1h7v-1c0-.7.7-1.6 1.48-2.6C18.28 15.24 20 13.06 20 10c0-4.42-3.58-8-8-8z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
-    <path d="M10 29h4l-1.3 3h-1.4z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
-    <g stroke="#fff" stroke-opacity="0.85" stroke-width="1" fill="none">
+// pin marker -- the glow padding added for `stacked` only extends the
+// canvas upward/sideways so the tip stays glued to the real lat/lng.
+export function bulbMarkerSvgMarkup(opts?: {
+  size?: number;
+  fill?: string;
+  icon?: OpportunityIconKey;
+  stacked?: boolean;
+}): string {
+  const { size = 28, fill = "#22c55e", icon, stacked = false } = opts ?? {};
+  const pad = stacked ? 7 : 0;
+  const viewWidth = 24 + pad * 2;
+  const viewHeight = 32 + pad;
+  const width = Math.round((size * viewWidth) / 24);
+  const height = Math.round((width * viewHeight) / viewWidth);
+
+  const iconMarkup = icon
+    ? `<g transform="translate(12,10) scale(0.34) translate(-12,-12)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${SIGNAL_ICON_PATHS[icon]
+        .map((d) => `<path d="${d}" />`)
+        .join("")}</g>`
+    : `<g stroke="#fff" stroke-opacity="0.85" stroke-width="1" fill="none">
       <path d="M9 21.2h6M9.3 23.8h5.4M9.6 26.4h4.8" />
     </g>
-    <path d="M9.3 9.5l1.4 2.6 1.3-2 1.3 2 1.4-2.6" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+    <path d="M9.3 9.5l1.4 2.6 1.3-2 1.3 2 1.4-2.6" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
+
+  const glowMarkup = stacked
+    ? `<circle cx="12" cy="9" r="15" fill="${STACKED_OPPORTUNITY_GLOW_COLOR}" opacity="0.35" filter="blur(4px)" />`
+    : "";
+
+  return `<svg width="${width}" height="${height}" viewBox="${-pad} ${-pad} ${viewWidth} ${viewHeight}" fill="none">
+    ${glowMarkup}
+    <path d="M12 2C7.58 2 4 5.58 4 10c0 3.06 1.72 5.24 3.02 6.9.78 1 1.48 1.9 1.48 2.6v1h7v-1c0-.7.7-1.6 1.48-2.6C18.28 15.24 20 13.06 20 10c0-4.42-3.58-8-8-8z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
+    <path d="M10 29h4l-1.3 3h-1.4z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
+    ${iconMarkup}
   </svg>`;
 }
 

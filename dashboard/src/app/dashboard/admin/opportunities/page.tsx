@@ -55,13 +55,19 @@ export default async function AdminOpportunitiesPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className={labelClass} htmlFor="opportunity_type">Opportunity Type</label>
-            <select id="opportunity_type" name="opportunity_type" required className={inputClass}>
+          <div className="col-span-2">
+            <label className={labelClass}>Signals (select all that apply)</label>
+            <div className="grid grid-cols-3 gap-2 rounded border border-white/10 bg-black/30 p-3">
               {TYPES.map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <label key={value} className="flex items-center gap-2 text-sm text-white/70">
+                  <input type="checkbox" name="signals" value={value} className="h-4 w-4" />
+                  {label}
+                </label>
               ))}
-            </select>
+            </div>
+            <p className="mt-1 text-xs text-white/35">
+              Properties with 2+ signals get a highlighted marker on the map.
+            </p>
           </div>
 
           <div className="col-span-2">
@@ -151,6 +157,35 @@ export default async function AdminOpportunitiesPage() {
 
           <div className="col-span-2 border-t border-white/10 pt-4">
             <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-white/40">
+              Signal Details (optional — fill in whichever apply)
+            </h3>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="original_list_price">Original List Price ($) — for Price Drop</label>
+            <input id="original_list_price" name="original_list_price" type="number" step="any" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="lot_size_acres">Lot Size (acres) — for Underutilized Land</label>
+            <input id="lot_size_acres" name="lot_size_acres" type="number" step="any" className={inputClass} />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="code_violation_count">Code Violation Count</label>
+            <input id="code_violation_count" name="code_violation_count" type="number" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="vacant_since">Vacant Since</label>
+            <input id="vacant_since" name="vacant_since" type="date" className={inputClass} />
+          </div>
+
+          <div className="col-span-2">
+            <label className={labelClass} htmlFor="code_violation_summary">Code Violation Summary</label>
+            <textarea id="code_violation_summary" name="code_violation_summary" rows={2} className={inputClass} />
+          </div>
+
+          <div className="col-span-2 border-t border-white/10 pt-4">
+            <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-white/40">
               Buildability (optional)
             </h3>
           </div>
@@ -225,7 +260,7 @@ export default async function AdminOpportunitiesPage() {
           {(opportunities ?? []).map((opportunity) => (
             <div key={opportunity.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
               <div className="text-xs uppercase tracking-wide text-white/40">
-                {OPPORTUNITY_TYPE_LABEL[opportunity.opportunity_type]}
+                {opportunity.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ")}
               </div>
               <div className="font-medium text-white">{opportunity.address}</div>
               <div className="text-sm text-white/50">{opportunity.why_flagged}</div>

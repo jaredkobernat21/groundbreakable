@@ -1,6 +1,14 @@
-import { OPPORTUNITIES_COLOR, OPPORTUNITY_TYPE_LABEL, type OpportunityWithSource, type ProjectWithSource } from "@/lib/types";
+import {
+  OPPORTUNITIES_COLOR,
+  OPPORTUNITY_TYPE_LABEL,
+  STACKED_OPPORTUNITY_GLOW_COLOR,
+  isStackedOpportunity,
+  primarySignal,
+  type OpportunityWithSource,
+  type ProjectWithSource,
+} from "@/lib/types";
 import { formatCurrency, formatDate, formatRelativeVerified } from "@/lib/format";
-import { bulbMarkerSvgMarkup } from "@/lib/markerIcons";
+import { bulbMarkerSvgMarkup, resolveOpportunityIcon } from "@/lib/markerIcons";
 import { haversineDistanceMeters } from "@/lib/geo";
 
 const CONFIDENCE_LABEL: Record<OpportunityWithSource["confidence"], string> = {
@@ -46,6 +54,13 @@ export default function OpportunityDetailPanel({
   const hasBuildability =
     opportunity.zoning_district || opportunity.permitted_uses || opportunity.rezoning_potential || opportunity.buildability_notes;
 
+  const stacked = isStackedOpportunity(opportunity.signals);
+
+  const hasPriceDrop = opportunity.original_list_price != null && opportunity.asking_price != null;
+  const priceDropAmount = hasPriceDrop ? opportunity.original_list_price! - opportunity.asking_price! : null;
+  const priceDropPct =
+    hasPriceDrop && opportunity.original_list_price! > 0 ? (priceDropAmount! / opportunity.original_list_price!) * 100 : null;
+
   const facts = [
     opportunity.estimated_equity != null && {
       label: "Estimated Equity",
@@ -58,6 +73,13 @@ export default function OpportunityDetailPanel({
     opportunity.years_owned != null && { label: "Years Owned", value: `${opportunity.years_owned}` },
     opportunity.is_absentee != null && { label: "Absentee Owner", value: opportunity.is_absentee ? "Yes" : "No" },
     opportunity.opportunity_score != null && { label: "Opportunity Score", value: `${opportunity.opportunity_score}/100` },
+    opportunity.lot_size_acres != null && { label: "Lot Size", value: `${opportunity.lot_size_acres} acres` },
+    opportunity.code_violation_count != null && { label: "Code Violations", value: `${opportunity.code_violation_count}` },
+    opportunity.vacant_since != null && { label: "Vacant Since", value: formatDate(opportunity.vacant_since) },
+    hasPriceDrop && {
+      label: "Price Drop",
+      value: `${formatCurrency(priceDropAmount)}${priceDropPct != null ? ` (${priceDropPct.toFixed(0)}%)` : ""}`,
+    },
   ].filter(Boolean) as { label: string; value: string | null }[];
 
   return (
@@ -71,15 +93,37 @@ export default function OpportunityDetailPanel({
         ✕
       </button>
 
-      <div
-        className="mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide"
-        style={{ borderColor: `${OPPORTUNITIES_COLOR}55`, color: OPPORTUNITIES_COLOR, backgroundColor: `${OPPORTUNITIES_COLOR}1a` }}
-      >
-        <span
-          className="flex h-3 w-3 items-center justify-center"
-          dangerouslySetInnerHTML={{ __html: bulbMarkerSvgMarkup({ size: 12, fill: OPPORTUNITIES_COLOR }) }}
-        />
-        {OPPORTUNITY_TYPE_LABEL[opportunity.opportunity_type]}
+      {stacked && (
+        <div
+          className="mb-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
+          style={{
+            borderColor: `${STACKED_OPPORTUNITY_GLOW_COLOR}66`,
+            color: STACKED_OPPORTUNITY_GLOW_COLOR,
+            backgroundColor: `${STACKED_OPPORTUNITY_GLOW_COLOR}1f`,
+          }}
+        >
+          {opportunity.signals.length} Signals Stacked
+        </div>
+      )}
+
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        {opportunity.signals.map((signal) => (
+          <span
+            key={signal}
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide"
+            style={{ borderColor: `${OPPORTUNITIES_COLOR}55`, color: OPPORTUNITIES_COLOR, backgroundColor: `${OPPORTUNITIES_COLOR}1a` }}
+          >
+            {signal === primarySignal(opportunity.signals) && (
+              <span
+                className="flex h-3 w-3 items-center justify-center"
+                dangerouslySetInnerHTML={{
+                  __html: bulbMarkerSvgMarkup({ size: 12, fill: OPPORTUNITIES_COLOR, icon: resolveOpportunityIcon(opportunity.signals) }),
+                }}
+              />
+            )}
+            {OPPORTUNITY_TYPE_LABEL[signal]}
+          </span>
+        ))}
       </div>
 
       <h2 className="pr-6 text-lg font-semibold leading-snug text-white">{opportunity.address}</h2>
@@ -103,6 +147,13 @@ export default function OpportunityDetailPanel({
         <div className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Why Groundbreakable Flagged It</div>
         <p className="text-sm leading-relaxed text-white/70">{opportunity.why_flagged}</p>
       </div>
+
+      {opportunity.code_violation_summary && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Code Violations</div>
+          <p className="text-sm leading-relaxed text-white/70">{opportunity.code_violation_summary}</p>
+        </div>
+      )}
 
       {nearestActivity && (
         <div className="mt-4 border-t border-white/10 pt-4">

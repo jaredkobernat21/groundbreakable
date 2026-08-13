@@ -12,6 +12,7 @@ import {
   CATALYST_STATUS_LABEL,
   CATALYSTS_COLOR,
   OPPORTUNITIES_COLOR,
+  isStackedOpportunity,
   type CatalystWithSource,
   type Market,
   type OpportunityWithSource,
@@ -23,6 +24,7 @@ import {
   bulbMarkerSvgMarkup,
   catalystMarkerSvgMarkup,
   pinMarkerSvgMarkup,
+  resolveOpportunityIcon,
   resolveProjectIcon,
 } from "@/lib/markerIcons";
 import { formatCurrency } from "@/lib/format";
@@ -267,18 +269,20 @@ export default function DevelopmentMap({
       if (showOpportunities) {
         opportunities.forEach((opp) => {
           const el = document.createElement("div");
-          el.className = "roq-marker roq-marker-opportunity";
+          const stacked = isStackedOpportunity(opp.signals);
+          el.className = `roq-marker roq-marker-opportunity${stacked ? " roq-marker-stacked" : ""}`;
 
           const metric = formatCurrency(opp.estimated_equity) ?? formatCurrency(opp.assessed_value);
+          const signalLabels = opp.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ");
 
           el.innerHTML = `
             <div class="roq-marker-card">
               <span class="roq-marker-card-title">${escapeHtml(opp.address)}</span>
-              <span class="roq-marker-card-sub">${escapeHtml(OPPORTUNITY_TYPE_LABEL[opp.opportunity_type])}${opp.listing_status ? " · " + escapeHtml(opp.listing_status) : ""}</span>
+              <span class="roq-marker-card-sub">${escapeHtml(signalLabels)}${opp.listing_status ? " · " + escapeHtml(opp.listing_status) : ""}</span>
               ${metric ? `<span class="roq-marker-card-metric" style="color:${OPPORTUNITIES_COLOR}">${escapeHtml(metric)}</span>` : ""}
             </div>
             <div class="roq-marker-line" style="background:${OPPORTUNITIES_COLOR}"></div>
-            <div class="roq-marker-pin">${bulbMarkerSvgMarkup({ fill: OPPORTUNITIES_COLOR })}</div>
+            <div class="roq-marker-pin">${bulbMarkerSvgMarkup({ fill: OPPORTUNITIES_COLOR, icon: resolveOpportunityIcon(opp.signals), stacked })}</div>
           `;
           el.addEventListener("click", (event) => {
             event.stopPropagation();

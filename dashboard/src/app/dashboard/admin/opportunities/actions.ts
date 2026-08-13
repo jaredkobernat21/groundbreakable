@@ -18,7 +18,7 @@ export async function createOpportunity(formData: FormData) {
 
   const marketId = str(formData, "market_id");
   const address = str(formData, "address");
-  const opportunityType = str(formData, "opportunity_type");
+  const signals = formData.getAll("signals").filter((v): v is string => typeof v === "string" && v.length > 0);
   const latitude = num(formData, "latitude");
   const longitude = num(formData, "longitude");
   const whyFlagged = str(formData, "why_flagged");
@@ -27,8 +27,8 @@ export async function createOpportunity(formData: FormData) {
 
   // RLS (is_admin()) is the real gate; these just avoid a confusing
   // partial insert if a required field was skipped client-side.
-  if (!marketId || !address || !opportunityType || latitude === null || longitude === null) {
-    throw new Error("Market, address, opportunity type, and coordinates are required.");
+  if (!marketId || !address || signals.length === 0 || latitude === null || longitude === null) {
+    throw new Error("Market, address, at least one signal, and coordinates are required.");
   }
   if (!whyFlagged) {
     throw new Error("Why Groundbreakable flagged it is required — every opportunity must state its rationale.");
@@ -66,7 +66,7 @@ export async function createOpportunity(formData: FormData) {
     address,
     latitude,
     longitude,
-    opportunity_type: opportunityType,
+    signals,
     listing_status: str(formData, "listing_status"),
     owner_name: str(formData, "owner_name"),
     is_absentee: formData.get("is_absentee") === "on",
@@ -79,6 +79,11 @@ export async function createOpportunity(formData: FormData) {
     date_identified: str(formData, "date_identified"),
     asking_price: num(formData, "asking_price"),
     estimated_resale_value: num(formData, "estimated_resale_value"),
+    original_list_price: num(formData, "original_list_price"),
+    lot_size_acres: num(formData, "lot_size_acres"),
+    code_violation_count: num(formData, "code_violation_count"),
+    code_violation_summary: str(formData, "code_violation_summary"),
+    vacant_since: str(formData, "vacant_since"),
     zoning_district: str(formData, "zoning_district"),
     permitted_uses: str(formData, "permitted_uses"),
     rezoning_potential: str(formData, "rezoning_potential"),
