@@ -109,14 +109,6 @@ export default async function DashboardPage({
         {market.name}, {market.state}
       </h1>
 
-      <NewsSection
-        recentActivity={recentActivity ?? []}
-        newOpportunities={newOpportunities}
-        decisions={decisions ?? []}
-      />
-
-      <CatalystSpotlight catalyst={spotlightCatalyst} />
-
       <DevelopmentIntelligenceView
         key={`${market.id}-${category}`}
         market={market}
@@ -126,6 +118,14 @@ export default async function DashboardPage({
         catalysts={catalysts ?? []}
         initialCategory={category}
       />
+
+      <NewsSection
+        recentActivity={recentActivity ?? []}
+        newOpportunities={newOpportunities}
+        decisions={decisions ?? []}
+      />
+
+      <CatalystSpotlight catalyst={spotlightCatalyst} />
     </div>
   );
 }

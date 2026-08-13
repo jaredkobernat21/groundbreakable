@@ -159,12 +159,12 @@ export default function DevelopmentIntelligenceView({
           <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-3">
             {showActivity && (
               <div className="pointer-events-auto">
-                <DevelopmentLegend counts={categoryCounts} />
+                <DevelopmentLegend counts={categoryCounts} total={phaseProjects.length} />
               </div>
             )}
             {showOpportunities && (
               <div className="pointer-events-auto">
-                <OpportunityLegend counts={signalCounts} />
+                <OpportunityLegend counts={signalCounts} total={opportunities.length} />
               </div>
             )}
           </div>
