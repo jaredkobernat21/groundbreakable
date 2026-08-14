@@ -15,7 +15,7 @@ export default function OpportunityZoneDetailPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute right-3 top-3 bottom-3 w-[340px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/75 p-5 shadow-2xl backdrop-blur-xl">
+    <div className="absolute right-3 top-16 bottom-3 z-30 w-[340px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/75 p-5 shadow-2xl backdrop-blur-xl sm:top-3">
       <button
         type="button"
         onClick={onClose}
