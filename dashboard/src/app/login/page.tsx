@@ -30,17 +30,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0b0e14] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#f4f2ee] px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-lg border border-white/10 bg-white/5 p-8"
+        className="w-full max-w-sm rounded-2xl border border-[#1c1c1c]/10 bg-white p-8 shadow-sm"
       >
-        <h1 className="mb-1 text-xl font-semibold tracking-tight text-white">
-          Groundbreakable
-        </h1>
-        <p className="mb-6 text-sm text-white/50">Sign in to your investor dashboard.</p>
+        <div className="mb-6 flex items-center gap-2">
+          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+          <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+        </div>
 
-        <label className="mb-1 block text-sm text-white/70" htmlFor="email">
+        <h1 className="mb-1 text-xl font-semibold tracking-tight text-[#1c1c1c]">Sign in</h1>
+        <p className="mb-6 text-sm text-[#1c1c1c]/50">Sign in to your dashboard.</p>
+
+        <label className="mb-1 block text-sm text-[#1c1c1c]/70" htmlFor="email">
           Email
         </label>
         <input
@@ -49,10 +52,10 @@ export default function LoginPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+          className="mb-4 w-full rounded border border-[#1c1c1c]/15 bg-white px-3 py-2 text-sm text-[#1c1c1c] outline-none focus:border-[#1c1c1c]/40"
         />
 
-        <label className="mb-1 block text-sm text-white/70" htmlFor="password">
+        <label className="mb-1 block text-sm text-[#1c1c1c]/70" htmlFor="password">
           Password
         </label>
         <input
@@ -61,20 +64,20 @@ export default function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-6 w-full rounded border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
+          className="mb-6 w-full rounded border border-[#1c1c1c]/15 bg-white px-3 py-2 text-sm text-[#1c1c1c] outline-none focus:border-[#1c1c1c]/40"
         />
 
-        {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-amber-500 py-2 text-sm font-medium text-black transition hover:bg-amber-400 disabled:opacity-50"
+          className="w-full rounded bg-[#1c1c1c] py-2 text-sm font-medium text-white transition hover:bg-[#1c1c1c]/85 disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
 
-        <p className="mt-6 text-xs text-white/40">
+        <p className="mt-6 text-xs text-[#1c1c1c]/40">
           Accounts are created by Groundbreakable — reach out if you need access.
         </p>
       </form>
