@@ -41,11 +41,15 @@ export default async function TopekaPreviewPage() {
 
   const supabase = createAdminClient();
 
-  const { data: market } = await supabase
+  const { data: market, error: marketError } = await supabase
     .from("markets")
     .select("*")
     .eq("slug", MARKET_SLUG)
     .single<Market>();
+
+  if (marketError) {
+    console.error("preview/topeka: markets query failed", marketError);
+  }
 
   if (!market) {
     return (
