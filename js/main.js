@@ -3,12 +3,6 @@
 (function () {
   "use strict";
 
-  // Public project URL + publishable (anon) key -- safe to ship in client
-  // code by design. Access is governed by the access_requests table's RLS
-  // policy (insert-only for anon), not by keeping this value secret.
-  var SUPABASE_URL = "https://pgcospvlhorcvssafjoo.supabase.co";
-  var SUPABASE_ANON_KEY = "sb_publishable_E8B6OF7rTmNhlEVvS36fiA_wewl5tER";
-
   /* ---- Mobile nav ---- */
   var toggle = document.getElementById("navToggle");
   var mobile = document.getElementById("navMobile");
@@ -106,50 +100,6 @@
     revealEls.forEach(function (el) { io.observe(el); });
   } else {
     revealEls.forEach(function (el) { el.classList.add("in"); });
-  }
-
-  /* ---- Access form (writes to Supabase access_requests table) ---- */
-  var form = document.getElementById("accessForm");
-  var note = document.getElementById("accessNote");
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      var submitBtn = form.querySelector("button[type=submit]");
-      var payload = {
-        full_name: form.name.value.trim(),
-        work_email: form.email.value.trim(),
-        primary_market: form.market.value.trim() || null,
-      };
-
-      note.classList.remove("success", "error");
-      note.textContent = "Submitting…";
-      submitBtn.disabled = true;
-
-      fetch(SUPABASE_URL + "/rest/v1/access_requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: "Bearer " + SUPABASE_ANON_KEY,
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then(function (res) {
-          if (!res.ok) throw new Error("request failed");
-          note.textContent = "Thanks — we’ve got your details and will be in touch shortly.";
-          note.classList.add("success");
-          form.reset();
-        })
-        .catch(function () {
-          note.textContent = "Something went wrong — please try again in a moment.";
-          note.classList.add("error");
-        })
-        .finally(function () {
-          submitBtn.disabled = false;
-        });
-    });
   }
 
   /* ---- Footer year ---- */

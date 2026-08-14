@@ -111,16 +111,8 @@ button{ font-family:inherit; }
   white-space:nowrap;
 }
 .btn:hover{ transform:translateY(-1px); }
-.btn--solid{ background:var(--ink); color:var(--paper); }
-.btn--solid:hover{ background:#000; }
-.btn--ghost{ background:transparent; color:var(--ink-70); border-color:transparent; }
-.btn--ghost:hover{ color:var(--ink); }
 .btn--line{ background:transparent; color:var(--ink); border-color:var(--ink-12); }
 .btn--line:hover{ border-color:var(--ink-25); background:var(--paper-soft); }
-.btn--onDark{ background:var(--paper); color:var(--ink); }
-.btn--onDark:hover{ background:#fff; box-shadow:0 0 0 1px rgba(255,255,255,0.4); }
-.btn--lg{ padding:14.5px 28px; font-size:14.5px; }
-.btn--full{ width:100%; }
 .btn--sm{ padding:9px 16px; font-size:12.5px; }
 
 /* ---------- Nav ---------- */
@@ -208,7 +200,7 @@ button{ font-family:inherit; }
    Order: headline -> brand still -> description -> map shot -> CTA.
    Each block is its own centered wrap so spacing stays even regardless
    of which piece moves. */
-.hero{ padding:96px 0 0; }
+.hero{ padding:96px 0 100px; }
 .hero__copy{
   max-width:680px;
   margin:56px auto 0;
@@ -233,11 +225,6 @@ button{ font-family:inherit; }
   color:var(--ink-55);
   max-width:52ch;
   margin:0 auto;
-}
-.hero__cta{
-  display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
-  margin:40px auto 0;
-  padding:0 32px 100px;
 }
 
 /* ---------- Hero images ----------
@@ -318,41 +305,6 @@ button{ font-family:inherit; }
 .market-card--soon .market-card__illo{ background:var(--sand); }
 .market-card__link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--ink); margin-top:auto; }
 .market-card__link svg{ width:13px; height:13px; }
-.market-card--soon .market-card__link{ color:var(--ink-40); }
-
-/* ---------- Access / final CTA ---------- */
-.access{ padding:0 0 128px; }
-.access__banner{
-  background:var(--ink);
-  border-radius:24px;
-  padding:64px 56px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:56px;
-  align-items:center;
-}
-.access__copy h2{ font-family:var(--serif); color:#fff; font-size:clamp(24px,3vw,32px); font-weight:600; margin:0 0 14px; max-width:16ch; }
-.access__copy p{ color:rgba(255,255,255,0.55); font-size:15px; max-width:40ch; margin:0; }
-.access__form{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.access__form .field--full{ grid-column:1 / -1; }
-.field{ display:flex; flex-direction:column; gap:7px; }
-.field label{ font-size:11.5px; font-weight:600; color:rgba(255,255,255,0.5); letter-spacing:0.03em; }
-.field input{
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.14);
-  border-radius:9px;
-  padding:12px 14px;
-  color:#fff;
-  font-family:var(--sans);
-  font-size:14px;
-  outline:none;
-  transition:border-color .18s ease, background .18s ease;
-}
-.field input::placeholder{ color:rgba(255,255,255,0.32); }
-.field input:focus{ border-color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.09); }
-.access__note{ font-size:12px; color:rgba(255,255,255,0.4); margin:2px 0 0; grid-column:1/-1; }
-.access__note.success{ color:var(--catalysts); font-weight:600; }
-.access__note.error{ color:#f87171; font-weight:600; }
 
 /* ---------- Footer / About ---------- */
 .about{ padding:100px 0; border-top:1px solid var(--ink-06); }
@@ -384,7 +336,6 @@ button{ font-family:inherit; }
   .pillars__grid{ grid-template-columns:1fr; }
   .markets__grid{ grid-template-columns:1fr; }
   .market-cards{ grid-template-columns:1fr 1fr; }
-  .access__banner{ grid-template-columns:1fr; }
   .about__inner{ grid-template-columns:1fr; }
 }
 
@@ -393,16 +344,13 @@ button{ font-family:inherit; }
   .nav__toggle{ display:flex; }
   .nav__mobile.open{ display:flex; }
   .wrap{ padding:0 20px; }
-  .hero{ padding:56px 0 0; }
+  .hero{ padding:56px 0 72px; }
   .hero__midcopy{ margin-top:40px; }
   .hero__still{ margin-top:40px; padding:0 20px; }
   .hero__still--first{ margin-top:0; }
   .hero__shot{ margin-top:36px; padding:0 20px; }
-  .hero__cta{ margin-top:32px; padding:0 20px 72px; }
   .heroshot{ border-radius:16px; }
   .pillars, .markets, .about{ padding:72px 0; }
   .market-cards{ grid-template-columns:1fr; }
-  .access__form{ grid-template-columns:1fr; }
-  .access__banner{ padding:40px 26px; border-radius:20px; }
   .section__head{ flex-direction:column; align-items:flex-start; }
 }
