@@ -24,10 +24,12 @@ export type AskSegment = { text: string; type?: "project" | "opportunity"; id?: 
 // suggestions are both a placeholder loop (idle state) and clickable
 // one-tap questions.
 //
-// `demo`, when provided, skips the real API call entirely and shows a
-// pre-baked question/answer instead -- used only by the marketing
-// screenshot page (src/app/marketing-preview/page.tsx) so a preview image
-// can show the feature working without a live API call or real data.
+// `demo`, when provided, renders a pre-baked question/answer instead and
+// makes the bar display-only (input read-only, suggestions and submit
+// disabled) -- used by the marketing screenshot page
+// (src/app/marketing-preview/page.tsx) and the no-login tester preview
+// (src/app/preview/topeka/page.tsx), neither of which can make a real,
+// session-authenticated call to /api/ask.
 export default function AskBar({
   marketName,
   marketSlug,
@@ -53,6 +55,7 @@ export default function AskBar({
   }, [question, demo]);
 
   async function ask(q: string) {
+    if (demo) return; // demo mode is display-only -- never calls the live endpoint
     if (!q.trim() || loading) return;
     setLoading(true);
     setError(null);
@@ -106,12 +109,13 @@ export default function AskBar({
         <input
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          readOnly={!!demo}
           placeholder={`Ask about ${marketName}… "${SUGGESTIONS[suggestionIndex]}"`}
-          className="flex-1 bg-transparent text-sm text-[#1c1c1c] outline-none placeholder:text-[#1c1c1c]/35"
+          className="flex-1 bg-transparent text-sm text-[#1c1c1c] outline-none placeholder:text-[#1c1c1c]/35 read-only:cursor-default"
         />
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !!demo}
           className="shrink-0 rounded-full bg-[#1c1c1c] px-4 py-1.5 text-xs font-medium text-white transition hover:bg-[#1c1c1c]/85 disabled:opacity-40"
         >
           {loading ? "Asking…" : "Ask"}
@@ -123,8 +127,9 @@ export default function AskBar({
           <button
             key={suggestion}
             type="button"
+            disabled={!!demo}
             onClick={() => handleSuggestionClick(suggestion)}
-            className="rounded-full border border-[#1c1c1c]/10 px-3 py-1 text-xs text-[#1c1c1c]/50 transition hover:border-[#1c1c1c]/25 hover:text-[#1c1c1c]"
+            className="rounded-full border border-[#1c1c1c]/10 px-3 py-1 text-xs text-[#1c1c1c]/50 transition hover:border-[#1c1c1c]/25 hover:text-[#1c1c1c] disabled:pointer-events-none disabled:opacity-40"
           >
             {suggestion}
           </button>
