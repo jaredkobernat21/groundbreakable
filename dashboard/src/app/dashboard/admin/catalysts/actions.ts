@@ -33,6 +33,16 @@ export async function createCatalyst(formData: FormData) {
     throw new Error("Source agency and source URL are required — every catalyst must cite a source.");
   }
 
+  const boundaryRaw = str(formData, "boundary");
+  let boundary: unknown = null;
+  if (boundaryRaw) {
+    try {
+      boundary = JSON.parse(boundaryRaw);
+    } catch {
+      throw new Error("Watch zone boundary must be valid GeoJSON (Polygon or MultiPolygon).");
+    }
+  }
+
   const { data: source, error: sourceError } = await supabase
     .from("sources")
     .insert({
@@ -58,6 +68,7 @@ export async function createCatalyst(formData: FormData) {
     latitude,
     longitude,
     influence_radius_meters: num(formData, "influence_radius_meters") ?? 800,
+    boundary,
     status: str(formData, "status") ?? "planned",
     estimated_value: num(formData, "estimated_value"),
     date_announced: str(formData, "date_announced"),

@@ -148,6 +148,8 @@ export type Project = {
   units: number | null;
   acreage: number | null;
   developer: string | null;
+  contractor: string | null;
+  investor: string | null;
   date_announced: string | null;
   date_updated: string;
   source_id: string;
@@ -221,20 +223,24 @@ export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 
 // --- View colors ---
 export const OPPORTUNITIES_COLOR = "#22c55e"; // green
-export const CATALYSTS_COLOR = "#eab308"; // premium gold -- catalyst overlay within Activity
+// Catalysts render as a white "watch zone" area outline (not a point pin),
+// always visible regardless of which segment is active -- see
+// DevelopmentMap.tsx.
+export const CATALYSTS_COLOR = "#ffffff";
 
 // --- Activity phases ---
 // Activity's primary grouping axis: construction phase, derived from
 // status (see src/lib/activityPhase.ts) rather than stored directly.
 export type ActivityPhase = "planning" | "active" | "completed";
 
-// Planning (pre-permit, actionable) is emphasized in orange; Active and
-// Completed are deliberately de-emphasized once a project has a permit in
-// hand, on a fading scale from near-white (still underway) to dim gray
-// (already finished, most historical).
+// Strict per-phase color + icon language: yellow/document = planning
+// (pre-permit), orange/shovel = active (permit through completion), gray/
+// building = completed. A glance at a pin's color tells you the phase
+// without opening it -- see resolveProjectPhaseIcon in markerIcons.ts for
+// the paired icon.
 export const ACTIVITY_PHASE_COLOR: Record<ActivityPhase, string> = {
-  planning: "#f97316",
-  active: "#e2e8f0",
+  planning: "#eab308",
+  active: "#f97316",
   completed: "#94a3b8",
 };
 
@@ -304,10 +310,10 @@ export function isStackedOpportunity(signals: OpportunityType[]): boolean {
   return signals.length >= 2;
 }
 
-// Reuses the Catalysts "premium/spotlight" gold rather than inventing a
-// new color -- a stacked opportunity is, in the same spirit, a signal
-// worth calling special attention to.
-export const STACKED_OPPORTUNITY_GLOW_COLOR = "#eab308";
+// White, matching CATALYSTS_COLOR's premium "watch zone" tone -- a stacked
+// opportunity is, in the same spirit, a signal worth calling special
+// attention to.
+export const STACKED_OPPORTUNITY_GLOW_COLOR = "#ffffff";
 
 export type Opportunity = {
   id: string;
@@ -390,6 +396,10 @@ export type Catalyst = {
   latitude: number;
   longitude: number;
   influence_radius_meters: number;
+  // Admin-traced exact watch-zone outline, when available -- falls back to
+  // a circle derived from influence_radius_meters (circlePolygon in
+  // src/lib/geo.ts) when null.
+  boundary: GeoJSON.Polygon | GeoJSON.MultiPolygon | null;
   status: CatalystStatus;
   estimated_value: number | null;
   is_spotlight: boolean;
@@ -401,6 +411,28 @@ export type Catalyst = {
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
+
+// --- Opportunity Zones ---
+// Area-based favorable-zoning opportunities -- a second geometry type
+// alongside the point-based `Opportunity` above. Same source-citation
+// discipline, admin-traced boundary (like a Catalyst), not an imported GIS
+// layer.
+
+export type OpportunityZone = {
+  id: string;
+  market_id: string;
+  title: string;
+  description: string | null;
+  zoning_district: string | null;
+  rezoning_notes: string | null;
+  boundary: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  source_id: string;
+  confidence: Confidence;
+  last_verified_at: string;
+  created_at: string;
+};
+
+export type OpportunityZoneWithSource = OpportunityZone & { source: Source | null };
 
 // --- Upcoming Decisions ---
 // Genuinely distinct from project_updates (which logs what already

@@ -8,7 +8,7 @@ import {
 } from "@/lib/types";
 import { formatCurrency, formatDate, formatRelativeVerified } from "@/lib/format";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
-import { haversineDistanceMeters } from "@/lib/geo";
+import { filterWithinRadius } from "@/lib/geo";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSource["confidence"], string> = {
   verified: "Verified against primary source",
@@ -129,11 +129,11 @@ export function findNearbySignals(
   projects: ProjectWithSource[],
   opportunities: OpportunityWithSource[]
 ) {
-  const within = (lat: number, lng: number) =>
-    haversineDistanceMeters(catalyst.latitude, catalyst.longitude, lat, lng) <= catalyst.influence_radius_meters;
+  const center = { lat: catalyst.latitude, lng: catalyst.longitude };
+  const getCoord = (item: { latitude: number; longitude: number }) => ({ lat: item.latitude, lng: item.longitude });
 
   return {
-    nearbyProjects: projects.filter((p) => within(p.latitude, p.longitude)),
-    nearbyOpportunities: opportunities.filter((o) => within(o.latitude, o.longitude)),
+    nearbyProjects: filterWithinRadius(center, catalyst.influence_radius_meters, projects, getCoord),
+    nearbyOpportunities: filterWithinRadius(center, catalyst.influence_radius_meters, opportunities, getCoord),
   };
 }

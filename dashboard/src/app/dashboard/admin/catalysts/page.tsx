@@ -99,7 +99,7 @@ export default async function AdminCatalystsPage() {
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="influence_radius_meters">Influence Radius (meters)</label>
+            <label className={labelClass} htmlFor="influence_radius_meters">Watch Zone Radius (meters)</label>
             <input
               id="influence_radius_meters"
               name="influence_radius_meters"
@@ -108,10 +108,25 @@ export default async function AdminCatalystsPage() {
               defaultValue={800}
               className={inputClass}
             />
+            <p className="mt-1 text-xs text-white/30">Used to draw a circle unless a traced boundary is given below.</p>
           </div>
           <div>
             <label className={labelClass} htmlFor="estimated_value">Estimated Value ($, optional)</label>
             <input id="estimated_value" name="estimated_value" type="number" step="any" className={inputClass} />
+          </div>
+
+          <div className="col-span-2">
+            <label className={labelClass} htmlFor="boundary">Watch Zone Boundary (GeoJSON Polygon, optional)</label>
+            <textarea
+              id="boundary"
+              name="boundary"
+              rows={3}
+              className={`${inputClass} font-mono text-xs`}
+              placeholder='{"type":"Polygon","coordinates":[[[lng,lat],[lng,lat],...]]}'
+            />
+            <p className="mt-1 text-xs text-white/30">
+              Leave blank to draw the watch zone as a circle from the radius above instead.
+            </p>
           </div>
 
           <div>

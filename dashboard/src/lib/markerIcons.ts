@@ -1,4 +1,11 @@
-import { OPPORTUNITY_SIGNAL_PRIORITY, STACKED_OPPORTUNITY_GLOW_COLOR, type OpportunityType, type ProjectCategory, type ProjectStatus } from "./types";
+import {
+  OPPORTUNITY_SIGNAL_PRIORITY,
+  STACKED_OPPORTUNITY_GLOW_COLOR,
+  type ActivityPhase,
+  type OpportunityType,
+  type ProjectCategory,
+  type ProjectStatus,
+} from "./types";
 
 // Small hand-authored line-icon set (24x24 viewBox, stroke-based) shared by
 // the map's DOM markers, the legend, and the filter bar -- one glyph per
@@ -8,6 +15,7 @@ import { OPPORTUNITY_SIGNAL_PRIORITY, STACKED_OPPORTUNITY_GLOW_COLOR, type Oppor
 export type ProjectIconKey =
   | "document"
   | "hammer"
+  | "shovel"
   | "grid"
   | "road"
   | "clipboard"
@@ -22,6 +30,7 @@ export const PROJECT_ICON_PATHS: Record<ProjectIconKey, string[]> = {
     "M9 12h6M9 15.5h6M9 8.5h3",
   ],
   hammer: ["M13 3l8 8-3 3-8-8z", "M10.5 8.5L3 16l3 3 7.5-7.5"],
+  shovel: ["M4 20l3-3 3 3-3 3z", "M7 17L19 5", "M17 3l3 3"],
   grid: ["M4 4h7v7H4z", "M13 4h7v7h-7z", "M4 13h7v7H4z", "M13 13h7v7h-7z"],
   road: ["M8 21L10 3", "M16 21L14 3", "M12 4v4M12 11v4M12 18v3"],
   clipboard: [
@@ -52,6 +61,22 @@ export function resolveProjectIcon(category: ProjectCategory, status: ProjectSta
       return "briefcase";
     case "active_development":
     default:
+      return "building";
+  }
+}
+
+// Map pins and the legend now use phase (not category) as the primary
+// visual grouping: yellow/document = planning, orange/shovel = active,
+// gray/building = completed, paired with ACTIVITY_PHASE_COLOR. Category
+// stays available as supplementary context (see resolveProjectIcon above,
+// still used for the category badge on a project's detail panel).
+export function resolveProjectPhaseIcon(phase: ActivityPhase): ProjectIconKey {
+  switch (phase) {
+    case "planning":
+      return "document";
+    case "active":
+      return "shovel";
+    case "completed":
       return "building";
   }
 }
@@ -147,55 +172,76 @@ export function opportunityIconSvgMarkup(
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 }
 
-// Opportunities marker: a standalone lightbulb (not a pin) -- per spec,
-// "Pins tell you what's happening. Bulbs show you where the opportunity
-// is." Anchor at the bottom tip of the base, same anchor scheme as the
-// pin marker -- the glow padding added for `stacked` only extends the
-// canvas upward/sideways so the tip stays glued to the real lat/lng.
+// Opportunities marker: the actual Groundbreakable mark (light rays +
+// combined pin/bulb outline + filament + base), not a generic bulb glyph
+// -- per the product direction, the map's opportunity pin should be
+// recognizably "the same lightbulb as the logo," just recolored to
+// OPPORTUNITIES_COLOR. Geometry lifted directly from
+// dashboard/groundbreakable_icon.svg's 0-240 coordinate space so the
+// silhouette matches exactly; viewBox is cropped tight to the mark's
+// actual bounding box (not the logo file's full square canvas) so the
+// bottom tip -- the base triangle at (120,222) -- lands exactly at the
+// anchor point, same "anchor: bottom" convention as pinMarkerSvgMarkup.
+// The glow padding added for `stacked` only extends the canvas upward/
+// sideways so the tip stays glued to the real lat/lng.
 export function bulbMarkerSvgMarkup(opts?: {
   size?: number;
   fill?: string;
   icon?: OpportunityIconKey;
   stacked?: boolean;
 }): string {
-  const { size = 28, fill = "#22c55e", icon, stacked = false } = opts ?? {};
-  const pad = stacked ? 7 : 0;
-  const viewWidth = 24 + pad * 2;
-  const viewHeight = 32 + pad;
-  const width = Math.round((size * viewWidth) / 24);
-  const height = Math.round((width * viewHeight) / viewWidth);
+  const { size = 30, fill = "#22c55e", icon, stacked = false } = opts ?? {};
+  const pad = stacked ? 16 : 0;
+  const viewX = 62 - pad;
+  const viewY = -2 - pad;
+  const viewWidth = 116 + pad * 2;
+  const viewHeight = 226 + pad;
+  const width = size;
+  const height = Math.round((size * viewHeight) / viewWidth);
 
-  const iconMarkup = icon
-    ? `<g transform="translate(12,10) scale(0.34) translate(-12,-12)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${SIGNAL_ICON_PATHS[icon]
+  // With an icon: the same "glyph centered in the pin head" convention as
+  // pinMarkerSvgMarkup, placed over the mark's filament position. Without
+  // one (bare legend glyph, or a single-signal bulb where the filament dot
+  // alone is enough): the plain white filament dot from the logo itself.
+  const centerMarkup = icon
+    ? `<g transform="translate(120,94) scale(1.3) translate(-12,-12)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SIGNAL_ICON_PATHS[icon]
         .map((d) => `<path d="${d}" />`)
         .join("")}</g>`
-    : `<g stroke="#fff" stroke-opacity="0.85" stroke-width="1" fill="none">
-      <path d="M9 21.2h6M9.3 23.8h5.4M9.6 26.4h4.8" />
-    </g>
-    <path d="M9.3 9.5l1.4 2.6 1.3-2 1.3 2 1.4-2.6" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
+    : `<circle cx="120" cy="94" r="13" fill="#fff" opacity="0.95" />`;
 
   const glowMarkup = stacked
-    ? `<circle cx="12" cy="9" r="15" fill="${STACKED_OPPORTUNITY_GLOW_COLOR}" opacity="0.35" filter="blur(4px)" />`
+    ? `<circle cx="120" cy="110" r="90" fill="${STACKED_OPPORTUNITY_GLOW_COLOR}" opacity="0.35" filter="blur(18px)" />`
     : "";
 
-  return `<svg width="${width}" height="${height}" viewBox="${-pad} ${-pad} ${viewWidth} ${viewHeight}" fill="none">
+  return `<svg width="${width}" height="${height}" viewBox="${viewX} ${viewY} ${viewWidth} ${viewHeight}" fill="none">
     ${glowMarkup}
-    <path d="M12 2C7.58 2 4 5.58 4 10c0 3.06 1.72 5.24 3.02 6.9.78 1 1.48 1.9 1.48 2.6v1h7v-1c0-.7.7-1.6 1.48-2.6C18.28 15.24 20 13.06 20 10c0-4.42-3.58-8-8-8z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
-    <path d="M10 29h4l-1.3 3h-1.4z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
-    ${iconMarkup}
+    <g stroke="${fill}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+      <path d="M120 18 L120 2" stroke-width="6" />
+      <path d="M84 29 L73 17" stroke-width="6" />
+      <path d="M156 29 L167 17" stroke-width="6" />
+    </g>
+    <path
+      d="M120 42C89 42 66 65 66 95C66 119 80 136 93 151C103 162 110 173 114 184L126 184C130 173 137 162 147 151C160 136 174 119 174 95C174 65 151 42 120 42Z"
+      fill="${fill}"
+      stroke="rgba(0,0,0,0.35)"
+      stroke-width="1.5"
+    />
+    ${centerMarkup}
+    <path d="M103 193H137" stroke="${fill}" stroke-width="6" stroke-linecap="round" />
+    <path d="M108 205H132" stroke="${fill}" stroke-width="6" stroke-linecap="round" />
+    <path d="M114 215H126L120 222Z" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="1" />
   </svg>`;
 }
 
-// Catalysts marker: a plain circle (not a pin or a bulb) -- deliberately a
-// third, distinct shape so a catalyst reads as "a point of influence,"
-// not "a thing happening" or "an opportunity." Center-anchored, since a
-// circle has no natural tip the way a pin does. No animation by default;
-// the influence-radius ripple only appears on selection (see DevelopmentMap).
+// Catalysts no longer render as a map pin -- they're an always-on white
+// "watch zone" area outline drawn as a map layer, not a Marker (see
+// DevelopmentMap.tsx). This glyph survives only as a small badge/legend
+// icon (e.g. the detail panel's type badge): a dashed outer ring around a
+// solid center, reading as "a zone of influence" rather than "a point."
 export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string }): string {
-  const { size = 26, fill = "#a855f7" } = opts ?? {};
-  return `<svg width="${size}" height="${size}" viewBox="0 0 28 28" fill="none">
-    <circle cx="14" cy="14" r="12" stroke="${fill}" stroke-width="1.5" opacity="0.4" />
-    <circle cx="14" cy="14" r="8.5" fill="${fill}" stroke="rgba(0,0,0,0.35)" stroke-width="0.5" />
-    <circle cx="14" cy="14" r="3" fill="#fff" opacity="0.9" />
+  const { size = 16, fill = "#ffffff" } = opts ?? {};
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" stroke="${fill}" stroke-width="1.5" opacity="0.5" stroke-dasharray="2 2" />
+    <circle cx="12" cy="12" r="4" stroke="${fill}" stroke-width="1.5" opacity="0.9" />
   </svg>`;
 }

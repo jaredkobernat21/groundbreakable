@@ -21,10 +21,20 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
       <header className="flex items-center justify-between border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-6 py-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-          <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+          </Link>
+          <nav className="flex items-center gap-4 text-sm text-[#1c1c1c]/50">
+            <Link href="/dashboard" className="hover:text-[#1c1c1c]">
+              Home
+            </Link>
+            <Link href="/dashboard/projects" className="hover:text-[#1c1c1c]">
+              Projects
+            </Link>
+          </nav>
+        </div>
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
           <MarketSwitcher markets={markets ?? []} />
           <span>{user?.email}</span>

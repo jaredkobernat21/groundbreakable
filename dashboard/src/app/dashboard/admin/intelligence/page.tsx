@@ -144,6 +144,15 @@ export default async function AdminIntelligencePage() {
           </div>
 
           <div>
+            <label className={labelClass} htmlFor="investor">Investor (optional)</label>
+            <input id="investor" name="investor" className={inputClass} placeholder="Capital partner / owner, if distinct from developer" />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="contractor">Contractor / Builder (optional)</label>
+            <input id="contractor" name="contractor" className={inputClass} placeholder="Leave blank if not yet hired" />
+          </div>
+
+          <div>
             <label className={labelClass} htmlFor="date_announced">Date Announced (optional)</label>
             <input id="date_announced" name="date_announced" type="date" className={inputClass} />
           </div>
@@ -207,6 +216,17 @@ export default async function AdminIntelligencePage() {
                   <div className="text-sm text-white/50">
                     {PROJECT_STATUS_LABEL[project.status]} · {project.address ?? "no address on file"}
                   </div>
+                  {(project.developer || project.contractor || project.investor) && (
+                    <div className="text-xs text-white/35">
+                      {[
+                        project.developer && `Developer: ${project.developer}`,
+                        project.investor && `Investor: ${project.investor}`,
+                        project.contractor && `Contractor: ${project.contractor}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </div>
+                  )}
                   {project.source && (
                     <a
                       href={project.source.url}

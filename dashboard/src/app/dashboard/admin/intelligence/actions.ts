@@ -69,6 +69,8 @@ export async function createSignal(formData: FormData) {
       units: num(formData, "units"),
       acreage: num(formData, "acreage"),
       developer: str(formData, "developer"),
+      investor: str(formData, "investor"),
+      contractor: str(formData, "contractor"),
       date_announced: dateAnnounced,
       source_id: source.id,
       confidence: str(formData, "confidence") ?? "reported",

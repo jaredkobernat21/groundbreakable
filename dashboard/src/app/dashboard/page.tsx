@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import NewsSection from "@/components/NewsSection";
 import CatalystSpotlight from "@/components/CatalystSpotlight";
+import AskBar from "@/components/AskBar";
 import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
 import { selectMarket } from "@/lib/selectMarket";
 import type {
   CatalystWithSource,
   Market,
   OpportunityWithSource,
+  OpportunityZoneWithSource,
   Parcel,
   ProjectUpdateWithProject,
   ProjectWithSource,
@@ -20,7 +22,7 @@ const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "ca
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { market?: string; category?: string };
+  searchParams: { market?: string; category?: string; select?: string; selectType?: string };
 }) {
   const supabase = createClient();
 
@@ -40,13 +42,22 @@ export default async function DashboardPage({
 
   const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
     ? (searchParams.category as MapCategory)
-    : "all";
+    : "activity";
+
+  // Deep-link from the AskBar's "View on map" link -- pre-selects and
+  // flies to a specific project/opportunity pin named by the AI's answer.
+  const selectType = searchParams.selectType;
+  const initialSelection: { type: "project" | "opportunity"; id: string } | null =
+    searchParams.select && (selectType === "project" || selectType === "opportunity")
+      ? { type: selectType, id: searchParams.select }
+      : null;
 
   const [
     { data: projects },
     { data: parcels },
     { data: opportunities },
     { data: catalysts },
+    { data: opportunityZones },
     { data: recentActivity },
     { data: decisions },
   ] = await Promise.all([
@@ -69,6 +80,12 @@ export default async function DashboardPage({
       .eq("market_id", market.id)
       .order("last_verified_at", { ascending: false })
       .returns<CatalystWithSource[]>(),
+    supabase
+      .from("opportunity_zones")
+      .select("*, source:sources(*)")
+      .eq("market_id", market.id)
+      .order("last_verified_at", { ascending: false })
+      .returns<OpportunityZoneWithSource[]>(),
     // Recent Activity news headlines -- project_updates is already an
     // append-only log of admin-made status changes, so News needs no
     // separate data-entry step of its own.
@@ -109,14 +126,18 @@ export default async function DashboardPage({
         {market.name}, {market.state}
       </h1>
 
+      <AskBar marketName={market.name} marketSlug={market.slug} />
+
       <DevelopmentIntelligenceView
-        key={`${market.id}-${category}`}
+        key={`${market.id}-${category}-${searchParams.select ?? ""}`}
         market={market}
         projects={projects ?? []}
         parcels={parcels ?? []}
         opportunities={opportunities ?? []}
         catalysts={catalysts ?? []}
+        opportunityZones={opportunityZones ?? []}
         initialCategory={category}
+        initialSelection={initialSelection}
       />
 
       <NewsSection

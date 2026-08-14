@@ -5,33 +5,30 @@ import { useEffect, useRef } from "react";
 import type { GeoJSONSource, Map as MapboxMap, Marker } from "mapbox-gl";
 import {
   ACTIVITY_PHASE_COLOR,
-  CATALYST_TYPE_LABEL,
   OPPORTUNITY_TYPE_LABEL,
   PROJECT_CATEGORY_LABEL,
   PROJECT_STATUS_LABEL,
-  CATALYST_STATUS_LABEL,
   CATALYSTS_COLOR,
   OPPORTUNITIES_COLOR,
   isStackedOpportunity,
   type CatalystWithSource,
   type Market,
   type OpportunityWithSource,
+  type OpportunityZoneWithSource,
   type Parcel,
   type ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
-import {
-  bulbMarkerSvgMarkup,
-  catalystMarkerSvgMarkup,
-  pinMarkerSvgMarkup,
-  resolveOpportunityIcon,
-  resolveProjectIcon,
-} from "@/lib/markerIcons";
+import { bulbMarkerSvgMarkup, pinMarkerSvgMarkup, resolveOpportunityIcon, resolveProjectPhaseIcon } from "@/lib/markerIcons";
 import { formatCurrency } from "@/lib/format";
-import { circlePolygon } from "@/lib/geo";
+import { circlePolygon, polygonCentroid, ONE_MILE_METERS } from "@/lib/geo";
 
 const PARCELS_SOURCE_ID = "roq-parcels";
-const CATALYST_RADIUS_SOURCE_ID = "roq-catalyst-radius";
+const CATALYST_AREA_SOURCE_ID = "roq-catalyst-areas";
+const CATALYST_LABEL_SOURCE_ID = "roq-catalyst-labels";
+const OPPORTUNITY_ZONES_SOURCE_ID = "roq-opportunity-zones";
+const OPPORTUNITY_ZONE_LABEL_SOURCE_ID = "roq-opportunity-zone-labels";
+const SELECTION_RADIUS_SOURCE_ID = "roq-selection-radius";
 const DEFAULT_PARCEL_COLOR = "#94a3b8"; // neutral gray -- context/inactive, not tied to a category
 
 export default function DevelopmentMap({
@@ -42,13 +39,16 @@ export default function DevelopmentMap({
   parcels,
   opportunities,
   catalysts,
-  showCatalysts,
+  opportunityZones,
+  nearbyOpportunityIds,
   selectedProjectId,
   onSelectProject,
   selectedOpportunityId,
   onSelectOpportunity,
   selectedCatalystId,
   onSelectCatalyst,
+  selectedOpportunityZoneId,
+  onSelectOpportunityZone,
 }: {
   market: Market;
   showActivity: boolean;
@@ -57,19 +57,29 @@ export default function DevelopmentMap({
   parcels: Parcel[];
   opportunities: OpportunityWithSource[];
   catalysts: CatalystWithSource[];
-  showCatalysts: boolean;
+  opportunityZones: OpportunityZoneWithSource[];
+  // Opportunities within 1 mile of the currently-selected project -- these
+  // render even when showOpportunities is off (e.g. the Planning-only
+  // segment), so the radius-reveal "pop up nearby opportunities" behavior
+  // works regardless of which segment the user is on. See
+  // DevelopmentIntelligenceView for the computation.
+  nearbyOpportunityIds: Set<string>;
   selectedProjectId: string | null;
   onSelectProject: (id: string | null) => void;
   selectedOpportunityId: string | null;
   onSelectOpportunity: (id: string | null) => void;
   selectedCatalystId: string | null;
   onSelectCatalyst: (id: string | null) => void;
+  selectedOpportunityZoneId: string | null;
+  onSelectOpportunityZone: (id: string | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
   const readyRef = useRef(false);
   const selectedParcelIdRef = useRef<string | null>(null);
+  const selectedAreaFeatureRef = useRef<{ source: string; id: string } | null>(null);
+  const radiusAnimTokenRef = useRef(0);
 
   // Init map once.
   useEffect(() => {
@@ -141,29 +151,173 @@ export default function DevelopmentMap({
           },
         });
 
-        // Catalyst influence-radius zone -- empty until a catalyst is
-        // selected (see the selection effect). Only one catalyst can show
-        // its radius at a time, so setData with either one circle or an
-        // empty collection is simpler than feature-state here.
-        map.addSource(CATALYST_RADIUS_SOURCE_ID, {
+        // Catalysts: an always-on white "watch zone" area, not a Marker --
+        // per the product direction, this is the radius where the most
+        // planning activity is concentrated, visible regardless of segment
+        // (Planning or Opportunities). promoteId lets feature-state
+        // selection work with UUID string ids, same pattern as parcels.
+        map.addSource(CATALYST_AREA_SOURCE_ID, {
+          type: "geojson",
+          promoteId: "id",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: `${CATALYST_AREA_SOURCE_ID}-fill`,
+          type: "fill",
+          source: CATALYST_AREA_SOURCE_ID,
+          paint: {
+            "fill-color": CATALYSTS_COLOR,
+            "fill-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 0.16, 0.06],
+          },
+        });
+        map.addLayer({
+          id: `${CATALYST_AREA_SOURCE_ID}-line`,
+          type: "line",
+          source: CATALYST_AREA_SOURCE_ID,
+          paint: {
+            "line-color": CATALYSTS_COLOR,
+            "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 2, 1],
+            "line-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 0.9, 0.5],
+            "line-dasharray": [2, 2],
+          },
+        });
+
+        // Removing the point pin also removed its hover tooltip, so a
+        // permanent (not hover-only) small label replaces it -- otherwise
+        // there'd be no way to tell one watch zone from another at a
+        // glance.
+        map.addSource(CATALYST_LABEL_SOURCE_ID, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
         });
         map.addLayer({
-          id: `${CATALYST_RADIUS_SOURCE_ID}-fill`,
-          type: "fill",
-          source: CATALYST_RADIUS_SOURCE_ID,
-          paint: { "fill-color": CATALYSTS_COLOR, "fill-opacity": 0.08 },
+          id: `${CATALYST_LABEL_SOURCE_ID}-symbol`,
+          type: "symbol",
+          source: CATALYST_LABEL_SOURCE_ID,
+          layout: {
+            "text-field": ["get", "title"],
+            "text-size": 11,
+            "text-anchor": "top",
+            "text-offset": [0, 0.4],
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": CATALYSTS_COLOR,
+            "text-opacity": 0.75,
+            "text-halo-color": "rgba(0,0,0,0.65)",
+            "text-halo-width": 1.2,
+          },
+        });
+
+        // Opportunity zones: green-outlined favorable-zoning areas -- a
+        // second Opportunities geometry alongside the point bulbs. Same
+        // shape as the catalyst layer above, scoped to the Opportunities
+        // segment (see renderAreaLayers).
+        map.addSource(OPPORTUNITY_ZONES_SOURCE_ID, {
+          type: "geojson",
+          promoteId: "id",
+          data: { type: "FeatureCollection", features: [] },
         });
         map.addLayer({
-          id: `${CATALYST_RADIUS_SOURCE_ID}-line`,
+          id: `${OPPORTUNITY_ZONES_SOURCE_ID}-fill`,
+          type: "fill",
+          source: OPPORTUNITY_ZONES_SOURCE_ID,
+          paint: {
+            "fill-color": OPPORTUNITIES_COLOR,
+            "fill-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 0.2, 0.08],
+          },
+        });
+        map.addLayer({
+          id: `${OPPORTUNITY_ZONES_SOURCE_ID}-line`,
           type: "line",
-          source: CATALYST_RADIUS_SOURCE_ID,
-          paint: { "line-color": CATALYSTS_COLOR, "line-width": 1.5, "line-opacity": 0.45 },
+          source: OPPORTUNITY_ZONES_SOURCE_ID,
+          paint: {
+            "line-color": OPPORTUNITIES_COLOR,
+            "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 2, 1.2],
+            "line-opacity": 0.8,
+          },
+        });
+        map.addSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: `${OPPORTUNITY_ZONE_LABEL_SOURCE_ID}-symbol`,
+          type: "symbol",
+          source: OPPORTUNITY_ZONE_LABEL_SOURCE_ID,
+          layout: {
+            "text-field": ["get", "title"],
+            "text-size": 11,
+            "text-anchor": "top",
+            "text-offset": [0, 0.4],
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": OPPORTUNITIES_COLOR,
+            "text-opacity": 0.85,
+            "text-halo-color": "rgba(0,0,0,0.65)",
+            "text-halo-width": 1.2,
+          },
+        });
+
+        // Selection radius: the 1-mile "premium reveal" ring drawn around
+        // a clicked project pin (see animateRadiusReveal). Empty until a
+        // project is selected. Opacity transitions give the reveal a soft
+        // fade rather than a hard snap on top of the animated geometry.
+        map.addSource(SELECTION_RADIUS_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: `${SELECTION_RADIUS_SOURCE_ID}-fill`,
+          type: "fill",
+          source: SELECTION_RADIUS_SOURCE_ID,
+          paint: {
+            "fill-color": "#ffffff",
+            "fill-opacity": 0.06,
+            "fill-opacity-transition": { duration: 300 },
+          },
+        });
+        map.addLayer({
+          id: `${SELECTION_RADIUS_SOURCE_ID}-line`,
+          type: "line",
+          source: SELECTION_RADIUS_SOURCE_ID,
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 1.5,
+            "line-opacity": 0.55,
+            "line-opacity-transition": { duration: 300 },
+            "line-dasharray": [1, 2],
+          },
+        });
+
+        map.on("click", `${CATALYST_AREA_SOURCE_ID}-fill`, (e) => {
+          e.originalEvent.stopPropagation();
+          const id = e.features?.[0]?.properties?.id;
+          if (id) onSelectCatalyst(id);
+        });
+        map.on("mouseenter", `${CATALYST_AREA_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", `${CATALYST_AREA_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        map.on("click", `${OPPORTUNITY_ZONES_SOURCE_ID}-fill`, (e) => {
+          e.originalEvent.stopPropagation();
+          const id = e.features?.[0]?.properties?.id;
+          if (id) onSelectOpportunityZone(id);
+        });
+        map.on("mouseenter", `${OPPORTUNITY_ZONES_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", `${OPPORTUNITY_ZONES_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "";
         });
 
         renderMarkers();
         renderParcels();
+        renderAreaLayers();
       });
     });
 
@@ -175,6 +329,7 @@ export default function DevelopmentMap({
       mapRef.current = null;
       readyRef.current = false;
       selectedParcelIdRef.current = null;
+      selectedAreaFeatureRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market.id]);
@@ -183,6 +338,7 @@ export default function DevelopmentMap({
     onSelectProject(null);
     onSelectOpportunity(null);
     onSelectCatalyst(null);
+    onSelectOpportunityZone(null);
   }
 
   function renderMarkers() {
@@ -208,7 +364,7 @@ export default function DevelopmentMap({
           const metric =
             formatCurrency(project.project_value) ??
             (project.units != null ? `${project.units.toLocaleString()} units` : null);
-          const icon = resolveProjectIcon(project.category, project.status);
+          const icon = resolveProjectPhaseIcon(phase);
 
           el.innerHTML = `
             <div class="roq-marker-card">
@@ -233,70 +389,42 @@ export default function DevelopmentMap({
         });
       }
 
-      // Catalysts are an independent overlay -- relevant regardless of
-      // whether Activity or Opportunities is the active segment.
-      if (showCatalysts) {
-        catalysts.forEach((catalyst) => {
-          const el = document.createElement("div");
-          el.className = "roq-marker roq-marker-catalyst";
+      // Opportunities render whenever the segment is on, PLUS any
+      // opportunity within 1 mile of the currently-selected project --
+      // that's the "click a property pin, nearby opportunities pop up"
+      // reveal, and it works even on the Planning-only segment.
+      opportunities.forEach((opp) => {
+        const isNearbyForced = nearbyOpportunityIds.has(opp.id);
+        if (!showOpportunities && !isNearbyForced) return;
 
-          const metric = formatCurrency(catalyst.estimated_value);
+        const el = document.createElement("div");
+        const stacked = isStackedOpportunity(opp.signals);
+        el.className = `roq-marker roq-marker-opportunity${stacked ? " roq-marker-stacked" : ""}`;
 
-          el.innerHTML = `
-            <div class="roq-marker-card">
-              <span class="roq-marker-card-title">${escapeHtml(catalyst.title)}</span>
-              <span class="roq-marker-card-sub">${escapeHtml(CATALYST_TYPE_LABEL[catalyst.catalyst_type])} · ${escapeHtml(CATALYST_STATUS_LABEL[catalyst.status])}</span>
-              ${metric ? `<span class="roq-marker-card-metric" style="color:${CATALYSTS_COLOR}">${escapeHtml(metric)}</span>` : ""}
-            </div>
-            <div class="roq-marker-line" style="background:${CATALYSTS_COLOR}"></div>
-            <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ fill: CATALYSTS_COLOR })}</div>
-          `;
-          el.addEventListener("click", (event) => {
-            event.stopPropagation();
-            onSelectCatalyst(catalyst.id);
-          });
+        const metric = formatCurrency(opp.estimated_equity) ?? formatCurrency(opp.assessed_value);
+        const signalLabels = opp.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ");
 
-          // Circle marker has no natural "tip" -- anchor at its center.
-          const marker = new mapboxgl.default.Marker({ element: el, anchor: "center" })
-            .setLngLat([catalyst.longitude, catalyst.latitude])
-            .addTo(map);
-          markersRef.current.set(catalyst.id, marker);
-          el.style.opacity = !selectedCatalystId || catalyst.id === selectedCatalystId ? "1" : "0.35";
-          el.classList.toggle("is-selected", catalyst.id === selectedCatalystId);
+        el.innerHTML = `
+          <div class="roq-marker-card">
+            <span class="roq-marker-card-title">${escapeHtml(opp.address)}</span>
+            <span class="roq-marker-card-sub">${escapeHtml(signalLabels)}${opp.listing_status ? " · " + escapeHtml(opp.listing_status) : ""}</span>
+            ${metric ? `<span class="roq-marker-card-metric" style="color:${OPPORTUNITIES_COLOR}">${escapeHtml(metric)}</span>` : ""}
+          </div>
+          <div class="roq-marker-line" style="background:${OPPORTUNITIES_COLOR}"></div>
+          <div class="roq-marker-pin">${bulbMarkerSvgMarkup({ fill: OPPORTUNITIES_COLOR, icon: resolveOpportunityIcon(opp.signals), stacked })}</div>
+        `;
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          onSelectOpportunity(opp.id);
         });
-      }
 
-      if (showOpportunities) {
-        opportunities.forEach((opp) => {
-          const el = document.createElement("div");
-          const stacked = isStackedOpportunity(opp.signals);
-          el.className = `roq-marker roq-marker-opportunity${stacked ? " roq-marker-stacked" : ""}`;
-
-          const metric = formatCurrency(opp.estimated_equity) ?? formatCurrency(opp.assessed_value);
-          const signalLabels = opp.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ");
-
-          el.innerHTML = `
-            <div class="roq-marker-card">
-              <span class="roq-marker-card-title">${escapeHtml(opp.address)}</span>
-              <span class="roq-marker-card-sub">${escapeHtml(signalLabels)}${opp.listing_status ? " · " + escapeHtml(opp.listing_status) : ""}</span>
-              ${metric ? `<span class="roq-marker-card-metric" style="color:${OPPORTUNITIES_COLOR}">${escapeHtml(metric)}</span>` : ""}
-            </div>
-            <div class="roq-marker-line" style="background:${OPPORTUNITIES_COLOR}"></div>
-            <div class="roq-marker-pin">${bulbMarkerSvgMarkup({ fill: OPPORTUNITIES_COLOR, icon: resolveOpportunityIcon(opp.signals), stacked })}</div>
-          `;
-          el.addEventListener("click", (event) => {
-            event.stopPropagation();
-            onSelectOpportunity(opp.id);
-          });
-
-          const marker = new mapboxgl.default.Marker({ element: el, anchor: "bottom" })
-            .setLngLat([opp.longitude, opp.latitude])
-            .addTo(map);
-          markersRef.current.set(opp.id, marker);
-          el.style.opacity = !selectedOpportunityId || opp.id === selectedOpportunityId ? "1" : "0.35";
-          el.classList.toggle("is-selected", opp.id === selectedOpportunityId);
-        });
-      }
+        const marker = new mapboxgl.default.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([opp.longitude, opp.latitude])
+          .addTo(map);
+        markersRef.current.set(opp.id, marker);
+        el.style.opacity = !selectedOpportunityId || opp.id === selectedOpportunityId ? "1" : "0.35";
+        el.classList.toggle("is-selected", opp.id === selectedOpportunityId);
+      });
     });
   }
 
@@ -333,30 +461,78 @@ export default function DevelopmentMap({
     });
   }
 
-  // Re-render markers/parcels when the data, view, or catalyst toggle changes.
+  // Catalyst watch zones and opportunity zones -- always-on area layers,
+  // independent of markers/parcels. Catalysts render on every segment;
+  // opportunity zones only when the Opportunities segment is active, same
+  // "clear the source when the segment is off" pattern as renderParcels.
+  function renderAreaLayers() {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.getSource(CATALYST_AREA_SOURCE_ID)) {
+      const features = catalysts.map((c) => ({
+        type: "Feature" as const,
+        properties: { id: c.id },
+        geometry: c.boundary ?? circlePolygon(c.longitude, c.latitude, c.influence_radius_meters),
+      }));
+      (map.getSource(CATALYST_AREA_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
+    if (map.getSource(CATALYST_LABEL_SOURCE_ID)) {
+      const features = catalysts.map((c) => ({
+        type: "Feature" as const,
+        properties: { title: c.title },
+        geometry: { type: "Point" as const, coordinates: [c.longitude, c.latitude] },
+      }));
+      (map.getSource(CATALYST_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
+
+    if (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID)) {
+      const features = showOpportunities
+        ? opportunityZones.map((z) => ({
+            type: "Feature" as const,
+            properties: { id: z.id },
+            geometry: z.boundary,
+          }))
+        : [];
+      (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
+    if (map.getSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID)) {
+      const features = showOpportunities
+        ? opportunityZones.map((z) => ({
+            type: "Feature" as const,
+            properties: { title: z.title },
+            geometry: { type: "Point" as const, coordinates: [polygonCentroid(z.boundary).lng, polygonCentroid(z.boundary).lat] },
+          }))
+        : [];
+      (map.getSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
+  }
+
+  // Re-render markers/parcels/areas when the data or view changes.
   useEffect(() => {
     if (!readyRef.current) return;
     renderMarkers();
     renderParcels();
+    renderAreaLayers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showActivity, showOpportunities, showCatalysts, projects, parcels, opportunities, catalysts]);
+  }, [showActivity, showOpportunities, projects, parcels, opportunities, catalysts, opportunityZones, nearbyOpportunityIds]);
 
   // Selection: fly the camera in, fade the unrelated markers in that
-  // signal's own collection, and (Activity/project) highlight the selected
-  // parcel via feature-state, or (Catalyst) draw the influence-radius zone.
+  // signal's own collection, and highlight the selected parcel/catalyst
+  // zone/opportunity zone via feature-state. A selected project additionally
+  // triggers the 1-mile radius-reveal animation (see animateRadiusReveal).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
 
     markersRef.current.forEach((marker, id) => {
       const isProjectMarker = projects.some((p) => p.id === id);
-      const isCatalystMarker = catalysts.some((c) => c.id === id);
-      const relevantSelectedId = isProjectMarker
-        ? selectedProjectId
-        : isCatalystMarker
-          ? selectedCatalystId
-          : selectedOpportunityId;
-      marker.getElement().style.opacity = !relevantSelectedId || id === relevantSelectedId ? "1" : "0.35";
+      const relevantSelectedId = isProjectMarker ? selectedProjectId : selectedOpportunityId;
+      // A nearby-forced opportunity marker (radius reveal) stays at full
+      // opacity as long as no other opportunity is explicitly selected.
+      const isNearbyForced = !isProjectMarker && nearbyOpportunityIds.has(id) && !selectedOpportunityId;
+      marker.getElement().style.opacity =
+        !relevantSelectedId || id === relevantSelectedId || isNearbyForced ? "1" : "0.35";
       marker.getElement().classList.toggle("is-selected", id === relevantSelectedId);
     });
 
@@ -364,11 +540,18 @@ export default function DevelopmentMap({
       map.setFeatureState({ source: PARCELS_SOURCE_ID, id: selectedParcelIdRef.current }, { selected: false });
       selectedParcelIdRef.current = null;
     }
-    if (map.getSource(CATALYST_RADIUS_SOURCE_ID)) {
-      (map.getSource(CATALYST_RADIUS_SOURCE_ID) as GeoJSONSource).setData({
-        type: "FeatureCollection",
-        features: [],
-      });
+    if (selectedAreaFeatureRef.current) {
+      map.setFeatureState(selectedAreaFeatureRef.current, { selected: false });
+      selectedAreaFeatureRef.current = null;
+    }
+
+    // Bumping the token invalidates any in-flight radius-reveal animation
+    // frame from a previous selection (see animateRadiusReveal's
+    // isCancelled check) without needing to track raw rAF ids.
+    radiusAnimTokenRef.current += 1;
+    const animToken = radiusAnimTokenRef.current;
+    if (map.getSource(SELECTION_RADIUS_SOURCE_ID)) {
+      (map.getSource(SELECTION_RADIUS_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
     }
 
     if (selectedProjectId) {
@@ -385,6 +568,14 @@ export default function DevelopmentMap({
           map.setFeatureState({ source: PARCELS_SOURCE_ID, id: project.parcel_id }, { selected: true });
           selectedParcelIdRef.current = project.parcel_id;
         }
+        animateRadiusReveal(
+          map,
+          SELECTION_RADIUS_SOURCE_ID,
+          project.longitude,
+          project.latitude,
+          ONE_MILE_METERS,
+          () => radiusAnimTokenRef.current !== animToken || !readyRef.current
+        );
       }
     } else if (selectedOpportunityId) {
       const opp = opportunities.find((o) => o.id === selectedOpportunityId);
@@ -407,22 +598,40 @@ export default function DevelopmentMap({
           duration: 1200,
           essential: true,
         });
-        if (map.getSource(CATALYST_RADIUS_SOURCE_ID)) {
-          (map.getSource(CATALYST_RADIUS_SOURCE_ID) as GeoJSONSource).setData({
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: {},
-                geometry: circlePolygon(catalyst.longitude, catalyst.latitude, catalyst.influence_radius_meters),
-              },
-            ],
-          });
+        if (map.getSource(CATALYST_AREA_SOURCE_ID)) {
+          map.setFeatureState({ source: CATALYST_AREA_SOURCE_ID, id: catalyst.id }, { selected: true });
+          selectedAreaFeatureRef.current = { source: CATALYST_AREA_SOURCE_ID, id: catalyst.id };
+        }
+      }
+    } else if (selectedOpportunityZoneId) {
+      const zone = opportunityZones.find((z) => z.id === selectedOpportunityZoneId);
+      if (zone) {
+        const center = polygonCentroid(zone.boundary);
+        map.flyTo({
+          center: [center.lng, center.lat],
+          zoom: Math.max(map.getZoom(), 14),
+          pitch: 50,
+          duration: 1200,
+          essential: true,
+        });
+        if (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID)) {
+          map.setFeatureState({ source: OPPORTUNITY_ZONES_SOURCE_ID, id: zone.id }, { selected: true });
+          selectedAreaFeatureRef.current = { source: OPPORTUNITY_ZONES_SOURCE_ID, id: zone.id };
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProjectId, selectedOpportunityId, selectedCatalystId, projects, opportunities, catalysts]);
+  }, [
+    selectedProjectId,
+    selectedOpportunityId,
+    selectedCatalystId,
+    selectedOpportunityZoneId,
+    projects,
+    opportunities,
+    catalysts,
+    opportunityZones,
+    nearbyOpportunityIds,
+  ]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
     return (
@@ -439,6 +648,45 @@ export default function DevelopmentMap({
       className="roq-dev-map h-full min-h-[520px] overflow-hidden rounded-xl border border-white/10"
     />
   );
+}
+
+// Animates a circle's radius from 0 up to targetRadiusMeters with an
+// ease-out curve, recomputing the polygon each frame -- the "premium
+// reveal" on a project-pin click, rather than an instant snap. isCancelled
+// is checked every frame so a new selection (or unmount) can halt an
+// in-flight animation without needing to track/cancel raw rAF ids.
+function animateRadiusReveal(
+  map: MapboxMap,
+  sourceId: string,
+  lng: number,
+  lat: number,
+  targetRadiusMeters: number,
+  isCancelled: () => boolean,
+  durationMs = 700
+) {
+  const source = map.getSource(sourceId) as GeoJSONSource | undefined;
+  if (!source) return;
+
+  const start = performance.now();
+
+  function frame(now: number) {
+    if (isCancelled()) return;
+    const t = Math.min(1, (now - start) / durationMs);
+    const eased = 1 - Math.pow(1 - t, 3);
+    source!.setData({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: circlePolygon(lng, lat, Math.max(targetRadiusMeters * eased, 1)),
+        },
+      ],
+    });
+    if (t < 1) requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
 }
 
 // Tones down a handful of dark-v11's default layers so roads/buildings read

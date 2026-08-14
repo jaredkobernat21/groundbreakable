@@ -2,34 +2,37 @@
 
 import { useMemo, useState } from "react";
 import type {
+  ActivityPhase,
   CatalystWithSource,
   Market,
   OpportunityType,
   OpportunityWithSource,
+  OpportunityZoneWithSource,
   Parcel,
-  ProjectCategory,
   ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
+import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
 import DevelopmentMap from "./DevelopmentMap";
 import DevelopmentLegend from "./DevelopmentLegend";
 import OpportunityLegend from "./OpportunityLegend";
 import ProjectDetailPanel from "./ProjectDetailPanel";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import CatalystDetailPanel, { findNearbySignals } from "./CatalystDetailPanel";
+import OpportunityZoneDetailPanel from "./OpportunityZoneDetailPanel";
 import LayerSwitcher, { type MapSegment } from "./LayerSwitcher";
+import MapKey from "./MapKey";
 
 export type MapCategory = "all" | "activity" | "opportunities" | "catalysts";
 
 // Single All/Planning/Opportunities toggle -- that's the whole filter
 // surface now (no per-phase, per-category, or per-property-type chips, and
-// no separate Catalysts toggle). Catalysts, and every phase within
-// Planning (planning/active/completed), always show together whenever
-// their segment is visible -- "All" shows everything at once, including
-// catalysts; "Planning" or "Opportunities" narrows to just that layer.
-// initialCategory lets the header nav land here pre-filtered; a
-// "catalysts"-only landing has no equivalent segment anymore, so it falls
-// back to "all" (the only place catalysts appear).
+// no separate Catalysts toggle). Every phase within Planning (planning/
+// active/completed) shows together whenever that segment is visible; "All"
+// shows everything at once. Catalyst watch zones always render regardless
+// of segment (see DevelopmentMap) -- there's no equivalent "catalysts"
+// segment anymore, so a legacy "catalysts"-only landing just falls back to
+// "all".
 function initialSegment(category: MapCategory): MapSegment {
   if (category === "activity") return "activity";
   if (category === "opportunities") return "opportunities";
@@ -44,38 +47,50 @@ export default function DevelopmentIntelligenceView({
   parcels,
   opportunities,
   catalysts,
-  initialCategory = "all",
+  opportunityZones,
+  initialCategory = "activity",
+  initialSelection = null,
 }: {
   market: Market;
   projects: ProjectWithSource[];
   parcels: Parcel[];
   opportunities: OpportunityWithSource[];
   catalysts: CatalystWithSource[];
+  opportunityZones: OpportunityZoneWithSource[];
   initialCategory?: MapCategory;
+  // Deep-link from the AskBar's "View on map" link -- pre-selects a
+  // specific project/opportunity pin on mount.
+  initialSelection?: { type: "project" | "opportunity"; id: string } | null;
 }) {
   const [segment, setSegment] = useState<MapSegment>(initialSegment(initialCategory));
   const showActivity = segment === "all" || segment === "activity";
   const showOpportunities = segment === "all" || segment === "opportunities";
-  const showCatalysts = segment === "all";
 
-  const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(null);
-  const [selectedOpportunityId, setSelectedOpportunityIdRaw] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(
+    initialSelection?.type === "project" ? initialSelection.id : null
+  );
+  const [selectedOpportunityId, setSelectedOpportunityIdRaw] = useState<string | null>(
+    initialSelection?.type === "opportunity" ? initialSelection.id : null
+  );
   const [selectedCatalystId, setSelectedCatalystIdRaw] = useState<string | null>(null);
+  const [selectedOpportunityZoneId, setSelectedOpportunityZoneIdRaw] = useState<string | null>(null);
 
   function selectSegment(next: MapSegment) {
     setSegment(next);
     selectProject(null);
     selectOpportunity(null);
     selectCatalyst(null);
+    selectOpportunityZone(null);
   }
 
   // Only one signal is ever selected at a time, regardless of which
-  // marker collection it came from -- selecting one clears the others.
+  // marker/layer it came from -- selecting one clears the others.
   function selectProject(id: string | null) {
     setSelectedProjectIdRaw(id);
     if (id) {
       setSelectedOpportunityIdRaw(null);
       setSelectedCatalystIdRaw(null);
+      setSelectedOpportunityZoneIdRaw(null);
     }
   }
   function selectOpportunity(id: string | null) {
@@ -83,6 +98,7 @@ export default function DevelopmentIntelligenceView({
     if (id) {
       setSelectedProjectIdRaw(null);
       setSelectedCatalystIdRaw(null);
+      setSelectedOpportunityZoneIdRaw(null);
     }
   }
   function selectCatalyst(id: string | null) {
@@ -90,6 +106,15 @@ export default function DevelopmentIntelligenceView({
     if (id) {
       setSelectedProjectIdRaw(null);
       setSelectedOpportunityIdRaw(null);
+      setSelectedOpportunityZoneIdRaw(null);
+    }
+  }
+  function selectOpportunityZone(id: string | null) {
+    setSelectedOpportunityZoneIdRaw(id);
+    if (id) {
+      setSelectedProjectIdRaw(null);
+      setSelectedOpportunityIdRaw(null);
+      setSelectedCatalystIdRaw(null);
     }
   }
 
@@ -100,17 +125,20 @@ export default function DevelopmentIntelligenceView({
     return projects.filter((p) => resolveActivityPhase(p.status, p.date_updated) !== null);
   }, [projects]);
 
-  const categoryCounts = useMemo(() => {
-    const result: Partial<Record<ProjectCategory, number>> = {};
+  // Legend breakdown now mirrors what's actually drawn on the map: phase
+  // (color + icon), not category -- see DevelopmentLegend.
+  const phaseCounts = useMemo(() => {
+    const result: Partial<Record<ActivityPhase, number>> = {};
     phaseProjects.forEach((p) => {
-      result[p.category] = (result[p.category] ?? 0) + 1;
+      const phase = resolveActivityPhase(p.status, p.date_updated);
+      if (phase) result[phase] = (result[phase] ?? 0) + 1;
     });
     return result;
   }, [phaseProjects]);
 
   // A property can carry more than one signal at once, so this sums to
-  // more than opportunities.length -- same idea as categoryCounts above,
-  // just not mutually exclusive per row.
+  // more than opportunities.length -- same idea as phaseCounts above, just
+  // not mutually exclusive per row.
   const signalCounts = useMemo(() => {
     const result: Partial<Record<OpportunityType, number>> = {};
     opportunities.forEach((o) => {
@@ -124,6 +152,25 @@ export default function DevelopmentIntelligenceView({
   const selectedProject = phaseProjects.find((p) => p.id === selectedProjectId) ?? null;
   const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
+  const selectedOpportunityZone = opportunityZones.find((z) => z.id === selectedOpportunityZoneId) ?? null;
+
+  // The project-pin "premium reveal": opportunities within 1 mile of the
+  // selected project. Computed once here and shared by the map (which
+  // forces those markers visible even off the Opportunities segment) and
+  // the project's own detail panel (which lists them).
+  const nearbyOpportunities = useMemo(() => {
+    if (!selectedProject) return [];
+    return filterWithinRadius(
+      { lat: selectedProject.latitude, lng: selectedProject.longitude },
+      ONE_MILE_METERS,
+      opportunities,
+      (o) => ({ lat: o.latitude, lng: o.longitude })
+    );
+  }, [selectedProject, opportunities]);
+  const nearbyOpportunityIds = useMemo(
+    () => new Set(nearbyOpportunities.map((o) => o.id)),
+    [nearbyOpportunities]
+  );
 
   // Nearby-signal lookup for a selected catalyst always runs against the
   // full, unfiltered projects/opportunities arrays.
@@ -131,6 +178,8 @@ export default function DevelopmentIntelligenceView({
 
   return (
     <div className="space-y-3">
+      <MapKey />
+
       <div className="relative h-[640px]">
         <DevelopmentMap
           market={market}
@@ -140,13 +189,16 @@ export default function DevelopmentIntelligenceView({
           parcels={parcels}
           opportunities={opportunities}
           catalysts={catalysts}
-          showCatalysts={showCatalysts}
+          opportunityZones={opportunityZones}
+          nearbyOpportunityIds={nearbyOpportunityIds}
           selectedProjectId={selectedProjectId}
           onSelectProject={selectProject}
           selectedOpportunityId={selectedOpportunityId}
           onSelectOpportunity={selectOpportunity}
           selectedCatalystId={selectedCatalystId}
           onSelectCatalyst={selectCatalyst}
+          selectedOpportunityZoneId={selectedOpportunityZoneId}
+          onSelectOpportunityZone={selectOpportunityZone}
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
@@ -159,18 +211,29 @@ export default function DevelopmentIntelligenceView({
           <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-3">
             {showActivity && (
               <div className="pointer-events-auto">
-                <DevelopmentLegend counts={categoryCounts} total={phaseProjects.length} />
+                <DevelopmentLegend counts={phaseCounts} total={phaseProjects.length} />
               </div>
             )}
             {showOpportunities && (
               <div className="pointer-events-auto">
-                <OpportunityLegend counts={signalCounts} total={opportunities.length} />
+                <OpportunityLegend
+                  counts={signalCounts}
+                  total={opportunities.length}
+                  zoneCount={opportunityZones.length}
+                />
               </div>
             )}
           </div>
         )}
 
-        {selectedProject && <ProjectDetailPanel project={selectedProject} onClose={() => selectProject(null)} />}
+        {selectedProject && (
+          <ProjectDetailPanel
+            project={selectedProject}
+            nearbyOpportunities={nearbyOpportunities}
+            onSelectOpportunity={selectOpportunity}
+            onClose={() => selectProject(null)}
+          />
+        )}
         {selectedOpportunity && (
           <OpportunityDetailPanel
             opportunity={selectedOpportunity}
@@ -185,6 +248,9 @@ export default function DevelopmentIntelligenceView({
             nearbyOpportunities={nearby.nearbyOpportunities}
             onClose={() => selectCatalyst(null)}
           />
+        )}
+        {selectedOpportunityZone && (
+          <OpportunityZoneDetailPanel zone={selectedOpportunityZone} onClose={() => selectOpportunityZone(null)} />
         )}
       </div>
 
