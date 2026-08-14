@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import AskBar from "@/components/AskBar";
 import NewsSection from "@/components/NewsSection";
 import CatalystSpotlight from "@/components/CatalystSpotlight";
 import DevelopmentIntelligenceView from "@/components/intelligence/DevelopmentIntelligenceView";
@@ -27,6 +28,20 @@ export const metadata: Metadata = {
 };
 
 const MARKET_SLUG = "topeka-ks";
+
+// Static demo answer, not a live call -- /api/ask requires a signed-in
+// session (see src/app/api/ask/route.ts), which this unauthenticated
+// preview intentionally never has. Segments are plain text only (no
+// type/id) so nothing here tries to link into the auth-gated /dashboard
+// route, which would just bounce an anonymous tester to /login.
+const demoAskAnswer = {
+  question: "Where is early development happening?",
+  segments: [
+    {
+      text: "Right now there's a mix of planning-stage rezonings and larger active builds spread across the city, with a cluster of activity in southwest Topeka. Several multimillion-dollar business expansions were also approved recently.",
+    },
+  ],
+};
 
 export default async function TopekaPreviewPage() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -134,6 +149,8 @@ export default async function TopekaPreviewPage() {
         <h1 className="text-2xl font-semibold text-[#1c1c1c]">
           {market.name}, {market.state}
         </h1>
+
+        <AskBar marketName={market.name} marketSlug={market.slug} demo={demoAskAnswer} />
 
         <DevelopmentIntelligenceView
           market={market}
