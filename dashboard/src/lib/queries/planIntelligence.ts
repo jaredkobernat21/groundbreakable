@@ -35,9 +35,7 @@ export async function getProjectsWithParties(supabase: SupabaseClient, marketId:
     .returns<(ProjectWithSource & ProjectPhase2Fields & { parties: ProjectPartyWithCompany[] })[]>();
 }
 
-// Equivalent of a single project's history section on ProjectDetailPanel
-// -- today reads project_updates, this reads project_events (the
-// generalized, richer-vocabulary replacement).
+// Powers a single project's history section on ProjectDetailPanel.
 export async function getProjectEvents(supabase: SupabaseClient, projectId: string) {
   return supabase
     .from("project_events")
@@ -47,9 +45,8 @@ export async function getProjectEvents(supabase: SupabaseClient, projectId: stri
     .returns<ProjectEventWithSource[]>();
 }
 
-// Equivalent of the Home dashboard's "Recent Activity" feed (currently
-// reads project_updates joined to projects). Same shape, new source
-// table -- a Timeline view can page through this directly.
+// Powers the Home dashboard's "Recent Activity" feed. A Timeline view
+// can page through this directly.
 export async function getRecentProjectEvents(supabase: SupabaseClient, marketId: string, limit = 5) {
   return supabase
     .from("project_events")

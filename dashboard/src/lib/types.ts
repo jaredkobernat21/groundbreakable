@@ -99,23 +99,6 @@ export type Project = {
   created_at: string;
 };
 
-export type ProjectUpdate = {
-  id: string;
-  project_id: string;
-  status: ProjectStatus;
-  note: string | null;
-  source_id: string | null;
-  occurred_on: string;
-  created_at: string;
-};
-
-// Joined shape used by the Home dashboard's "Recent Activity" news feed --
-// project_updates is already an append-only log of admin-made changes, so
-// no separate "news" table is needed for this.
-export type ProjectUpdateWithProject = ProjectUpdate & {
-  project: Pick<Project, "id" | "title" | "category" | "market_id"> | null;
-};
-
 // Joined shape returned by the development-map query (project + its source).
 export type ProjectWithSource = Project & { source: Source | null };
 
@@ -376,7 +359,7 @@ export type OpportunityZone = {
 export type OpportunityZoneWithSource = OpportunityZone & { source: Source | null };
 
 // --- Upcoming Decisions ---
-// Genuinely distinct from project_updates (which logs what already
+// Genuinely distinct from project_events (which logs what already
 // happened) -- this is what's scheduled: planning commission meetings,
 // rezoning votes, agendas.
 
