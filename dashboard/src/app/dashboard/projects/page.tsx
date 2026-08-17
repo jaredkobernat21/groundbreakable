@@ -7,12 +7,23 @@ import { projectIconSvgMarkup, resolveProjectPhaseIcon } from "@/lib/markerIcons
 import {
   ACTIVITY_PHASE_COLOR,
   ACTIVITY_PHASE_LABEL,
+  PLAN_CATEGORY_LABEL,
   PROJECT_CATEGORY_LABEL,
   type Market,
+  type PlanCategory,
+  type ProjectPhase2Fields,
   type ProjectWithSource,
 } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+const CATEGORY_FILTERS: { key: PlanCategory | "all"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "development", label: "Development" },
+  { key: "land_use", label: "Land Use" },
+  { key: "infrastructure", label: "Infrastructure" },
+  { key: "public_investment", label: "Public Investment" },
+];
 
 // A dedicated, scannable list of every planning + active project (deal
 // context: developer, investor, contractor, timeline, stage) -- the map is
@@ -22,7 +33,7 @@ export const dynamic = "force-dynamic";
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: { market?: string };
+  searchParams: { market?: string; category?: string };
 }) {
   const supabase = createClient();
 
@@ -37,16 +48,21 @@ export default async function ProjectsPage({
     );
   }
 
+  const activeCategory: PlanCategory | "all" = CATEGORY_FILTERS.some((f) => f.key === searchParams.category)
+    ? (searchParams.category as PlanCategory | "all")
+    : "all";
+
   const { data: projects } = await supabase
     .from("projects")
     .select("*, source:sources(*)")
     .eq("market_id", market.id)
     .order("date_updated", { ascending: false })
-    .returns<ProjectWithSource[]>();
+    .returns<(ProjectWithSource & ProjectPhase2Fields)[]>();
 
   const activeProjects = (projects ?? []).filter((p) => {
     const phase = resolveActivityPhase(p.status, p.date_updated);
-    return phase === "planning" || phase === "active";
+    if (phase !== "planning" && phase !== "active") return false;
+    return activeCategory === "all" || p.plan_category === activeCategory;
   });
 
   return (
@@ -57,6 +73,22 @@ export default async function ProjectsPage({
           Every planning and active development in {market.name}, {market.state} — timeline, stage, and who's
           behind it.
         </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {CATEGORY_FILTERS.map((f) => (
+          <Link
+            key={f.key}
+            href={`/dashboard/projects?market=${market.slug}${f.key === "all" ? "" : `&category=${f.key}`}`}
+            className={`rounded-full px-3 py-1.5 text-sm transition ${
+              activeCategory === f.key
+                ? "bg-[#1c1c1c] text-white"
+                : "border border-[#1c1c1c]/15 text-[#1c1c1c]/60 hover:border-[#1c1c1c]/30 hover:text-[#1c1c1c]"
+            }`}
+          >
+            {f.label}
+          </Link>
+        ))}
       </div>
 
       {activeProjects.length === 0 ? (
@@ -83,8 +115,15 @@ export default async function ProjectsPage({
                 return (
                   <tr key={project.id} className="border-b border-[#1c1c1c]/5 last:border-0">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-[#1c1c1c]">{project.title}</div>
-                      <div className="text-xs text-[#1c1c1c]/40">{PROJECT_CATEGORY_LABEL[project.category]}</div>
+                      <Link
+                        href={`/dashboard/projects/${project.id}?market=${market.slug}`}
+                        className="font-medium text-[#1c1c1c] hover:underline"
+                      >
+                        {project.title}
+                      </Link>
+                      <div className="text-xs text-[#1c1c1c]/40">
+                        {project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : PROJECT_CATEGORY_LABEL[project.category]}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span

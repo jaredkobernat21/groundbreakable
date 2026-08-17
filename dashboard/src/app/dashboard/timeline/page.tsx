@@ -2,15 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { selectMarket } from "@/lib/selectMarket";
 import { getProjectEventsFeed } from "@/lib/queries/planIntelligence";
+import { eventTypeLabel, groupEventsByDate } from "@/lib/projectEventDisplay";
 import { formatDate } from "@/lib/format";
-import {
-  PLAN_CATEGORY_LABEL,
-  PROJECT_STATUS_LABEL,
-  type Market,
-  type PlanCategory,
-  type ProjectEventWithProject,
-  type ProjectStatus,
-} from "@/lib/types";
+import { PLAN_CATEGORY_LABEL, type Market, type PlanCategory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -21,30 +15,6 @@ const CATEGORY_FILTERS: { key: PlanCategory | "all"; label: string }[] = [
   { key: "infrastructure", label: "Infrastructure" },
   { key: "public_investment", label: "Public Investment" },
 ];
-
-// event_type is open vocabulary (see the project_events schema comment),
-// but every row today still carries the raw ProjectStatus value written
-// by the mirror trigger off project_updates -- humanize whichever shape
-// shows up rather than assuming one.
-function eventTypeLabel(eventType: string): string {
-  if (eventType in PROJECT_STATUS_LABEL) {
-    return PROJECT_STATUS_LABEL[eventType as ProjectStatus];
-  }
-  return eventType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function groupByDate(events: ProjectEventWithProject[]) {
-  const groups: { date: string; events: ProjectEventWithProject[] }[] = [];
-  for (const event of events) {
-    const last = groups[groups.length - 1];
-    if (last && last.date === event.occurred_on) {
-      last.events.push(event);
-    } else {
-      groups.push({ date: event.occurred_on, events: [event] });
-    }
-  }
-  return groups;
-}
 
 // "What changed?" (§14) -- every project_event across the market,
 // newest first, grouped by day. Each event links back to its project on
@@ -77,7 +47,7 @@ export default async function TimelinePage({
     planCategory: activeCategory === "all" ? undefined : activeCategory,
   });
 
-  const groups = groupByDate(events ?? []);
+  const groups = groupEventsByDate(events ?? []);
 
   return (
     <div className="space-y-6">

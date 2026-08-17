@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
 import type {
+  Market,
   PlanCategory,
   ProjectEventWithProject,
   ProjectEventWithSource,
@@ -10,13 +12,13 @@ import type {
   ZoningLandUseWithSource,
 } from "@/lib/types";
 
-// New read layer over the Aug 17 2026 schema additions (companies/
-// project_parties, project_events, signals, zoning_land_use). Not called
-// from any page yet -- Phase 2 of the architecture review is building and
-// verifying this in parallel with the existing queries, not switching the
-// UI over (that's a later phase). Each function here is the direct new-
-// schema equivalent of an existing query elsewhere in the app; see the
-// comment on each for which one.
+// Read layer over the Aug 17 2026 schema additions (companies/
+// project_parties, project_events, signals, zoning_land_use). Built and
+// parity-checked against the old queries in Phase 2 before anything used
+// it; now the Timeline page (Phase 3) and Project detail page (Phase 4)
+// read from it directly. Each function is the new-schema equivalent of
+// an existing (or, for detail/nearby, newly needed) query elsewhere in
+// the app -- see the comment on each.
 
 // Equivalent of the `projects` query in dashboard/page.tsx and
 // projects/page.tsx, plus the new plan_category/project_type/stage
@@ -80,6 +82,56 @@ export async function getProjectEventsFeed(
   }
 
   return query.returns<ProjectEventWithProject[]>();
+}
+
+export type ProjectDetail = ProjectWithSource & ProjectPhase2Fields & { parties: ProjectPartyWithCompany[]; market: Market };
+
+// The Project detail page's (Phase 4) primary fetch: one project plus
+// its source, parties/companies, and market. RLS (has_market_access via
+// the project's market_id) is the real access gate -- this just asks for
+// one row by id instead of a whole market's worth. Fetched as a one-row
+// array (matching this codebase's existing .returns<T[]>() convention)
+// rather than .maybeSingle(), which doesn't combine cleanly with
+// .returns() in the installed supabase-js version.
+export async function getProjectDetail(supabase: SupabaseClient, projectId: string) {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*, source:sources(*), parties:project_parties(*, company:companies(*)), market:markets(*)")
+    .eq("id", projectId)
+    .limit(1)
+    .returns<ProjectDetail[]>();
+
+  return { data: data?.[0] ?? null, error };
+}
+
+// "Related Intelligence: Nearby Projects" (§15) -- same haversine-radius
+// approach DevelopmentIntelligenceView already uses for a selected
+// project's nearby opportunities (src/lib/geo.ts), just project-to-
+// project. projects doesn't have a geography column (only parcels/
+// growth_areas/zoning_land_use got one in Phase 1), so this stays a
+// client-side radius filter over the market's projects rather than a
+// PostGIS query -- matches the existing precedent, no schema change
+// needed for it.
+export async function getNearbyProjects(
+  supabase: SupabaseClient,
+  marketId: string,
+  excludeProjectId: string,
+  center: { lat: number; lng: number },
+  radiusMeters = ONE_MILE_METERS
+) {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*, source:sources(*)")
+    .eq("market_id", marketId)
+    .neq("id", excludeProjectId)
+    .returns<ProjectWithSource[]>();
+
+  if (error || !data) return { data: null, error };
+
+  return {
+    data: filterWithinRadius(center, radiusMeters, data, (p) => ({ lat: p.latitude, lng: p.longitude })),
+    error: null,
+  };
 }
 
 // Equivalent of the `opportunities` query in dashboard/page.tsx --
