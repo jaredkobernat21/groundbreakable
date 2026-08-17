@@ -480,3 +480,166 @@ export type UpcomingDecision = {
 };
 
 export type UpcomingDecisionWithSource = UpcomingDecision & { source: Source | null };
+
+// --- Plans / Potential (Phase 2 data-access layer) ---
+// New types for the columns/tables added in the Aug 17 2026 schema
+// migration. Not wired into any page yet -- these exist so the new
+// read layer (src/lib/queries/planIntelligence.ts) can be built and
+// verified against real data before any component switches over to it.
+// See the architecture review for the full rationale.
+
+export type PlanCategory = "development" | "land_use" | "infrastructure" | "public_investment";
+
+export const PLAN_CATEGORY_LABEL: Record<PlanCategory, string> = {
+  development: "Development",
+  land_use: "Land Use",
+  infrastructure: "Infrastructure",
+  public_investment: "Public Investment",
+};
+
+export type ProjectType =
+  | "residential"
+  | "multifamily"
+  | "commercial"
+  | "retail"
+  | "industrial"
+  | "mixed_use"
+  | "public"
+  | "infrastructure"
+  | "other";
+
+export const PROJECT_TYPE_LABEL: Record<ProjectType, string> = {
+  residential: "Residential",
+  multifamily: "Multifamily",
+  commercial: "Commercial",
+  retail: "Retail",
+  industrial: "Industrial",
+  mixed_use: "Mixed Use",
+  public: "Public",
+  infrastructure: "Infrastructure",
+  other: "Other",
+};
+
+// The simplified rollup stage (§4 of the architecture review) -- separate
+// from the detailed ProjectStatus enum above, which project_events keeps
+// as the fine-grained history. on_hold/cancelled projects have no stage
+// (null) -- they've fallen outside the linear progression, same as they
+// already fall outside every ActivityPhase view today.
+export type ProjectStage = "proposed" | "review_planning" | "approved" | "permitting" | "construction" | "complete";
+
+export const PROJECT_STAGE_LABEL: Record<ProjectStage, string> = {
+  proposed: "Proposed",
+  review_planning: "Review / Planning",
+  approved: "Approved",
+  permitting: "Permitting",
+  construction: "Construction",
+  complete: "Complete",
+};
+
+// projects.plan_category/project_type/stage are the new columns --
+// nullable everywhere until every write path sets them explicitly.
+export type ProjectPhase2Fields = {
+  plan_category: PlanCategory | null;
+  project_type: ProjectType | null;
+  stage: ProjectStage | null;
+};
+
+export type Company = {
+  id: string;
+  name: string;
+  website: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type PartyRole = "developer" | "builder_gc" | "owner" | "architect_engineer" | "applicant" | "investor";
+
+export const PARTY_ROLE_LABEL: Record<PartyRole, string> = {
+  developer: "Developer",
+  builder_gc: "Builder / GC",
+  owner: "Owner",
+  architect_engineer: "Architect / Engineer",
+  applicant: "Applicant",
+  investor: "Investor",
+};
+
+export type ProjectParty = {
+  id: string;
+  project_id: string;
+  company_id: string;
+  role: PartyRole;
+  created_at: string;
+};
+
+export type ProjectPartyWithCompany = ProjectParty & { company: Company };
+
+// Generalizes ProjectUpdate: any meaningful event, not just a status
+// change. event_type is deliberately open vocabulary (same precedent as
+// projects.subcategory) rather than a rigid enum.
+export type ProjectEvent = {
+  id: string;
+  project_id: string;
+  event_type: string;
+  status: ProjectStatus | null;
+  note: string | null;
+  amount: number | null;
+  funding_source: string | null;
+  occurred_on: string;
+  source_id: string | null;
+  confidence: Confidence;
+  source_quality: "primary_government" | "official_company" | "secondary" | null;
+  verification_status: "automated" | "human_reviewed" | "verified";
+  is_interpretation: boolean;
+  interpretation_basis: string | null;
+  created_at: string;
+};
+
+export type ProjectEventWithSource = ProjectEvent & { source: Source | null };
+
+// Joined shape for a Timeline-style feed -- mirrors ProjectUpdateWithProject.
+export type ProjectEventWithProject = ProjectEvent & {
+  project: Pick<Project, "id" | "title" | "market_id"> & Partial<ProjectPhase2Fields>;
+};
+
+// Replaces opportunities.signals[] -- one row per detection instead of
+// one array per property, so a signal disappearing can be recorded
+// (resolved_date) instead of silently rewriting the array.
+export type Signal = {
+  id: string;
+  market_id: string;
+  parcel_id: string | null;
+  opportunity_id: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  signal_type: OpportunityType;
+  detected_date: string | null;
+  resolved_date: string | null;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type SignalWithSource = Signal & { source: Source | null };
+
+// Generalizes opportunity_zones with a layer_type discriminator --
+// current zoning, future land use, and overlays are the same shape.
+export type ZoningLandUseLayerType = "current_zoning" | "future_land_use" | "overlay";
+
+export type ZoningLandUse = {
+  id: string;
+  market_id: string;
+  layer_type: ZoningLandUseLayerType;
+  title: string;
+  description: string | null;
+  district_code: string | null;
+  permitted_uses: string | null;
+  regulatory_notes: string | null;
+  geom: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  source_id: string;
+  confidence: Confidence;
+  last_verified_at: string;
+  created_at: string;
+};
+
+export type ZoningLandUseWithSource = ZoningLandUse & { source: Source | null };
