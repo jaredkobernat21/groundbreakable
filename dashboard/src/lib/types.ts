@@ -8,54 +8,6 @@ export type Market = {
   default_zoom: number;
 };
 
-export type Submarket = {
-  id: string;
-  market_id: string;
-  name: string;
-  momentum: "high" | "emerging" | "stable" | "watch";
-  median_price: number | null;
-  cash_on_cash_pct: number | null;
-  summary: string | null;
-  sort_order: number;
-};
-
-export type MarketEvent = {
-  id: string;
-  market_id: string;
-  type: "development" | "permit" | "infrastructure" | "risk";
-  title: string;
-  description: string | null;
-  status: string | null;
-  lat: number | null;
-  lng: number | null;
-  source_url: string | null;
-  event_date: string | null;
-};
-
-export type MarketMetrics = {
-  id: string;
-  market_id: string;
-  period: string;
-  population_growth_pct: number | null;
-  median_income: number | null;
-  job_growth_pct: number | null;
-  permit_activity_index: number | null;
-  price_momentum_index: number | null;
-  days_on_market: number | null;
-  inventory_index: number | null;
-};
-
-export type Competitor = {
-  id: string;
-  market_id: string;
-  entity_name: string;
-  property_address: string | null;
-  purchase_date: string | null;
-  purchase_price: number | null;
-  strategy_notes: string | null;
-  source_url: string | null;
-};
-
 export type Lead = {
   id: string;
   market_id: string;
@@ -68,17 +20,6 @@ export type Lead = {
   years_owned: number | null;
   years_owned_display: string | null;
   assessed_value: number | null;
-};
-
-export type Property = {
-  id: string;
-  investor_id: string;
-  market_id: string | null;
-  status: "owned" | "target" | "watchlist";
-  address: string;
-  price: number | null;
-  notes: string | null;
-  tags: string[];
 };
 
 // --- Development Intelligence ---
