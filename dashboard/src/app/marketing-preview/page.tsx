@@ -347,6 +347,8 @@ export default function MarketingPreviewPage() {
           opportunities={demoOpportunities}
           catalysts={demoCatalysts}
           opportunityZones={demoOpportunityZones}
+          growthAreas={[]}
+          potentialSites={[]}
           initialCategory="all"
         />
       </div>

@@ -4,11 +4,13 @@ import { useMemo, useState } from "react";
 import type {
   ActivityPhase,
   CatalystWithSource,
+  GrowthArea,
   Market,
   OpportunityType,
   OpportunityWithSource,
   OpportunityZoneWithSource,
   Parcel,
+  PotentialSiteWithSource,
   ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
@@ -20,10 +22,12 @@ import ProjectDetailPanel from "./ProjectDetailPanel";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import CatalystDetailPanel, { findNearbySignals } from "./CatalystDetailPanel";
 import OpportunityZoneDetailPanel from "./OpportunityZoneDetailPanel";
+import GrowthAreaDetailPanel from "./GrowthAreaDetailPanel";
+import PotentialSiteDetailPanel from "./PotentialSiteDetailPanel";
 import LayerSwitcher, { type MapSegment } from "./LayerSwitcher";
 import MapKey from "./MapKey";
 
-export type MapCategory = "all" | "activity" | "opportunities" | "catalysts";
+export type MapCategory = "all" | "activity" | "opportunities" | "catalysts" | "potential";
 
 // Single All/Planning/Opportunities toggle -- that's the whole filter
 // surface now (no per-phase, per-category, or per-property-type chips, and
@@ -36,6 +40,7 @@ export type MapCategory = "all" | "activity" | "opportunities" | "catalysts";
 function initialSegment(category: MapCategory): MapSegment {
   if (category === "activity") return "activity";
   if (category === "opportunities") return "opportunities";
+  if (category === "potential") return "potential";
   return "all";
 }
 
@@ -48,6 +53,8 @@ export default function DevelopmentIntelligenceView({
   opportunities,
   catalysts,
   opportunityZones,
+  growthAreas,
+  potentialSites,
   initialCategory = "activity",
   initialSelection = null,
 }: {
@@ -57,6 +64,8 @@ export default function DevelopmentIntelligenceView({
   opportunities: OpportunityWithSource[];
   catalysts: CatalystWithSource[];
   opportunityZones: OpportunityZoneWithSource[];
+  growthAreas: GrowthArea[];
+  potentialSites: PotentialSiteWithSource[];
   initialCategory?: MapCategory;
   // Deep-link from the AskBar's "View on map" link -- pre-selects a
   // specific project/opportunity pin on mount.
@@ -65,6 +74,7 @@ export default function DevelopmentIntelligenceView({
   const [segment, setSegment] = useState<MapSegment>(initialSegment(initialCategory));
   const showActivity = segment === "all" || segment === "activity";
   const showOpportunities = segment === "all" || segment === "opportunities";
+  const showPotential = segment === "all" || segment === "potential";
 
   const [selectedProjectId, setSelectedProjectIdRaw] = useState<string | null>(
     initialSelection?.type === "project" ? initialSelection.id : null
@@ -74,6 +84,8 @@ export default function DevelopmentIntelligenceView({
   );
   const [selectedCatalystId, setSelectedCatalystIdRaw] = useState<string | null>(null);
   const [selectedOpportunityZoneId, setSelectedOpportunityZoneIdRaw] = useState<string | null>(null);
+  const [selectedGrowthAreaId, setSelectedGrowthAreaIdRaw] = useState<string | null>(null);
+  const [selectedPotentialSiteId, setSelectedPotentialSiteIdRaw] = useState<string | null>(null);
 
   function selectSegment(next: MapSegment) {
     setSegment(next);
@@ -81,6 +93,8 @@ export default function DevelopmentIntelligenceView({
     selectOpportunity(null);
     selectCatalyst(null);
     selectOpportunityZone(null);
+    selectGrowthArea(null);
+    selectPotentialSite(null);
   }
 
   // Only one signal is ever selected at a time, regardless of which
@@ -91,6 +105,8 @@ export default function DevelopmentIntelligenceView({
       setSelectedOpportunityIdRaw(null);
       setSelectedCatalystIdRaw(null);
       setSelectedOpportunityZoneIdRaw(null);
+      setSelectedGrowthAreaIdRaw(null);
+      setSelectedPotentialSiteIdRaw(null);
     }
   }
   function selectOpportunity(id: string | null) {
@@ -99,6 +115,8 @@ export default function DevelopmentIntelligenceView({
       setSelectedProjectIdRaw(null);
       setSelectedCatalystIdRaw(null);
       setSelectedOpportunityZoneIdRaw(null);
+      setSelectedGrowthAreaIdRaw(null);
+      setSelectedPotentialSiteIdRaw(null);
     }
   }
   function selectCatalyst(id: string | null) {
@@ -107,6 +125,8 @@ export default function DevelopmentIntelligenceView({
       setSelectedProjectIdRaw(null);
       setSelectedOpportunityIdRaw(null);
       setSelectedOpportunityZoneIdRaw(null);
+      setSelectedGrowthAreaIdRaw(null);
+      setSelectedPotentialSiteIdRaw(null);
     }
   }
   function selectOpportunityZone(id: string | null) {
@@ -115,6 +135,28 @@ export default function DevelopmentIntelligenceView({
       setSelectedProjectIdRaw(null);
       setSelectedOpportunityIdRaw(null);
       setSelectedCatalystIdRaw(null);
+      setSelectedGrowthAreaIdRaw(null);
+      setSelectedPotentialSiteIdRaw(null);
+    }
+  }
+  function selectGrowthArea(id: string | null) {
+    setSelectedGrowthAreaIdRaw(id);
+    if (id) {
+      setSelectedProjectIdRaw(null);
+      setSelectedOpportunityIdRaw(null);
+      setSelectedCatalystIdRaw(null);
+      setSelectedOpportunityZoneIdRaw(null);
+      setSelectedPotentialSiteIdRaw(null);
+    }
+  }
+  function selectPotentialSite(id: string | null) {
+    setSelectedPotentialSiteIdRaw(id);
+    if (id) {
+      setSelectedProjectIdRaw(null);
+      setSelectedOpportunityIdRaw(null);
+      setSelectedCatalystIdRaw(null);
+      setSelectedOpportunityZoneIdRaw(null);
+      setSelectedGrowthAreaIdRaw(null);
     }
   }
 
@@ -153,6 +195,20 @@ export default function DevelopmentIntelligenceView({
   const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
   const selectedOpportunityZone = opportunityZones.find((z) => z.id === selectedOpportunityZoneId) ?? null;
+  const selectedGrowthArea = growthAreas.find((g) => g.id === selectedGrowthAreaId) ?? null;
+  const selectedPotentialSite = potentialSites.find((s) => s.id === selectedPotentialSiteId) ?? null;
+
+  // A selected Growth Area's panel lists the Potential Sites inside it;
+  // a selected Potential Site's panel names the Growth Area it's in, if
+  // any -- both computed here rather than re-fetched, same "share what's
+  // already loaded" pattern as nearbyOpportunities below.
+  const potentialSitesInSelectedGrowthArea = useMemo(
+    () => (selectedGrowthArea ? potentialSites.filter((s) => s.growth_area_id === selectedGrowthArea.id) : []),
+    [selectedGrowthArea, potentialSites]
+  );
+  const growthAreaOfSelectedSite = selectedPotentialSite
+    ? (growthAreas.find((g) => g.id === selectedPotentialSite.growth_area_id) ?? null)
+    : null;
 
   // The project-pin "premium reveal": opportunities within 1 mile of the
   // selected project. Computed once here and shared by the map (which
@@ -185,11 +241,14 @@ export default function DevelopmentIntelligenceView({
           market={market}
           showActivity={showActivity}
           showOpportunities={showOpportunities}
+          showPotential={showPotential}
           projects={phaseProjects}
           parcels={parcels}
           opportunities={opportunities}
           catalysts={catalysts}
           opportunityZones={opportunityZones}
+          growthAreas={growthAreas}
+          potentialSites={potentialSites}
           nearbyOpportunityIds={nearbyOpportunityIds}
           selectedProjectId={selectedProjectId}
           onSelectProject={selectProject}
@@ -199,6 +258,10 @@ export default function DevelopmentIntelligenceView({
           onSelectCatalyst={selectCatalyst}
           selectedOpportunityZoneId={selectedOpportunityZoneId}
           onSelectOpportunityZone={selectOpportunityZone}
+          selectedGrowthAreaId={selectedGrowthAreaId}
+          onSelectGrowthArea={selectGrowthArea}
+          selectedPotentialSiteId={selectedPotentialSiteId}
+          onSelectPotentialSite={selectPotentialSite}
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
@@ -252,6 +315,21 @@ export default function DevelopmentIntelligenceView({
         {selectedOpportunityZone && (
           <OpportunityZoneDetailPanel zone={selectedOpportunityZone} onClose={() => selectOpportunityZone(null)} />
         )}
+        {selectedGrowthArea && (
+          <GrowthAreaDetailPanel
+            growthArea={selectedGrowthArea}
+            potentialSitesInArea={potentialSitesInSelectedGrowthArea}
+            onSelectPotentialSite={selectPotentialSite}
+            onClose={() => selectGrowthArea(null)}
+          />
+        )}
+        {selectedPotentialSite && (
+          <PotentialSiteDetailPanel
+            site={selectedPotentialSite}
+            growthArea={growthAreaOfSelectedSite}
+            onClose={() => selectPotentialSite(null)}
+          />
+        )}
       </div>
 
       {showActivity && phaseProjects.length === 0 && (
@@ -261,6 +339,12 @@ export default function DevelopmentIntelligenceView({
         <p className="text-sm text-white/40">
           No verified opportunities entered yet for {market.name} — add them from the admin
           opportunities tool once sourced.
+        </p>
+      )}
+      {showPotential && growthAreas.length === 0 && potentialSites.length === 0 && (
+        <p className="text-sm text-white/40">
+          No Growth Areas or Potential Sites curated yet for {market.name} — add them from the admin
+          Potential tools once researched.
         </p>
       )}
     </div>

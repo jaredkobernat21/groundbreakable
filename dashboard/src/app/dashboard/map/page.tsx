@@ -6,7 +6,7 @@ import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts"];
+const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts", "potential"];
 
 // The dedicated Map view (Phase 3 of the architecture review) -- same
 // DevelopmentIntelligenceView component and the same getMapLayerData
@@ -41,7 +41,8 @@ export default async function MapPage({
       ? { type: selectType, id: searchParams.select }
       : null;
 
-  const { projects, parcels, opportunities, catalysts, opportunityZones } = await getMapLayerData(supabase, market.id);
+  const { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites } =
+    await getMapLayerData(supabase, market.id);
 
   return (
     <div className="space-y-3">
@@ -60,6 +61,8 @@ export default async function MapPage({
         opportunities={opportunities}
         catalysts={catalysts}
         opportunityZones={opportunityZones}
+        growthAreas={growthAreas}
+        potentialSites={potentialSites}
         initialCategory={category}
         initialSelection={initialSelection}
       />

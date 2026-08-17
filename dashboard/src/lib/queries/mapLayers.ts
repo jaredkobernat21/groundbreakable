@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getGrowthAreas, getPotentialSites } from "@/lib/queries/planIntelligence";
 import type {
   CatalystWithSource,
   OpportunityWithSource,
@@ -7,11 +8,13 @@ import type {
   ProjectWithSource,
 } from "@/lib/types";
 
-// The map's five layers, fetched together. Shared by the Overview page's
+// The map's seven layers, fetched together. Shared by the Overview page's
 // embedded map and the dedicated /dashboard/map page (Phase 3) so the
 // query lives in exactly one place instead of being copy-pasted between
 // them -- the same real-world fact (a project, a parcel, a zoning zone)
-// renders in both places off one fetch shape.
+// renders in both places off one fetch shape. growthAreas/potentialSites
+// (Phase 5) reuse the same functions the Potential map layer's own read
+// path uses, not a separate query.
 export async function getMapLayerData(supabase: SupabaseClient, marketId: string) {
   const [
     { data: projects },
@@ -19,6 +22,8 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
     { data: opportunities },
     { data: catalysts },
     { data: opportunityZones },
+    { data: growthAreas },
+    { data: potentialSites },
   ] = await Promise.all([
     supabase
       .from("projects")
@@ -45,6 +50,8 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
       .eq("market_id", marketId)
       .order("last_verified_at", { ascending: false })
       .returns<OpportunityZoneWithSource[]>(),
+    getGrowthAreas(supabase, marketId),
+    getPotentialSites(supabase, marketId),
   ]);
 
   return {
@@ -53,5 +60,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
     opportunities: opportunities ?? [],
     catalysts: catalysts ?? [],
     opportunityZones: opportunityZones ?? [],
+    growthAreas: growthAreas ?? [],
+    potentialSites: potentialSites ?? [],
   };
 }

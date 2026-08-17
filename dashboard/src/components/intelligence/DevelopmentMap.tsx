@@ -1,7 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MapboxMap, Marker } from "mapbox-gl";
 import {
   ACTIVITY_PHASE_COLOR,
@@ -10,12 +10,15 @@ import {
   PROJECT_STATUS_LABEL,
   CATALYSTS_COLOR,
   OPPORTUNITIES_COLOR,
+  POTENTIAL_COLOR,
   isStackedOpportunity,
   type CatalystWithSource,
+  type GrowthArea,
   type Market,
   type OpportunityWithSource,
   type OpportunityZoneWithSource,
   type Parcel,
+  type PotentialSiteWithSource,
   type ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
@@ -28,18 +31,29 @@ const CATALYST_AREA_SOURCE_ID = "roq-catalyst-areas";
 const CATALYST_LABEL_SOURCE_ID = "roq-catalyst-labels";
 const OPPORTUNITY_ZONES_SOURCE_ID = "roq-opportunity-zones";
 const OPPORTUNITY_ZONE_LABEL_SOURCE_ID = "roq-opportunity-zone-labels";
+const GROWTH_AREAS_SOURCE_ID = "roq-growth-areas";
+const GROWTH_AREA_LABEL_SOURCE_ID = "roq-growth-area-labels";
 const SELECTION_RADIUS_SOURCE_ID = "roq-selection-radius";
 const DEFAULT_PARCEL_COLOR = "#94a3b8"; // neutral gray -- context/inactive, not tied to a category
+
+// Potential Sites are parcel-level detail -- per the architecture review's
+// §12 progressive-disclosure direction, they only reveal once zoomed in
+// close enough to make sense as individual points; Growth Areas (regions)
+// stay visible at every zoom. ~13.5 is roughly "city block" zoom in Mapbox.
+const POTENTIAL_SITE_MIN_ZOOM = 13.5;
 
 export default function DevelopmentMap({
   market,
   showActivity,
   showOpportunities,
+  showPotential,
   projects,
   parcels,
   opportunities,
   catalysts,
   opportunityZones,
+  growthAreas,
+  potentialSites,
   nearbyOpportunityIds,
   selectedProjectId,
   onSelectProject,
@@ -49,15 +63,22 @@ export default function DevelopmentMap({
   onSelectCatalyst,
   selectedOpportunityZoneId,
   onSelectOpportunityZone,
+  selectedGrowthAreaId,
+  onSelectGrowthArea,
+  selectedPotentialSiteId,
+  onSelectPotentialSite,
 }: {
   market: Market;
   showActivity: boolean;
   showOpportunities: boolean;
+  showPotential: boolean;
   projects: ProjectWithSource[];
   parcels: Parcel[];
   opportunities: OpportunityWithSource[];
   catalysts: CatalystWithSource[];
   opportunityZones: OpportunityZoneWithSource[];
+  growthAreas: GrowthArea[];
+  potentialSites: PotentialSiteWithSource[];
   // Opportunities within 1 mile of the currently-selected project -- these
   // render even when showOpportunities is off (e.g. the Planning-only
   // segment), so the radius-reveal "pop up nearby opportunities" behavior
@@ -72,14 +93,28 @@ export default function DevelopmentMap({
   onSelectCatalyst: (id: string | null) => void;
   selectedOpportunityZoneId: string | null;
   onSelectOpportunityZone: (id: string | null) => void;
+  selectedGrowthAreaId: string | null;
+  onSelectGrowthArea: (id: string | null) => void;
+  selectedPotentialSiteId: string | null;
+  onSelectPotentialSite: (id: string | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
+  const potentialSiteMarkersRef = useRef<Map<string, Marker>>(new Map());
   const readyRef = useRef(false);
   const selectedParcelIdRef = useRef<string | null>(null);
   const selectedAreaFeatureRef = useRef<{ source: string; id: string } | null>(null);
   const radiusAnimTokenRef = useRef(0);
+  // The map's "load"/'zoom' handlers are native Mapbox listeners registered
+  // once on mount -- they close over whichever render's showPotential/
+  // potentialSites happened to be current at that moment, which goes stale
+  // the instant either prop changes. The zoom listener below only ever
+  // flips this boolean (comparing against a ref, so it doesn't fire on
+  // every zoom tick) and lets a normal React effect -- always running with
+  // this render's fresh props -- do the actual marker rendering.
+  const zoomGateOpenRef = useRef(false);
+  const [potentialSiteZoomGateOpen, setPotentialSiteZoomGateOpen] = useState(false);
 
   // Init map once.
   useEffect(() => {
@@ -260,6 +295,62 @@ export default function DevelopmentMap({
           },
         });
 
+        // Growth Areas: translucent Potential regions, always visible at
+        // every zoom while the Potential segment is active (Potential
+        // Sites are the layer that's zoom-gated, not this one -- see the
+        // 'zoom' listener below). Same source/fill/line/label shape as
+        // catalyst watch-zones and opportunity zones above.
+        map.addSource(GROWTH_AREAS_SOURCE_ID, {
+          type: "geojson",
+          promoteId: "id",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: `${GROWTH_AREAS_SOURCE_ID}-fill`,
+          type: "fill",
+          source: GROWTH_AREAS_SOURCE_ID,
+          paint: {
+            "fill-color": POTENTIAL_COLOR,
+            "fill-opacity": [
+              "case",
+              ["boolean", ["feature-state", "selected"], false],
+              0.22,
+              ["match", ["get", "momentum"], "established", 0.14, "accelerating", 0.1, 0.06],
+            ],
+          },
+        });
+        map.addLayer({
+          id: `${GROWTH_AREAS_SOURCE_ID}-line`,
+          type: "line",
+          source: GROWTH_AREAS_SOURCE_ID,
+          paint: {
+            "line-color": POTENTIAL_COLOR,
+            "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 2, 1],
+            "line-opacity": 0.7,
+          },
+        });
+        map.addSource(GROWTH_AREA_LABEL_SOURCE_ID, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: `${GROWTH_AREA_LABEL_SOURCE_ID}-symbol`,
+          type: "symbol",
+          source: GROWTH_AREA_LABEL_SOURCE_ID,
+          layout: {
+            "text-field": ["get", "name"],
+            "text-size": 12,
+            "text-anchor": "center",
+            "text-allow-overlap": false,
+          },
+          paint: {
+            "text-color": POTENTIAL_COLOR,
+            "text-opacity": 0.85,
+            "text-halo-color": "rgba(0,0,0,0.65)",
+            "text-halo-width": 1.2,
+          },
+        });
+
         // Selection radius: the 1-mile "premium reveal" ring drawn around
         // a clicked project pin (see animateRadiusReveal). Empty until a
         // project is selected. Opacity transitions give the reveal a soft
@@ -315,9 +406,41 @@ export default function DevelopmentMap({
           map.getCanvas().style.cursor = "";
         });
 
+        map.on("click", `${GROWTH_AREAS_SOURCE_ID}-fill`, (e) => {
+          e.originalEvent.stopPropagation();
+          const id = e.features?.[0]?.properties?.id;
+          if (id) onSelectGrowthArea(id);
+        });
+        map.on("mouseenter", `${GROWTH_AREAS_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", `${GROWTH_AREAS_SOURCE_ID}-fill`, () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        // Potential Sites are zoom-gated (see POTENTIAL_SITE_MIN_ZOOM).
+        // This only flips potentialSiteZoomGateOpen -- and only when
+        // crossing the threshold actually changes, not on every zoom tick
+        // -- which lets the effect below (always running with this
+        // render's fresh showPotential/potentialSites) do the real work.
+        // Calling renderPotentialSiteMarkers() directly from here would
+        // run it against this closure's props forever, which are only
+        // ever correct for the instant this "load" handler first fired.
+        map.on("zoom", () => {
+          const shouldOpen = map.getZoom() >= POTENTIAL_SITE_MIN_ZOOM;
+          if (shouldOpen !== zoomGateOpenRef.current) {
+            zoomGateOpenRef.current = shouldOpen;
+            setPotentialSiteZoomGateOpen(shouldOpen);
+          }
+        });
+
+        zoomGateOpenRef.current = map.getZoom() >= POTENTIAL_SITE_MIN_ZOOM;
+        setPotentialSiteZoomGateOpen(zoomGateOpenRef.current);
+
         renderMarkers();
         renderParcels();
         renderAreaLayers();
+        renderPotentialSiteMarkers();
       });
     });
 
@@ -325,11 +448,14 @@ export default function DevelopmentMap({
       cancelled = true;
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current.clear();
+      potentialSiteMarkersRef.current.forEach((marker) => marker.remove());
+      potentialSiteMarkersRef.current.clear();
       mapRef.current?.remove();
       mapRef.current = null;
       readyRef.current = false;
       selectedParcelIdRef.current = null;
       selectedAreaFeatureRef.current = null;
+      zoomGateOpenRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market.id]);
@@ -339,6 +465,8 @@ export default function DevelopmentMap({
     onSelectOpportunity(null);
     onSelectCatalyst(null);
     onSelectOpportunityZone(null);
+    onSelectGrowthArea(null);
+    onSelectPotentialSite(null);
   }
 
   function renderMarkers() {
@@ -428,6 +556,51 @@ export default function DevelopmentMap({
     });
   }
 
+  // Potential Sites: zoom-gated point markers (§12's "reveal parcel-level
+  // detail only once zoomed in" direction) -- rebuilt whenever zoom
+  // crosses POTENTIAL_SITE_MIN_ZOOM (see the 'zoom' listener) or the
+  // segment/data/selection changes. Separate marker map from
+  // markersRef so clearing project/opportunity markers on a data refresh
+  // never touches these.
+  function renderPotentialSiteMarkers() {
+    const map = mapRef.current;
+    if (!map) return;
+
+    potentialSiteMarkersRef.current.forEach((marker) => marker.remove());
+    potentialSiteMarkersRef.current.clear();
+
+    if (!showPotential || map.getZoom() < POTENTIAL_SITE_MIN_ZOOM) return;
+
+    import("mapbox-gl").then((mapboxgl) => {
+      potentialSites.forEach((site) => {
+        if (site.latitude == null || site.longitude == null) return;
+
+        const el = document.createElement("div");
+        el.className = "roq-marker";
+
+        el.innerHTML = `
+          <div class="roq-marker-card">
+            <span class="roq-marker-card-title">${escapeHtml(site.title)}</span>
+            <span class="roq-marker-card-sub">Potential Site</span>
+          </div>
+          <div class="roq-marker-line" style="background:${POTENTIAL_COLOR}"></div>
+          <div class="roq-marker-pin">${pinMarkerSvgMarkup("star", { fill: POTENTIAL_COLOR })}</div>
+        `;
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          onSelectPotentialSite(site.id);
+        });
+
+        const marker = new mapboxgl.default.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([site.longitude!, site.latitude!])
+          .addTo(map);
+        potentialSiteMarkersRef.current.set(site.id, marker);
+        el.style.opacity = !selectedPotentialSiteId || site.id === selectedPotentialSiteId ? "1" : "0.35";
+        el.classList.toggle("is-selected", site.id === selectedPotentialSiteId);
+      });
+    });
+  }
+
   function renderParcels() {
     const map = mapRef.current;
     if (!map || !map.getSource(PARCELS_SOURCE_ID)) return;
@@ -506,6 +679,27 @@ export default function DevelopmentMap({
         : [];
       (map.getSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
     }
+
+    if (map.getSource(GROWTH_AREAS_SOURCE_ID)) {
+      const features = showPotential
+        ? growthAreas.map((g) => ({
+            type: "Feature" as const,
+            properties: { id: g.id, momentum: g.momentum_state },
+            geometry: g.geom,
+          }))
+        : [];
+      (map.getSource(GROWTH_AREAS_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
+    if (map.getSource(GROWTH_AREA_LABEL_SOURCE_ID)) {
+      const features = showPotential
+        ? growthAreas.map((g) => ({
+            type: "Feature" as const,
+            properties: { name: g.name },
+            geometry: { type: "Point" as const, coordinates: [polygonCentroid(g.geom).lng, polygonCentroid(g.geom).lat] },
+          }))
+        : [];
+      (map.getSource(GROWTH_AREA_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    }
   }
 
   // Re-render markers/parcels/areas when the data or view changes.
@@ -514,8 +708,22 @@ export default function DevelopmentMap({
     renderMarkers();
     renderParcels();
     renderAreaLayers();
+    renderPotentialSiteMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showActivity, showOpportunities, projects, parcels, opportunities, catalysts, opportunityZones, nearbyOpportunityIds]);
+  }, [
+    showActivity,
+    showOpportunities,
+    showPotential,
+    projects,
+    parcels,
+    opportunities,
+    catalysts,
+    opportunityZones,
+    growthAreas,
+    potentialSites,
+    potentialSiteZoomGateOpen,
+    nearbyOpportunityIds,
+  ]);
 
   // Selection: fly the camera in, fade the unrelated markers in that
   // signal's own collection, and highlight the selected parcel/catalyst
@@ -534,6 +742,11 @@ export default function DevelopmentMap({
       marker.getElement().style.opacity =
         !relevantSelectedId || id === relevantSelectedId || isNearbyForced ? "1" : "0.35";
       marker.getElement().classList.toggle("is-selected", id === relevantSelectedId);
+    });
+
+    potentialSiteMarkersRef.current.forEach((marker, id) => {
+      marker.getElement().style.opacity = !selectedPotentialSiteId || id === selectedPotentialSiteId ? "1" : "0.35";
+      marker.getElement().classList.toggle("is-selected", id === selectedPotentialSiteId);
     });
 
     if (selectedParcelIdRef.current !== null) {
@@ -619,6 +832,33 @@ export default function DevelopmentMap({
           selectedAreaFeatureRef.current = { source: OPPORTUNITY_ZONES_SOURCE_ID, id: zone.id };
         }
       }
+    } else if (selectedGrowthAreaId) {
+      const area = growthAreas.find((g) => g.id === selectedGrowthAreaId);
+      if (area) {
+        const center = polygonCentroid(area.geom);
+        map.flyTo({
+          center: [center.lng, center.lat],
+          zoom: Math.min(map.getZoom(), 13),
+          pitch: 40,
+          duration: 1200,
+          essential: true,
+        });
+        if (map.getSource(GROWTH_AREAS_SOURCE_ID)) {
+          map.setFeatureState({ source: GROWTH_AREAS_SOURCE_ID, id: area.id }, { selected: true });
+          selectedAreaFeatureRef.current = { source: GROWTH_AREAS_SOURCE_ID, id: area.id };
+        }
+      }
+    } else if (selectedPotentialSiteId) {
+      const site = potentialSites.find((s) => s.id === selectedPotentialSiteId);
+      if (site && site.latitude != null && site.longitude != null) {
+        map.flyTo({
+          center: [site.longitude, site.latitude],
+          zoom: Math.max(map.getZoom(), POTENTIAL_SITE_MIN_ZOOM + 1),
+          pitch: 55,
+          duration: 1200,
+          essential: true,
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -626,10 +866,14 @@ export default function DevelopmentMap({
     selectedOpportunityId,
     selectedCatalystId,
     selectedOpportunityZoneId,
+    selectedGrowthAreaId,
+    selectedPotentialSiteId,
     projects,
     opportunities,
     catalysts,
     opportunityZones,
+    growthAreas,
+    potentialSites,
     nearbyOpportunityIds,
   ]);
 

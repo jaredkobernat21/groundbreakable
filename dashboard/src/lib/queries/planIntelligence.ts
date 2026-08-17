@@ -1,8 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
 import type {
+  GrowthArea,
   Market,
   PlanCategory,
+  PotentialSiteWithSource,
   ProjectEventWithProject,
   ProjectEventWithSource,
   ProjectPartyWithCompany,
@@ -146,6 +148,24 @@ export async function getActiveSignals(supabase: SupabaseClient, marketId: strin
     .is("resolved_date", null)
     .order("detected_date", { ascending: false })
     .returns<SignalWithSource[]>();
+}
+
+// Potential's two map layers (Phase 5). Both tables start empty for every
+// market -- unlike Plans, nothing here is transcribed from a source
+// document, so there's no backfill to run and no collection pipeline to
+// point at; a human curates these through the admin pages.
+export async function getGrowthAreas(supabase: SupabaseClient, marketId: string) {
+  return supabase.from("growth_areas").select("*").eq("market_id", marketId).order("name").returns<GrowthArea[]>();
+}
+
+export async function getPotentialSites(supabase: SupabaseClient, marketId: string) {
+  return supabase
+    .from("potential_sites")
+    .select("*, source:sources(*)")
+    .eq("market_id", marketId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .returns<PotentialSiteWithSource[]>();
 }
 
 // Equivalent of the `opportunity_zones` query -- zoning_land_use also

@@ -1,11 +1,12 @@
-import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
+import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR, POTENTIAL_COLOR } from "@/lib/types";
 
-export type MapSegment = "all" | "activity" | "opportunities";
+export type MapSegment = "all" | "activity" | "opportunities" | "potential";
 
 const SEGMENTS: { key: MapSegment; label: string }[] = [
   { key: "all", label: "All" },
   { key: "activity", label: "Planning" },
   { key: "opportunities", label: "Opportunities" },
+  { key: "potential", label: "Potential" },
 ];
 
 // The only filter control on the map -- deliberately just one small,
@@ -24,7 +25,14 @@ export default function LayerSwitcher({
     <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/70 p-1 shadow-lg backdrop-blur-xl">
       {SEGMENTS.map((s) => {
         const active = segment === s.key;
-        const dotColor = s.key === "activity" ? ACTIVITY_COLOR : s.key === "opportunities" ? OPPORTUNITIES_COLOR : null;
+        const dotColor =
+          s.key === "activity"
+            ? ACTIVITY_COLOR
+            : s.key === "opportunities"
+              ? OPPORTUNITIES_COLOR
+              : s.key === "potential"
+                ? POTENTIAL_COLOR
+                : null;
         return (
           <button
             key={s.key}

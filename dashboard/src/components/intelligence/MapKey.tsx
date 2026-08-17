@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ACTIVITY_PHASE_COLOR, ACTIVITY_PHASE_LABEL, OPPORTUNITIES_COLOR, type ActivityPhase } from "@/lib/types";
+import { ACTIVITY_PHASE_COLOR, ACTIVITY_PHASE_LABEL, OPPORTUNITIES_COLOR, POTENTIAL_COLOR, type ActivityPhase } from "@/lib/types";
 import { bulbMarkerSvgMarkup, pinMarkerSvgMarkup, resolveProjectPhaseIcon } from "@/lib/markerIcons";
 
 const PHASES: ActivityPhase[] = ["planning", "active", "completed"];
@@ -111,6 +111,25 @@ export default function MapKey() {
             <div>
               <div className="text-xs font-medium text-[#1c1c1c]">Favorable Zoning</div>
               <div className="text-[11px] text-[#1c1c1c]/45">An area zoned well for new development</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="h-4 w-4 shrink-0 rounded-sm" style={{ backgroundColor: `${POTENTIAL_COLOR}33`, border: `1px solid ${POTENTIAL_COLOR}` }} />
+            <div>
+              <div className="text-xs font-medium text-[#1c1c1c]">Growth Area</div>
+              <div className="text-[11px] text-[#1c1c1c]/45">Multiple development indicators converging</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span
+              className="flex h-7 w-6 shrink-0 items-center justify-center"
+              dangerouslySetInnerHTML={{ __html: pinMarkerSvgMarkup("star", { size: 24, fill: POTENTIAL_COLOR }) }}
+            />
+            <div>
+              <div className="text-xs font-medium text-[#1c1c1c]">Potential Site</div>
+              <div className="text-[11px] text-[#1c1c1c]/45">Zoom in to reveal — a site worth watching</div>
             </div>
           </div>
         </div>

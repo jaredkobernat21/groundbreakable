@@ -9,7 +9,7 @@ import type { Market, ProjectUpdateWithProject, UpcomingDecisionWithSource } fro
 
 export const dynamic = "force-dynamic";
 
-const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts"];
+const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts", "potential"];
 
 export default async function DashboardPage({
   searchParams,
@@ -44,8 +44,11 @@ export default async function DashboardPage({
       ? { type: selectType, id: searchParams.select }
       : null;
 
-  const [{ projects, parcels, opportunities, catalysts, opportunityZones }, { data: recentActivity }, { data: decisions }] =
-    await Promise.all([
+  const [
+    { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites },
+    { data: recentActivity },
+    { data: decisions },
+  ] = await Promise.all([
       getMapLayerData(supabase, market.id),
       // Recent Activity news headlines -- project_updates is already an
       // append-only log of admin-made status changes, so News needs no
@@ -97,6 +100,8 @@ export default async function DashboardPage({
         opportunities={opportunities ?? []}
         catalysts={catalysts ?? []}
         opportunityZones={opportunityZones ?? []}
+        growthAreas={growthAreas ?? []}
+        potentialSites={potentialSites ?? []}
         initialCategory={category}
         initialSelection={initialSelection}
       />

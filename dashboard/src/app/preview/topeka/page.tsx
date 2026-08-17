@@ -4,16 +4,8 @@ import AskBar from "@/components/AskBar";
 import NewsSection from "@/components/NewsSection";
 import CatalystSpotlight from "@/components/CatalystSpotlight";
 import DevelopmentIntelligenceView from "@/components/intelligence/DevelopmentIntelligenceView";
-import type {
-  CatalystWithSource,
-  Market,
-  OpportunityWithSource,
-  OpportunityZoneWithSource,
-  Parcel,
-  ProjectUpdateWithProject,
-  ProjectWithSource,
-  UpcomingDecisionWithSource,
-} from "@/lib/types";
+import { getMapLayerData } from "@/lib/queries/mapLayers";
+import type { Market, ProjectUpdateWithProject, UpcomingDecisionWithSource } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -75,39 +67,11 @@ export default async function TopekaPreviewPage() {
   }
 
   const [
-    { data: projects },
-    { data: parcels },
-    { data: opportunities },
-    { data: catalysts },
-    { data: opportunityZones },
+    { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites },
     { data: recentActivity },
     { data: decisions },
   ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("date_updated", { ascending: false })
-      .returns<ProjectWithSource[]>(),
-    supabase.from("parcels").select("*").eq("market_id", market.id).returns<Parcel[]>(),
-    supabase
-      .from("opportunities")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<OpportunityWithSource[]>(),
-    supabase
-      .from("catalysts")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<CatalystWithSource[]>(),
-    supabase
-      .from("opportunity_zones")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<OpportunityZoneWithSource[]>(),
+    getMapLayerData(supabase, market.id),
     supabase
       .from("project_updates")
       .select("*, project:projects!inner(id, title, category, market_id)")
@@ -154,11 +118,13 @@ export default async function TopekaPreviewPage() {
 
         <DevelopmentIntelligenceView
           market={market}
-          projects={projects ?? []}
-          parcels={parcels ?? []}
-          opportunities={opportunities ?? []}
-          catalysts={catalysts ?? []}
-          opportunityZones={opportunityZones ?? []}
+          projects={projects}
+          parcels={parcels}
+          opportunities={opportunities}
+          catalysts={catalysts}
+          opportunityZones={opportunityZones}
+          growthAreas={growthAreas}
+          potentialSites={potentialSites}
           initialCategory="activity"
         />
 

@@ -21,7 +21,8 @@ export type ProjectIconKey =
   | "clipboard"
   | "building"
   | "landTransfer"
-  | "briefcase";
+  | "briefcase"
+  | "star";
 
 export const PROJECT_ICON_PATHS: Record<ProjectIconKey, string[]> = {
   document: [
@@ -41,6 +42,9 @@ export const PROJECT_ICON_PATHS: Record<ProjectIconKey, string[]> = {
   building: ["M6 21V6l6-3 6 3v15", "M3 21h18", "M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"],
   landTransfer: ["M4 10h16v10H4z", "M9 5l3-3 3 3", "M12 2v6"],
   briefcase: ["M4 8h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z", "M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2", "M4 13h16"],
+  // Potential Site marker glyph -- a flagged/starred location, not tied to
+  // any project category (Potential Sites aren't projects).
+  star: ["M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"],
 };
 
 // status takes priority for the two states the spec calls out explicitly

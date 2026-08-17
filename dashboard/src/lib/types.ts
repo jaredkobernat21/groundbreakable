@@ -643,3 +643,63 @@ export type ZoningLandUse = {
 };
 
 export type ZoningLandUseWithSource = ZoningLandUse & { source: Source | null };
+
+// --- Potential: Growth Areas & Potential Sites (Phase 5 map layer) ---
+// The other half of the two-pillar model -- Plans is "what's coming"
+// (projects/project_events), Potential is "what's next." Both concepts
+// have real tables since Phase 1 but no UI until now, and deliberately
+// no seeded Topeka content: unlike Plans, there's no source document a
+// Growth Area or Potential Site is transcribed from -- they're
+// Groundbreakable's own synthesis across evidence, which means a human
+// has to actually make the call. See the admin curation pages.
+
+// A single accent for the whole Potential pillar (growth areas AND
+// potential sites) -- distinct from every Plans-side color (Activity's
+// phase colors, Opportunities' green, Catalysts' white) so "which pillar
+// am I looking at" reads at a glance regardless of zoom level.
+export const POTENTIAL_COLOR = "#818cf8"; // indigo
+
+export type GrowthAreaMomentum = "emerging" | "accelerating" | "established";
+
+export const GROWTH_AREA_MOMENTUM_LABEL: Record<GrowthAreaMomentum, string> = {
+  emerging: "Emerging",
+  accelerating: "Accelerating",
+  established: "Established",
+};
+
+export type GrowthArea = {
+  id: string;
+  market_id: string;
+  name: string;
+  momentum_state: GrowthAreaMomentum;
+  narrative: string | null; // the "why we're watching" bullets, editorial -- no source_id on this table on purpose, see the Phase 1 migration comment
+  geom: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PotentialSiteTier = "watch" | "high";
+
+export const POTENTIAL_SITE_TIER_LABEL: Record<PotentialSiteTier, string> = {
+  watch: "Watch",
+  high: "High Potential",
+};
+
+export type PotentialSite = {
+  id: string;
+  market_id: string;
+  growth_area_id: string | null;
+  title: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  tier: PotentialSiteTier;
+  development_context: string | null; // the "why this site" narrative
+  status: "active" | "archived";
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PotentialSiteWithSource = PotentialSite & { source: Source | null };
