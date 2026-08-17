@@ -97,22 +97,15 @@ export async function approveAsNewProject(formData: FormData) {
 
   const payload = (intakeRecord.raw_payload as { case_number?: string; extraction?: { zoning_to?: string; summary?: string } }) ?? {};
   const caseNumber: string | undefined = payload.case_number;
-  // Legacy category enum (projects.category, still not-null) -- every
-  // case reaching this pipeline is a land-use action; "zoning" for
-  // rezoning-prefixed cases, "planning_entitlement" for the rest
-  // (conditional use, annexation, PUD, plat, comp plan amendment).
-  const legacyCategory = caseNumber?.startsWith("Z") ? "zoning" : "planning_entitlement";
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
       market_id: intakeRecord.market_id,
       title: intakeRecord.extracted_title,
-      category: legacyCategory,
       plan_category: intakeRecord.extracted_plan_category,
       project_type: intakeRecord.extracted_project_type,
       stage: "proposed",
-      status: "proposed",
       description: payload.extraction?.summary ?? null,
       address: intakeRecord.extracted_address,
       latitude,

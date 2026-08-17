@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
-  PROJECT_CATEGORY_LABEL,
+  PLAN_CATEGORY_LABEL,
+  PROJECT_STAGE_LABEL,
   PROJECT_STATUS_LABEL,
   PROJECT_TYPE_LABEL,
   type Market,
+  type PlanCategory,
   type ProjectStatus,
   type ProjectWithSource,
 } from "@/lib/types";
@@ -12,7 +14,7 @@ import { createSignal, logStatusUpdate } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const CATEGORIES = Object.entries(PROJECT_CATEGORY_LABEL) as [string, string][];
+const PLAN_CATEGORIES = Object.entries(PLAN_CATEGORY_LABEL) as [PlanCategory, string][];
 const STATUSES = Object.entries(PROJECT_STATUS_LABEL) as [ProjectStatus, string][];
 const PROJECT_TYPES = Object.entries(PROJECT_TYPE_LABEL) as [string, string][];
 const SOURCE_TYPES = [
@@ -78,9 +80,9 @@ export default async function AdminIntelligencePage() {
           </div>
 
           <div>
-            <label className={labelClass} htmlFor="category">Category</label>
-            <select id="category" name="category" required className={inputClass}>
-              {CATEGORIES.map(([value, label]) => (
+            <label className={labelClass} htmlFor="plan_category">Plan Category</label>
+            <select id="plan_category" name="plan_category" required className={inputClass}>
+              {PLAN_CATEGORIES.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
@@ -226,11 +228,12 @@ export default async function AdminIntelligencePage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-white/40">
-                    {PROJECT_CATEGORY_LABEL[project.category]}
+                    {project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : "Uncategorized"}
                   </div>
                   <div className="font-medium text-white">{project.title}</div>
                   <div className="text-sm text-white/50">
-                    {PROJECT_STATUS_LABEL[project.status]} · {project.address ?? "no address on file"}
+                    {project.stage ? PROJECT_STAGE_LABEL[project.stage] : "No stage recorded"} ·{" "}
+                    {project.address ?? "no address on file"}
                   </div>
                   {(project.developer || project.contractor || project.investor) && (
                     <div className="text-xs text-white/35">
@@ -259,7 +262,7 @@ export default async function AdminIntelligencePage() {
                   <input type="hidden" name="project_id" value={project.id} />
                   <div>
                     <label className={labelClass}>New Status</label>
-                    <select name="status" defaultValue={project.status} className={`${inputClass} py-1.5`}>
+                    <select name="status" defaultValue={project.status ?? undefined} className={`${inputClass} py-1.5`}>
                       {STATUSES.map(([value, label]) => (
                         <option key={value} value={value}>{label}</option>
                       ))}

@@ -78,9 +78,12 @@ export type Project = {
   market_id: string;
   parcel_id: string | null;
   title: string;
-  category: ProjectCategory;
+  // Legacy -- nullable since Phase 7 Tier 3 (part 3). New rows leave these
+  // unset; plan_category/project_type/stage are the real, direct fields
+  // every write path sets going forward. Existing rows keep their values.
+  category: ProjectCategory | null;
   subcategory: string | null;
-  status: ProjectStatus;
+  status: ProjectStatus | null;
   description: string | null;
   address: string | null;
   latitude: number;

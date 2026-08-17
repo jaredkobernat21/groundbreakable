@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { ProjectStatus } from "@/lib/types";
+import { deriveStageFromStatus } from "@/lib/activityPhase";
+import type { PlanCategory, ProjectStatus } from "@/lib/types";
 
 function str(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -28,7 +29,7 @@ export async function createSignal(formData: FormData) {
 
   const marketId = str(formData, "market_id");
   const title = str(formData, "title");
-  const category = str(formData, "category");
+  const planCategory = str(formData, "plan_category") as PlanCategory | null;
   const status = str(formData, "status") as ProjectStatus | null;
   const latitude = num(formData, "latitude");
   const longitude = num(formData, "longitude");
@@ -37,8 +38,8 @@ export async function createSignal(formData: FormData) {
 
   // RLS (is_admin()) is the real gate; these just avoid a confusing
   // partial insert if a required field was skipped client-side.
-  if (!marketId || !title || !category || !status || latitude === null || longitude === null) {
-    throw new Error("Market, title, category, status, and coordinates are required.");
+  if (!marketId || !title || !planCategory || !status || latitude === null || longitude === null) {
+    throw new Error("Market, title, plan category, status, and coordinates are required.");
   }
   if (!sourceAgency || !sourceUrl) {
     throw new Error("Source agency and source URL are required — every signal must cite a source.");
@@ -64,21 +65,22 @@ export async function createSignal(formData: FormData) {
   const confidence = str(formData, "confidence") ?? "reported";
   const sourceType = str(formData, "source_type");
 
-  // plan_category/stage are deliberately not set here -- the Phase 2
-  // trigger derives both from category/status on every insert, so
-  // setting them here would just be a second, driftable copy of the
-  // same mapping. project_type and case_number have no such derivation
-  // (nothing to derive project_type from, and case_number's one-time
-  // backfill only ever covered existing rows), so they're real inputs.
+  // plan_category/stage are set directly rather than left to a DB trigger
+  // to derive from category/status -- see the Phase 7 Tier 3 migration
+  // that dropped that trigger after finding it silently overwrote
+  // explicit plan_category values set elsewhere (review-queue/actions.ts).
+  // category/status themselves are legacy and no longer written for new
+  // rows (see types.ts) -- project_events.status below is what actually
+  // carries this creation's status going forward.
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
       market_id: marketId,
       title,
-      category,
       subcategory: str(formData, "subcategory"),
-      status,
+      plan_category: planCategory,
       project_type: str(formData, "project_type"),
+      stage: deriveStageFromStatus(status),
       case_number: str(formData, "case_number"),
       description: str(formData, "description"),
       address: str(formData, "address"),
@@ -135,7 +137,7 @@ export async function logStatusUpdate(formData: FormData) {
 
   const { error: updateError } = await supabase
     .from("projects")
-    .update({ status, last_verified_at: new Date().toISOString() })
+    .update({ stage: deriveStageFromStatus(status), last_verified_at: new Date().toISOString() })
     .eq("id", projectId);
 
   if (updateError) throw new Error(updateError.message);
