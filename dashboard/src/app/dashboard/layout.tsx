@@ -28,7 +28,13 @@ export default async function DashboardLayout({
           </Link>
           <nav className="flex items-center gap-4 text-sm text-[#1c1c1c]/50">
             <Link href="/dashboard" className="hover:text-[#1c1c1c]">
-              Home
+              Overview
+            </Link>
+            <Link href="/dashboard/map" className="hover:text-[#1c1c1c]">
+              Map
+            </Link>
+            <Link href="/dashboard/timeline" className="hover:text-[#1c1c1c]">
+              Timeline
             </Link>
             <Link href="/dashboard/projects" className="hover:text-[#1c1c1c]">
               Projects

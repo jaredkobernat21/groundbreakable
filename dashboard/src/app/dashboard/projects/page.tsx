@@ -128,7 +128,7 @@ export default async function ProjectsPage({
       )}
 
       <Link
-        href={`/dashboard?market=${market.slug}&category=activity`}
+        href={`/dashboard/map?market=${market.slug}&category=activity`}
         className="inline-block text-sm text-[#1c1c1c]/50 underline decoration-[#1c1c1c]/20 underline-offset-2 hover:text-[#1c1c1c]"
       >
         View on the map →

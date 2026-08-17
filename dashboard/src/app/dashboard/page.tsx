@@ -4,16 +4,8 @@ import CatalystSpotlight from "@/components/CatalystSpotlight";
 import AskBar from "@/components/AskBar";
 import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
 import { selectMarket } from "@/lib/selectMarket";
-import type {
-  CatalystWithSource,
-  Market,
-  OpportunityWithSource,
-  OpportunityZoneWithSource,
-  Parcel,
-  ProjectUpdateWithProject,
-  ProjectWithSource,
-  UpcomingDecisionWithSource,
-} from "@/lib/types";
+import { getMapLayerData } from "@/lib/queries/mapLayers";
+import type { Market, ProjectUpdateWithProject, UpcomingDecisionWithSource } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -52,59 +44,28 @@ export default async function DashboardPage({
       ? { type: selectType, id: searchParams.select }
       : null;
 
-  const [
-    { data: projects },
-    { data: parcels },
-    { data: opportunities },
-    { data: catalysts },
-    { data: opportunityZones },
-    { data: recentActivity },
-    { data: decisions },
-  ] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("date_updated", { ascending: false })
-      .returns<ProjectWithSource[]>(),
-    supabase.from("parcels").select("*").eq("market_id", market.id).returns<Parcel[]>(),
-    supabase
-      .from("opportunities")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<OpportunityWithSource[]>(),
-    supabase
-      .from("catalysts")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<CatalystWithSource[]>(),
-    supabase
-      .from("opportunity_zones")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .order("last_verified_at", { ascending: false })
-      .returns<OpportunityZoneWithSource[]>(),
-    // Recent Activity news headlines -- project_updates is already an
-    // append-only log of admin-made status changes, so News needs no
-    // separate data-entry step of its own.
-    supabase
-      .from("project_updates")
-      .select("*, project:projects!inner(id, title, category, market_id)")
-      .eq("project.market_id", market.id)
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<ProjectUpdateWithProject[]>(),
-    supabase
-      .from("upcoming_decisions")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .eq("status", "scheduled")
-      .order("decision_date", { ascending: true })
-      .limit(6)
-      .returns<UpcomingDecisionWithSource[]>(),
-  ]);
+  const [{ projects, parcels, opportunities, catalysts, opportunityZones }, { data: recentActivity }, { data: decisions }] =
+    await Promise.all([
+      getMapLayerData(supabase, market.id),
+      // Recent Activity news headlines -- project_updates is already an
+      // append-only log of admin-made status changes, so News needs no
+      // separate data-entry step of its own.
+      supabase
+        .from("project_updates")
+        .select("*, project:projects!inner(id, title, category, market_id)")
+        .eq("project.market_id", market.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+        .returns<ProjectUpdateWithProject[]>(),
+      supabase
+        .from("upcoming_decisions")
+        .select("*, source:sources(*)")
+        .eq("market_id", market.id)
+        .eq("status", "scheduled")
+        .order("decision_date", { ascending: true })
+        .limit(6)
+        .returns<UpcomingDecisionWithSource[]>(),
+    ]);
 
   // New Opportunities news headlines -- newest-added first, reusing the
   // same fetch as the map (no extra query needed).
