@@ -3,8 +3,8 @@ import {
   STACKED_OPPORTUNITY_GLOW_COLOR,
   type ActivityPhase,
   type OpportunityType,
-  type ProjectCategory,
-  type ProjectStatus,
+  type PlanCategory,
+  type ProjectStage,
 } from "./types";
 
 // Small hand-authored line-icon set (24x24 viewBox, stroke-based) shared by
@@ -49,21 +49,17 @@ export const PROJECT_ICON_PATHS: Record<ProjectIconKey, string[]> = {
 
 // status takes priority for the two states the spec calls out explicitly
 // (a permit issued, active construction); category decides the rest.
-export function resolveProjectIcon(category: ProjectCategory, status: ProjectStatus): ProjectIconKey {
-  if (status === "permitted") return "document";
-  if (status === "under_construction") return "hammer";
-  switch (category) {
-    case "zoning":
+export function resolveProjectIcon(planCategory: PlanCategory | null, stage: ProjectStage | null): ProjectIconKey {
+  if (stage === "permitting") return "document";
+  if (stage === "construction") return "hammer";
+  switch (planCategory) {
+    case "land_use":
       return "grid";
     case "infrastructure":
       return "road";
-    case "planning_entitlement":
-      return "clipboard";
-    case "land_transaction":
-      return "landTransfer";
-    case "business_announcement":
+    case "public_investment":
       return "briefcase";
-    case "active_development":
+    case "development":
     default:
       return "building";
   }

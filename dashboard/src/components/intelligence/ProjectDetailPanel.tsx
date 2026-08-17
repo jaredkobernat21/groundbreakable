@@ -3,8 +3,8 @@ import {
   ACTIVITY_PHASE_LABEL,
   OPPORTUNITIES_COLOR,
   OPPORTUNITY_TYPE_LABEL,
-  PROJECT_CATEGORY_LABEL,
-  PROJECT_STATUS_LABEL,
+  PLAN_CATEGORY_LABEL,
+  PROJECT_STAGE_LABEL,
   primarySignal,
   type OpportunityWithSource,
   type ProjectWithSource,
@@ -30,7 +30,7 @@ export default function ProjectDetailPanel({
   onSelectOpportunity: (id: string) => void;
   onClose: () => void;
 }) {
-  const phase = resolveActivityPhase(project.status, project.date_updated);
+  const phase = resolveActivityPhase(project.stage, project.date_updated);
   const color = phase ? ACTIVITY_PHASE_COLOR[phase] : ACTIVITY_PHASE_COLOR.completed;
   // Developer/Contractor get their own highlighted block (not the generic
   // facts grid below) only for planning/active projects -- a completed
@@ -63,19 +63,21 @@ export default function ProjectDetailPanel({
         <span
           className="flex h-3 w-3 items-center justify-center"
           dangerouslySetInnerHTML={{
-            __html: projectIconSvgMarkup(resolveProjectIcon(project.category, project.status), {
+            __html: projectIconSvgMarkup(resolveProjectIcon(project.plan_category, project.stage), {
               size: 12,
               stroke: color,
               strokeWidth: 2,
             }),
           }}
         />
-        {PROJECT_CATEGORY_LABEL[project.category]}
+        {project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : "Uncategorized"}
         {phase && <span className="text-white/40">· {ACTIVITY_PHASE_LABEL[phase]}</span>}
       </div>
 
       <h2 className="pr-6 text-lg font-semibold leading-snug text-white">{project.title}</h2>
-      <div className="mt-1 text-sm text-white/50">{PROJECT_STATUS_LABEL[project.status]}</div>
+      <div className="mt-1 text-sm text-white/50">
+        {project.stage ? PROJECT_STAGE_LABEL[project.stage] : "No stage recorded"}
+      </div>
       {project.address && <div className="mt-1 text-sm text-white/40">{project.address}</div>}
 
       {project.description && (

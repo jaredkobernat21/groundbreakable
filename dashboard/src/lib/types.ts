@@ -97,6 +97,11 @@ export type Project = {
   confidence: Confidence;
   last_verified_at: string;
   created_at: string;
+  // Added in Phase 1 -- see ProjectStage below for why plan_category/stage
+  // are coarser than category/status rather than a 1:1 rename.
+  plan_category: PlanCategory | null;
+  project_type: ProjectType | null;
+  stage: ProjectStage | null;
 };
 
 // Joined shape returned by the development-map query (project + its source).
@@ -446,10 +451,19 @@ export const PROJECT_TYPE_LABEL: Record<ProjectType, string> = {
 
 // The simplified rollup stage (§4 of the architecture review) -- separate
 // from the detailed ProjectStatus enum above, which project_events keeps
-// as the fine-grained history. on_hold/cancelled projects have no stage
-// (null) -- they've fallen outside the linear progression, same as they
-// already fall outside every ActivityPhase view today.
-export type ProjectStage = "proposed" | "review_planning" | "approved" | "permitting" | "construction" | "complete";
+// as the fine-grained history. Includes on_hold/cancelled (added Phase 7,
+// Tier 3) so stage can fully replace status as the "current state" field
+// -- resolveActivityPhase excludes both from every phase view, same as
+// it always excluded status on_hold/cancelled.
+export type ProjectStage =
+  | "proposed"
+  | "review_planning"
+  | "approved"
+  | "permitting"
+  | "construction"
+  | "complete"
+  | "on_hold"
+  | "cancelled";
 
 export const PROJECT_STAGE_LABEL: Record<ProjectStage, string> = {
   proposed: "Proposed",
@@ -458,14 +472,8 @@ export const PROJECT_STAGE_LABEL: Record<ProjectStage, string> = {
   permitting: "Permitting",
   construction: "Construction",
   complete: "Complete",
-};
-
-// projects.plan_category/project_type/stage are the new columns --
-// nullable everywhere until every write path sets them explicitly.
-export type ProjectPhase2Fields = {
-  plan_category: PlanCategory | null;
-  project_type: ProjectType | null;
-  stage: ProjectStage | null;
+  on_hold: "On Hold",
+  cancelled: "Cancelled",
 };
 
 export type Company = {
@@ -520,9 +528,9 @@ export type ProjectEvent = {
 
 export type ProjectEventWithSource = ProjectEvent & { source: Source | null };
 
-// Joined shape for a Timeline-style feed -- mirrors ProjectUpdateWithProject.
+// Joined shape for a Timeline-style feed.
 export type ProjectEventWithProject = ProjectEvent & {
-  project: Pick<Project, "id" | "title" | "market_id"> & Partial<ProjectPhase2Fields>;
+  project: Pick<Project, "id" | "title" | "market_id" | "plan_category" | "project_type" | "stage">;
 };
 
 // Replaces opportunities.signals[] -- one row per detection instead of

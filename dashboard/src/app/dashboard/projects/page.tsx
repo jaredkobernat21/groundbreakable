@@ -8,10 +8,8 @@ import {
   ACTIVITY_PHASE_COLOR,
   ACTIVITY_PHASE_LABEL,
   PLAN_CATEGORY_LABEL,
-  PROJECT_CATEGORY_LABEL,
   type Market,
   type PlanCategory,
-  type ProjectPhase2Fields,
   type ProjectWithSource,
 } from "@/lib/types";
 
@@ -57,10 +55,10 @@ export default async function ProjectsPage({
     .select("*, source:sources(*)")
     .eq("market_id", market.id)
     .order("date_updated", { ascending: false })
-    .returns<(ProjectWithSource & ProjectPhase2Fields)[]>();
+    .returns<ProjectWithSource[]>();
 
   const activeProjects = (projects ?? []).filter((p) => {
-    const phase = resolveActivityPhase(p.status, p.date_updated);
+    const phase = resolveActivityPhase(p.stage, p.date_updated);
     if (phase !== "planning" && phase !== "active") return false;
     return activeCategory === "all" || p.plan_category === activeCategory;
   });
@@ -110,7 +108,7 @@ export default async function ProjectsPage({
             </thead>
             <tbody>
               {activeProjects.map((project) => {
-                const phase = resolveActivityPhase(project.status, project.date_updated)!;
+                const phase = resolveActivityPhase(project.stage, project.date_updated)!;
                 const color = ACTIVITY_PHASE_COLOR[phase];
                 return (
                   <tr key={project.id} className="border-b border-[#1c1c1c]/5 last:border-0">
@@ -122,7 +120,7 @@ export default async function ProjectsPage({
                         {project.title}
                       </Link>
                       <div className="text-xs text-[#1c1c1c]/40">
-                        {project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : PROJECT_CATEGORY_LABEL[project.category]}
+                        {project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : "—"}
                       </div>
                     </td>
                     <td className="px-4 py-3">

@@ -6,8 +6,8 @@ import type { GeoJSONSource, Map as MapboxMap, Marker } from "mapbox-gl";
 import {
   ACTIVITY_PHASE_COLOR,
   OPPORTUNITY_TYPE_LABEL,
-  PROJECT_CATEGORY_LABEL,
-  PROJECT_STATUS_LABEL,
+  PLAN_CATEGORY_LABEL,
+  PROJECT_STAGE_LABEL,
   CATALYSTS_COLOR,
   OPPORTUNITIES_COLOR,
   POTENTIAL_COLOR,
@@ -482,7 +482,7 @@ export default function DevelopmentMap({
       // whole map" is a reachable default.
       if (showActivity) {
         projects.forEach((project) => {
-          const phase = resolveActivityPhase(project.status, project.date_updated);
+          const phase = resolveActivityPhase(project.stage, project.date_updated);
           if (!phase) return; // on_hold/cancelled/stale-completed -- shouldn't reach here if pre-filtered, but stay defensive
           const color = ACTIVITY_PHASE_COLOR[phase];
 
@@ -497,7 +497,14 @@ export default function DevelopmentMap({
           el.innerHTML = `
             <div class="roq-marker-card">
               <span class="roq-marker-card-title">${escapeHtml(project.title)}</span>
-              <span class="roq-marker-card-sub">${escapeHtml(PROJECT_CATEGORY_LABEL[project.category])} · ${escapeHtml(PROJECT_STATUS_LABEL[project.status])}</span>
+              <span class="roq-marker-card-sub">${escapeHtml(
+                [
+                  project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : null,
+                  project.stage ? PROJECT_STAGE_LABEL[project.stage] : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              )}</span>
               ${metric ? `<span class="roq-marker-card-metric" style="color:${color}">${escapeHtml(metric)}</span>` : ""}
             </div>
             <div class="roq-marker-line" style="background:${color}"></div>
@@ -615,7 +622,7 @@ export default function DevelopmentMap({
       projects
         .filter((p) => p.parcel_id)
         .map((p) => {
-          const phase = resolveActivityPhase(p.status, p.date_updated);
+          const phase = resolveActivityPhase(p.stage, p.date_updated);
           return [p.parcel_id as string, phase ? ACTIVITY_PHASE_COLOR[phase] : DEFAULT_PARCEL_COLOR];
         })
     );

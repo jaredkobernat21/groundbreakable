@@ -8,7 +8,6 @@ import type {
   ProjectEventWithProject,
   ProjectEventWithSource,
   ProjectPartyWithCompany,
-  ProjectPhase2Fields,
   ProjectWithSource,
   SignalWithSource,
   ZoningLandUseWithSource,
@@ -32,7 +31,7 @@ export async function getProjectsWithParties(supabase: SupabaseClient, marketId:
     .select("*, source:sources(*), parties:project_parties(*, company:companies(*))")
     .eq("market_id", marketId)
     .order("date_updated", { ascending: false })
-    .returns<(ProjectWithSource & ProjectPhase2Fields & { parties: ProjectPartyWithCompany[] })[]>();
+    .returns<(ProjectWithSource & { parties: ProjectPartyWithCompany[] })[]>();
 }
 
 // Powers a single project's history section on ProjectDetailPanel.
@@ -83,7 +82,7 @@ export async function getProjectEventsFeed(
   return query.returns<ProjectEventWithProject[]>();
 }
 
-export type ProjectDetail = ProjectWithSource & ProjectPhase2Fields & { parties: ProjectPartyWithCompany[]; market: Market };
+export type ProjectDetail = ProjectWithSource & { parties: ProjectPartyWithCompany[]; market: Market };
 
 // The Project detail page's (Phase 4) primary fetch: one project plus
 // its source, parties/companies, and market. RLS (has_market_access via

@@ -6,8 +6,9 @@ import { resolveActivityPhase } from "@/lib/activityPhase";
 import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
 import { eventTypeLabel } from "@/lib/projectEventDisplay";
 import {
-  PROJECT_CATEGORY_LABEL,
-  PROJECT_STATUS_LABEL,
+  PLAN_CATEGORY_LABEL,
+  PROJECT_STAGE_LABEL,
+  PROJECT_TYPE_LABEL,
   type CatalystWithSource,
   type Market,
   type OpportunityWithSource,
@@ -199,8 +200,15 @@ function buildContext(
   const projectLines = projects.map((p, i) => {
     const key = `P${i + 1}`;
     keyMap[key] = { type: "project", id: p.id };
-    const phase = resolveActivityPhase(p.status, p.date_updated);
-    return `- [${key}] "${p.title}" (${PROJECT_CATEGORY_LABEL[p.category]}, ${PROJECT_STATUS_LABEL[p.status]}${phase ? `, phase: ${phase}` : ""})${
+    const phase = resolveActivityPhase(p.stage, p.date_updated);
+    const categorization = [
+      p.plan_category ? PLAN_CATEGORY_LABEL[p.plan_category] : null,
+      p.project_type ? PROJECT_TYPE_LABEL[p.project_type] : null,
+      p.stage ? PROJECT_STAGE_LABEL[p.stage] : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    return `- [${key}] "${p.title}" (${categorization}${phase ? `, phase: ${phase}` : ""})${
       p.address ? ` at ${p.address}` : ""
     }. Developer: ${p.developer ?? "unknown"}. Contractor: ${p.contractor ?? "not yet assigned"}. Investor: ${
       p.investor ?? "unknown"

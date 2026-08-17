@@ -164,7 +164,7 @@ export default function DevelopmentIntelligenceView({
   // on_hold/cancelled/stale-completed, which resolveActivityPhase already
   // filters out.
   const phaseProjects = useMemo(() => {
-    return projects.filter((p) => resolveActivityPhase(p.status, p.date_updated) !== null);
+    return projects.filter((p) => resolveActivityPhase(p.stage, p.date_updated) !== null);
   }, [projects]);
 
   // Legend breakdown now mirrors what's actually drawn on the map: phase
@@ -172,7 +172,7 @@ export default function DevelopmentIntelligenceView({
   const phaseCounts = useMemo(() => {
     const result: Partial<Record<ActivityPhase, number>> = {};
     phaseProjects.forEach((p) => {
-      const phase = resolveActivityPhase(p.status, p.date_updated);
+      const phase = resolveActivityPhase(p.stage, p.date_updated);
       if (phase) result[phase] = (result[phase] ?? 0) + 1;
     });
     return result;

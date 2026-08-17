@@ -7,7 +7,6 @@ import { formatCurrency, formatDate, formatRelativeVerified } from "@/lib/format
 import {
   PARTY_ROLE_LABEL,
   PLAN_CATEGORY_LABEL,
-  PROJECT_CATEGORY_LABEL,
   PROJECT_STAGE_LABEL,
   PROJECT_STATUS_LABEL,
   PROJECT_TYPE_LABEL,
@@ -50,6 +49,12 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   const eventGroups = groupEventsByDate(events ?? []);
   const partyGroups = groupPartiesByRole(project.parties);
+
+  // events is already ordered newest-first (getProjectEvents), so its
+  // first status-bearing row is the project's current granular status --
+  // no separate query needed, and it stays fresh as new events land
+  // instead of relying on a status cache column on projects itself.
+  const currentStatus = events?.find((e) => e.status)?.status ?? null;
 
   // Documents/Sources (§15) -- the project's own citation plus every
   // distinct source an event has added since, deduplicated by source id
@@ -100,7 +105,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         </div>
         <h1 className="mt-2 text-2xl font-semibold text-[#1c1c1c]">{project.title}</h1>
         <p className="mt-1 text-sm text-[#1c1c1c]/50">
-          {PROJECT_CATEGORY_LABEL[project.category]} · {PROJECT_STATUS_LABEL[project.status]}
+          {currentStatus ? PROJECT_STATUS_LABEL[currentStatus] : "No status recorded"}
           {project.address ? ` · ${project.address}` : ""}
         </p>
       </div>
@@ -187,7 +192,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                     >
                       <span className="truncate font-medium">{nearby.title}</span>
                       <span className="shrink-0 text-[11px] uppercase tracking-wide text-[#1c1c1c]/35">
-                        {PROJECT_CATEGORY_LABEL[nearby.category]}
+                        {nearby.plan_category ? PLAN_CATEGORY_LABEL[nearby.plan_category] : "—"}
                       </span>
                     </Link>
                   </li>
