@@ -5,7 +5,8 @@ import NewsSection from "@/components/NewsSection";
 import CatalystSpotlight from "@/components/CatalystSpotlight";
 import DevelopmentIntelligenceView from "@/components/intelligence/DevelopmentIntelligenceView";
 import { getMapLayerData } from "@/lib/queries/mapLayers";
-import type { Market, ProjectUpdateWithProject, UpcomingDecisionWithSource } from "@/lib/types";
+import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
+import type { Market, UpcomingDecisionWithSource } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -72,13 +73,7 @@ export default async function TopekaPreviewPage() {
     { data: decisions },
   ] = await Promise.all([
     getMapLayerData(supabase, market.id),
-    supabase
-      .from("project_updates")
-      .select("*, project:projects!inner(id, title, category, market_id)")
-      .eq("project.market_id", market.id)
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<ProjectUpdateWithProject[]>(),
+    getRecentProjectEvents(supabase, market.id, 5),
     supabase
       .from("upcoming_decisions")
       .select("*, source:sources(*)")

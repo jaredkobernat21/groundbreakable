@@ -3,13 +3,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { selectMarket } from "@/lib/selectMarket";
 import { resolveActivityPhase } from "@/lib/activityPhase";
+import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
+import { eventTypeLabel } from "@/lib/projectEventDisplay";
 import {
   PROJECT_CATEGORY_LABEL,
   PROJECT_STATUS_LABEL,
   type CatalystWithSource,
   type Market,
   type OpportunityWithSource,
-  type ProjectUpdateWithProject,
+  type ProjectEventWithProject,
   type ProjectWithSource,
   type UpcomingDecisionWithSource,
 } from "@/lib/types";
@@ -77,13 +79,7 @@ export async function POST(request: Request) {
       supabase.from("projects").select("*").eq("market_id", market.id).returns<ProjectWithSource[]>(),
       supabase.from("opportunities").select("*").eq("market_id", market.id).returns<OpportunityWithSource[]>(),
       supabase.from("catalysts").select("*").eq("market_id", market.id).returns<CatalystWithSource[]>(),
-      supabase
-        .from("project_updates")
-        .select("*, project:projects!inner(id, title, category, market_id)")
-        .eq("project.market_id", market.id)
-        .order("created_at", { ascending: false })
-        .limit(20)
-        .returns<ProjectUpdateWithProject[]>(),
+      getRecentProjectEvents(supabase, market.id, 20),
       supabase
         .from("upcoming_decisions")
         .select("*")
@@ -195,7 +191,7 @@ function buildContext(
   projects: ProjectWithSource[],
   opportunities: OpportunityWithSource[],
   catalysts: CatalystWithSource[],
-  recentUpdates: ProjectUpdateWithProject[],
+  recentUpdates: ProjectEventWithProject[],
   decisions: UpcomingDecisionWithSource[]
 ): { context: string; keyMap: Record<string, { type: "project" | "opportunity"; id: string }> } {
   const keyMap: Record<string, { type: "project" | "opportunity"; id: string }> = {};
@@ -222,7 +218,7 @@ function buildContext(
   );
 
   const updateLines = recentUpdates.map(
-    (u) => `- ${u.occurred_on}: "${u.project?.title ?? "unknown project"}" → ${u.status}${u.note ? ` (${u.note})` : ""}`
+    (u) => `- ${u.occurred_on}: "${u.project?.title ?? "unknown project"}" → ${eventTypeLabel(u.event_type)}${u.note ? ` (${u.note})` : ""}`
   );
 
   const decisionLines = decisions.map(

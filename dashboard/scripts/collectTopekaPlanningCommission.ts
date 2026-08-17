@@ -158,6 +158,11 @@ async function extractWithClaude(anthropic: Anthropic, item: ArchiveItem): Promi
     // Deterministic case-number prefix always wins over the model's guess.
     const prefix = item.caseNumber.match(/^[A-Z]+/)?.[0];
     if (prefix && EVENT_TYPE_BY_PREFIX[prefix]) parsed.event_type = EVENT_TYPE_BY_PREFIX[prefix];
+    // Despite the prompt asking for a single string, the model
+    // occasionally returns an array (seen live: ["industrial"]) --
+    // coerce rather than let a mismatched type land in a text column.
+    if (Array.isArray(parsed.project_type)) parsed.project_type = parsed.project_type[0] ?? null;
+    if (!PROJECT_TYPES.includes(parsed.project_type)) parsed.project_type = null;
     return parsed as Extraction;
   } catch {
     console.warn(`  ! Claude extraction returned non-JSON for ${item.caseNumber}, storing raw text only`);

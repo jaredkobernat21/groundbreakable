@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   PROJECT_CATEGORY_LABEL,
   PROJECT_STATUS_LABEL,
+  PROJECT_TYPE_LABEL,
   type Market,
   type ProjectStatus,
   type ProjectWithSource,
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 const CATEGORIES = Object.entries(PROJECT_CATEGORY_LABEL) as [string, string][];
 const STATUSES = Object.entries(PROJECT_STATUS_LABEL) as [ProjectStatus, string][];
+const PROJECT_TYPES = Object.entries(PROJECT_TYPE_LABEL) as [string, string][];
 const SOURCE_TYPES = [
   ["agency_document", "Agency Document"],
   ["agency_gis", "Agency GIS / Parcel Record"],
@@ -86,6 +88,20 @@ export default async function AdminIntelligencePage() {
           <div>
             <label className={labelClass} htmlFor="subcategory">Subcategory (optional)</label>
             <input id="subcategory" name="subcategory" className={inputClass} placeholder="e.g. multifamily, rezoning R-1 to C-2" />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="project_type">Project Type (optional)</label>
+            <select id="project_type" name="project_type" defaultValue="" className={inputClass}>
+              <option value="">Unknown</option>
+              {PROJECT_TYPES.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="case_number">Case / Application Number (optional)</label>
+            <input id="case_number" name="case_number" className={inputClass} placeholder="e.g. Z26/10" />
           </div>
 
           <div>

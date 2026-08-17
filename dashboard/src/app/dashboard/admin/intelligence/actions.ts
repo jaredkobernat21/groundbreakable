@@ -14,6 +14,15 @@ function num(formData: FormData, key: string): number | null {
   return value !== null ? Number(value) : null;
 }
 
+// A source citing its own agency's records is about as primary as
+// evidence gets; a press release or news writeup is secondary even when
+// reliable. "other" stays unclassified rather than guessed.
+function sourceQuality(sourceType: string | null): "primary_government" | "secondary" | null {
+  if (sourceType === "agency_document" || sourceType === "agency_gis" || sourceType === "public_record") return "primary_government";
+  if (sourceType === "press_release" || sourceType === "news") return "secondary";
+  return null;
+}
+
 export async function createSignal(formData: FormData) {
   const supabase = createClient();
 
@@ -52,7 +61,15 @@ export async function createSignal(formData: FormData) {
   }
 
   const dateAnnounced = str(formData, "date_announced");
+  const confidence = str(formData, "confidence") ?? "reported";
+  const sourceType = str(formData, "source_type");
 
+  // plan_category/stage are deliberately not set here -- the Phase 2
+  // trigger derives both from category/status on every insert, so
+  // setting them here would just be a second, driftable copy of the
+  // same mapping. project_type and case_number have no such derivation
+  // (nothing to derive project_type from, and case_number's one-time
+  // backfill only ever covered existing rows), so they're real inputs.
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
@@ -61,6 +78,8 @@ export async function createSignal(formData: FormData) {
       category,
       subcategory: str(formData, "subcategory"),
       status,
+      project_type: str(formData, "project_type"),
+      case_number: str(formData, "case_number"),
       description: str(formData, "description"),
       address: str(formData, "address"),
       latitude,
@@ -73,7 +92,7 @@ export async function createSignal(formData: FormData) {
       contractor: str(formData, "contractor"),
       date_announced: dateAnnounced,
       source_id: source.id,
-      confidence: str(formData, "confidence") ?? "reported",
+      confidence,
     })
     .select("id")
     .single();
@@ -82,15 +101,24 @@ export async function createSignal(formData: FormData) {
     throw new Error(projectError?.message ?? "Failed to save signal.");
   }
 
-  await supabase.from("project_updates").insert({
+  // Writes directly to project_events now instead of project_updates --
+  // Timeline and the Project detail page have read project_events since
+  // Phase 3/4, so writing anywhere else would mean this signal's own
+  // creation never shows up in its own history there.
+  await supabase.from("project_events").insert({
     project_id: project.id,
+    event_type: status,
     status,
     note: "Signal created.",
     source_id: source.id,
     occurred_on: dateAnnounced ?? new Date().toISOString().slice(0, 10),
+    confidence,
+    source_quality: sourceQuality(sourceType),
+    verification_status: "human_reviewed",
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/timeline");
   revalidatePath("/dashboard/admin/intelligence");
 }
 
@@ -112,15 +140,19 @@ export async function logStatusUpdate(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
-  const { error: historyError } = await supabase.from("project_updates").insert({
+  const { error: historyError } = await supabase.from("project_events").insert({
     project_id: projectId,
+    event_type: status,
     status,
     note: str(formData, "note"),
     occurred_on: occurredOn,
+    confidence: "reported",
+    verification_status: "human_reviewed",
   });
 
   if (historyError) throw new Error(historyError.message);
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/timeline");
   revalidatePath("/dashboard/admin/intelligence");
 }

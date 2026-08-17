@@ -4,15 +4,15 @@ import { useState } from "react";
 import {
   DECISION_TYPE_LABEL,
   OPPORTUNITY_TYPE_LABEL,
-  PROJECT_STATUS_LABEL,
   type OpportunityWithSource,
-  type ProjectUpdateWithProject,
+  type ProjectEventWithProject,
   type UpcomingDecisionWithSource,
 } from "@/lib/types";
 import { formatDate, formatRelativeVerified } from "@/lib/format";
+import { eventTypeLabel } from "@/lib/projectEventDisplay";
 
-function activityHeadline(update: ProjectUpdateWithProject) {
-  return `${PROJECT_STATUS_LABEL[update.status]}: ${update.project?.title ?? "Untitled project"}`;
+function activityHeadline(update: ProjectEventWithProject) {
+  return `${eventTypeLabel(update.event_type)}: ${update.project?.title ?? "Untitled project"}`;
 }
 
 function opportunityHeadline(opp: OpportunityWithSource) {
@@ -28,7 +28,7 @@ export default function NewsSection({
   newOpportunities,
   decisions,
 }: {
-  recentActivity: ProjectUpdateWithProject[];
+  recentActivity: ProjectEventWithProject[];
   newOpportunities: OpportunityWithSource[];
   decisions: UpcomingDecisionWithSource[];
 }) {

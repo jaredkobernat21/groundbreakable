@@ -5,7 +5,8 @@ import AskBar from "@/components/AskBar";
 import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
 import { selectMarket } from "@/lib/selectMarket";
 import { getMapLayerData } from "@/lib/queries/mapLayers";
-import type { Market, ProjectUpdateWithProject, UpcomingDecisionWithSource } from "@/lib/types";
+import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
+import type { Market, UpcomingDecisionWithSource } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -50,16 +51,11 @@ export default async function DashboardPage({
     { data: decisions },
   ] = await Promise.all([
       getMapLayerData(supabase, market.id),
-      // Recent Activity news headlines -- project_updates is already an
-      // append-only log of admin-made status changes, so News needs no
-      // separate data-entry step of its own.
-      supabase
-        .from("project_updates")
-        .select("*, project:projects!inner(id, title, category, market_id)")
-        .eq("project.market_id", market.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
-        .returns<ProjectUpdateWithProject[]>(),
+      // Recent Activity news headlines -- project_events is already an
+      // append-only log (admin-made status changes, collection-pipeline
+      // discoveries, everything), so News needs no separate data-entry
+      // step of its own. Same rows Timeline reads, just the latest 5.
+      getRecentProjectEvents(supabase, market.id, 5),
       supabase
         .from("upcoming_decisions")
         .select("*, source:sources(*)")
