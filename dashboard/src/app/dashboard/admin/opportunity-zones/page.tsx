@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Market, OpportunityZoneWithSource } from "@/lib/types";
+import type { Market, ZoningLandUseWithSource } from "@/lib/types";
+import { zoningLandUseAsOpportunityZone } from "@/lib/queries/planIntelligence";
 import { createOpportunityZone } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +24,16 @@ export default async function AdminOpportunityZonesPage() {
     redirect("/dashboard");
   }
 
-  const [{ data: markets }, { data: zones }] = await Promise.all([
+  const [{ data: markets }, { data: zoningLandUse }] = await Promise.all([
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
     supabase
-      .from("opportunity_zones")
+      .from("zoning_land_use")
       .select("*, source:sources(*)")
+      .eq("layer_type", "current_zoning")
       .order("last_verified_at", { ascending: false })
-      .returns<OpportunityZoneWithSource[]>(),
+      .returns<ZoningLandUseWithSource[]>(),
   ]);
+  const zones = zoningLandUseAsOpportunityZone(zoningLandUse ?? []);
 
   return (
     <div className="space-y-10">
@@ -140,10 +143,10 @@ export default async function AdminOpportunityZonesPage() {
 
       <section>
         <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-white/60">
-          All Opportunity Zones ({(zones ?? []).length})
+          All Opportunity Zones ({zones.length})
         </h2>
         <div className="space-y-3">
-          {(zones ?? []).map((zone) => (
+          {zones.map((zone) => (
             <div key={zone.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
               <div className="text-xs uppercase tracking-wide text-white/40">{zone.zoning_district ?? "No district on file"}</div>
               <div className="font-medium text-white">{zone.title}</div>
@@ -160,7 +163,7 @@ export default async function AdminOpportunityZonesPage() {
               )}
             </div>
           ))}
-          {(zones ?? []).length === 0 && (
+          {zones.length === 0 && (
             <p className="text-sm text-white/40">No opportunity zones entered yet.</p>
           )}
         </div>

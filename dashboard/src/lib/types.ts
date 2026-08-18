@@ -349,6 +349,12 @@ export type CatalystWithSource = Catalyst & { source: Source | null };
 // alongside the point-based `Opportunity` above. Same source-citation
 // discipline, admin-traced boundary (like a Catalyst), not an imported GIS
 // layer.
+//
+// No longer a real table (Phase 7, Tier 3 dropped opportunity_zones once
+// zoning_land_use fully absorbed it) -- this is now purely the shape
+// zoningLandUseAsOpportunityZone() (src/lib/queries/planIntelligence.ts)
+// reshapes zoning_land_use rows into, so DevelopmentMap and
+// OpportunityZoneDetailPanel didn't need to change field names.
 
 export type OpportunityZone = {
   id: string;
