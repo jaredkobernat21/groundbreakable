@@ -47,13 +47,31 @@ export async function approveAsEvent(formData: FormData) {
   if (intakeError || !intakeRecord) throw new Error(intakeError?.message ?? "Intake record not found.");
 
   const extraction = (intakeRecord.raw_payload as { extraction?: { summary?: string } } | null)?.extraction;
-  const sourceMeetingDate = (intakeRecord.raw_payload as { extraction?: unknown; item_url?: string } | null) ?? {};
+
+  // occurred_on should be when the real-world event happened (the agenda
+  // item's own meeting date), not whenever an admin happens to click
+  // Approve -- the collection script already parses this onto the
+  // source's published_date (see collectTopekaPlanningCommission.ts's
+  // meetingDate), so read it back from there rather than defaulting to
+  // today. Without this, a case discovered weeks after its actual
+  // hearing (as review-queue items often are) shows up on the Timeline
+  // dated today, which can sort it after -- and so read as reversing --
+  // a status the project already reached before that date.
+  let occurredOn = new Date().toISOString().slice(0, 10);
+  if (intakeRecord.source_id) {
+    const { data: source } = await supabase
+      .from("sources")
+      .select("published_date")
+      .eq("id", intakeRecord.source_id)
+      .single();
+    if (source?.published_date) occurredOn = source.published_date;
+  }
 
   const { error: eventError } = await supabase.from("project_events").insert({
     project_id: projectId,
     event_type: intakeRecord.extracted_event_type ?? "planning_commission_scheduled",
     note: extraction?.summary ?? intakeRecord.extracted_title,
-    occurred_on: new Date().toISOString().slice(0, 10),
+    occurred_on: occurredOn,
     source_id: intakeRecord.source_id,
     confidence: "reported",
     source_quality: "primary_government",
