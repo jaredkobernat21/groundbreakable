@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OPPORTUNITY_TYPE_LABEL, type Market, type OpportunityWithSource } from "@/lib/types";
-import { getAllActiveSignals, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
+import { getAllActiveSignals, attachLiveOpportunitySignals } from "@/lib/queries/planIntelligence";
 import { createOpportunity } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export default async function AdminOpportunitiesPage() {
     getAllActiveSignals(supabase),
   ]);
 
-  const hydratedOpportunities = hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []);
+  const hydratedOpportunities = attachLiveOpportunitySignals(opportunities ?? [], activeSignals ?? []);
 
   return (
     <div className="space-y-10">

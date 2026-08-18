@@ -254,6 +254,10 @@ export type Opportunity = {
   address: string;
   latitude: number;
   longitude: number;
+  // Not a real column (Phase 7, Tier 3 dropped opportunities.signals[]
+  // once the `signals` table fully absorbed it) -- every raw fetch of
+  // `opportunities` must be passed through attachLiveOpportunitySignals()
+  // (src/lib/queries/planIntelligence.ts) before this field is trustworthy.
   signals: OpportunityType[];
   listing_status: string | null;
   owner_name: string | null;

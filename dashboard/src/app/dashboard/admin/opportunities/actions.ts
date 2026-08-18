@@ -61,39 +61,68 @@ export async function createOpportunity(formData: FormData) {
         .filter(Boolean)
     : null;
 
-  const { error: opportunityError } = await supabase.from("opportunities").insert({
-    market_id: marketId,
-    address,
-    latitude,
-    longitude,
-    signals,
-    listing_status: str(formData, "listing_status"),
-    owner_name: str(formData, "owner_name"),
-    is_absentee: formData.get("is_absentee") === "on",
-    years_owned: num(formData, "years_owned"),
-    estimated_equity: num(formData, "estimated_equity"),
-    assessed_value: num(formData, "assessed_value"),
-    distress_indicators: distressIndicators,
-    opportunity_score: num(formData, "opportunity_score"),
-    why_flagged: whyFlagged,
-    date_identified: str(formData, "date_identified"),
-    asking_price: num(formData, "asking_price"),
-    estimated_resale_value: num(formData, "estimated_resale_value"),
-    original_list_price: num(formData, "original_list_price"),
-    lot_size_acres: num(formData, "lot_size_acres"),
-    code_violation_count: num(formData, "code_violation_count"),
-    code_violation_summary: str(formData, "code_violation_summary"),
-    vacant_since: str(formData, "vacant_since"),
-    zoning_district: str(formData, "zoning_district"),
-    permitted_uses: str(formData, "permitted_uses"),
-    rezoning_potential: str(formData, "rezoning_potential"),
-    buildability_notes: str(formData, "buildability_notes"),
-    source_id: source.id,
-    confidence: str(formData, "confidence") ?? "reported",
-  });
+  const dateIdentified = str(formData, "date_identified");
+  const confidence = str(formData, "confidence") ?? "reported";
 
-  if (opportunityError) {
-    throw new Error(opportunityError.message);
+  const { data: opportunity, error: opportunityError } = await supabase
+    .from("opportunities")
+    .insert({
+      market_id: marketId,
+      address,
+      latitude,
+      longitude,
+      listing_status: str(formData, "listing_status"),
+      owner_name: str(formData, "owner_name"),
+      is_absentee: formData.get("is_absentee") === "on",
+      years_owned: num(formData, "years_owned"),
+      estimated_equity: num(formData, "estimated_equity"),
+      assessed_value: num(formData, "assessed_value"),
+      distress_indicators: distressIndicators,
+      opportunity_score: num(formData, "opportunity_score"),
+      why_flagged: whyFlagged,
+      date_identified: dateIdentified,
+      asking_price: num(formData, "asking_price"),
+      estimated_resale_value: num(formData, "estimated_resale_value"),
+      original_list_price: num(formData, "original_list_price"),
+      lot_size_acres: num(formData, "lot_size_acres"),
+      code_violation_count: num(formData, "code_violation_count"),
+      code_violation_summary: str(formData, "code_violation_summary"),
+      vacant_since: str(formData, "vacant_since"),
+      zoning_district: str(formData, "zoning_district"),
+      permitted_uses: str(formData, "permitted_uses"),
+      rezoning_potential: str(formData, "rezoning_potential"),
+      buildability_notes: str(formData, "buildability_notes"),
+      source_id: source.id,
+      confidence,
+    })
+    .select("id")
+    .single();
+
+  if (opportunityError || !opportunity) {
+    throw new Error(opportunityError?.message ?? "Failed to save opportunity.");
+  }
+
+  // Writes directly to the signals table now instead of
+  // opportunities.signals[] -- see the Phase 7 Tier 3 migration that
+  // dropped that column once nothing read it anymore. One row per
+  // checked signal type, all sharing this opportunity's address/
+  // coordinates/source/confidence.
+  const { error: signalsError } = await supabase.from("signals").insert(
+    signals.map((signalType) => ({
+      market_id: marketId,
+      opportunity_id: opportunity.id,
+      address,
+      latitude,
+      longitude,
+      signal_type: signalType,
+      detected_date: dateIdentified,
+      source_id: source.id,
+      confidence,
+    }))
+  );
+
+  if (signalsError) {
+    throw new Error(signalsError.message);
   }
 
   revalidatePath("/dashboard");

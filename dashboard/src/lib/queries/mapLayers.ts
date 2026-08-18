@@ -4,7 +4,7 @@ import {
   getGrowthAreas,
   getPotentialSites,
   getZoningLandUse,
-  hydrateOpportunitySignals,
+  attachLiveOpportunitySignals,
   zoningLandUseAsOpportunityZone,
 } from "@/lib/queries/planIntelligence";
 import type { CatalystWithSource, OpportunityWithSource, Parcel, ProjectWithSource } from "@/lib/types";
@@ -55,7 +55,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
   return {
     projects: projects ?? [],
     parcels: parcels ?? [],
-    opportunities: hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []),
+    opportunities: attachLiveOpportunitySignals(opportunities ?? [], activeSignals ?? []),
     catalysts: catalysts ?? [],
     opportunityZones: zoningLandUseAsOpportunityZone(zoningLandUse ?? []),
     growthAreas: growthAreas ?? [],

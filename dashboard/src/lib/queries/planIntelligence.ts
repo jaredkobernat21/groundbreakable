@@ -156,16 +156,17 @@ export async function getAllActiveSignals(supabase: SupabaseClient) {
   return supabase.from("signals").select("*").is("resolved_date", null).returns<Signal[]>();
 }
 
-// Replaces an opportunity's frozen signals[] (set once at creation, per
-// opportunities_sync_signals's Phase 2 comment) with what's actually
-// still active in the `signals` table -- a signal resolving (e.g. a lien
-// getting paid off) disappears from here even though the array column
-// never gets rewritten. Falls back to the stored array only if a row
-// somehow has zero live signals, so a marker never goes signal-less.
-export function hydrateOpportunitySignals<T extends { id: string; signals: OpportunityType[] }>(
+// Computes each opportunity's live signals[] purely from the `signals`
+// table -- opportunities.signals[] is gone (Phase 7, Tier 3 dropped it
+// once nothing read it anymore), so this is the only source now. An
+// opportunity with zero unresolved signals is filtered out entirely
+// rather than rendered signal-less -- once every signal on it resolves
+// (a lien paid off, a listing pulled), it's no longer "worth a closer
+// look," discussed and confirmed directly rather than assumed.
+export function attachLiveOpportunitySignals<T extends { id: string }>(
   opportunities: T[],
   activeSignals: Pick<Signal, "opportunity_id" | "signal_type">[]
-): T[] {
+): (T & { signals: OpportunityType[] })[] {
   const byOpportunity = new Map<string, OpportunityType[]>();
   for (const signal of activeSignals) {
     if (!signal.opportunity_id) continue;
@@ -173,10 +174,9 @@ export function hydrateOpportunitySignals<T extends { id: string; signals: Oppor
     if (existing) existing.push(signal.signal_type);
     else byOpportunity.set(signal.opportunity_id, [signal.signal_type]);
   }
-  return opportunities.map((opportunity) => {
-    const live = byOpportunity.get(opportunity.id);
-    return live && live.length > 0 ? { ...opportunity, signals: live } : opportunity;
-  });
+  return opportunities
+    .map((opportunity) => ({ ...opportunity, signals: byOpportunity.get(opportunity.id) ?? [] }))
+    .filter((opportunity) => opportunity.signals.length > 0);
 }
 
 // Potential's two map layers (Phase 5). Both tables start empty for every

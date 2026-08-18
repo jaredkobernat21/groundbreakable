@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { selectMarket } from "@/lib/selectMarket";
 import { resolveActivityPhase } from "@/lib/activityPhase";
-import { getActiveSignals, getRecentProjectEvents, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
+import { getActiveSignals, getRecentProjectEvents, attachLiveOpportunitySignals } from "@/lib/queries/planIntelligence";
 import { eventTypeLabel } from "@/lib/projectEventDisplay";
 import {
   PLAN_CATEGORY_LABEL,
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
   const { context, keyMap } = buildContext(
     market,
     projects ?? [],
-    hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []),
+    attachLiveOpportunitySignals(opportunities ?? [], activeSignals ?? []),
     catalysts ?? [],
     recentUpdates ?? [],
     decisions ?? []
