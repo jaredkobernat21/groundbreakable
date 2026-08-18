@@ -44,7 +44,7 @@ const POTENTIAL_SITE_MIN_ZOOM = 13.5;
 
 export default function DevelopmentMap({
   market,
-  showActivity,
+  showPlans,
   showOpportunities,
   showPotential,
   projects,
@@ -69,7 +69,7 @@ export default function DevelopmentMap({
   onSelectPotentialSite,
 }: {
   market: Market;
-  showActivity: boolean;
+  showPlans: boolean;
   showOpportunities: boolean;
   showPotential: boolean;
   projects: ProjectWithSource[];
@@ -80,7 +80,7 @@ export default function DevelopmentMap({
   growthAreas: GrowthArea[];
   potentialSites: PotentialSiteWithSource[];
   // Opportunities within 1 mile of the currently-selected project -- these
-  // render even when showOpportunities is off (e.g. the Planning-only
+  // render even when showOpportunities is off (e.g. the Plans-only
   // segment), so the radius-reveal "pop up nearby opportunities" behavior
   // works regardless of which segment the user is on. See
   // DevelopmentIntelligenceView for the computation.
@@ -189,7 +189,7 @@ export default function DevelopmentMap({
         // Catalysts: an always-on white "watch zone" area, not a Marker --
         // per the product direction, this is the radius where the most
         // planning activity is concentrated, visible regardless of segment
-        // (Planning or Opportunities). promoteId lets feature-state
+        // (Plans or Opportunities). promoteId lets feature-state
         // selection work with UUID string ids, same pattern as parcels.
         map.addSource(CATALYST_AREA_SOURCE_ID, {
           type: "geojson",
@@ -477,10 +477,10 @@ export default function DevelopmentMap({
     markersRef.current.clear();
 
     import("mapbox-gl").then((mapboxgl) => {
-      // Activity and Opportunities are independent toggles, not exclusive
+      // Plans and Opportunities are independent toggles, not exclusive
       // tabs -- both can render simultaneously so "one view shows the
       // whole map" is a reachable default.
-      if (showActivity) {
+      if (showPlans) {
         projects.forEach((project) => {
           const phase = resolveActivityPhase(project.stage, project.date_updated);
           if (!phase) return; // on_hold/cancelled/stale-completed -- shouldn't reach here if pre-filtered, but stay defensive
@@ -527,7 +527,7 @@ export default function DevelopmentMap({
       // Opportunities render whenever the segment is on, PLUS any
       // opportunity within 1 mile of the currently-selected project --
       // that's the "click a property pin, nearby opportunities pop up"
-      // reveal, and it works even on the Planning-only segment.
+      // reveal, and it works even on the Plans-only segment.
       opportunities.forEach((opp) => {
         const isNearbyForced = nearbyOpportunityIds.has(opp.id);
         if (!showOpportunities && !isNearbyForced) return;
@@ -612,8 +612,8 @@ export default function DevelopmentMap({
     const map = mapRef.current;
     if (!map || !map.getSource(PARCELS_SOURCE_ID)) return;
 
-    // Parcels are Activity-scoped context -- keep Opportunities quiet.
-    if (!showActivity) {
+    // Parcels are Plans-scoped context -- keep other segments quiet.
+    if (!showPlans) {
       (map.getSource(PARCELS_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
       return;
     }
@@ -641,10 +641,14 @@ export default function DevelopmentMap({
     });
   }
 
-  // Catalyst watch zones and opportunity zones -- always-on area layers,
-  // independent of markers/parcels. Catalysts render on every segment;
-  // opportunity zones only when the Opportunities segment is active, same
-  // "clear the source when the segment is off" pattern as renderParcels.
+  // Catalyst watch zones and opportunity (favorable-zoning) zones -- area
+  // layers independent of markers/parcels. Catalysts render on every
+  // segment; favorable zoning only when the Potential segment is active
+  // -- it's a future-development-capacity signal (zoning), not a
+  // property-level distress/acquisition one, so it lives with Growth
+  // Areas/Potential Sites rather than the Opportunities signal pins.
+  // Same "clear the source when the segment is off" pattern as
+  // renderParcels.
   function renderAreaLayers() {
     const map = mapRef.current;
     if (!map) return;
@@ -667,7 +671,7 @@ export default function DevelopmentMap({
     }
 
     if (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID)) {
-      const features = showOpportunities
+      const features = showPotential
         ? opportunityZones.map((z) => ({
             type: "Feature" as const,
             properties: { id: z.id },
@@ -677,7 +681,7 @@ export default function DevelopmentMap({
       (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
     }
     if (map.getSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID)) {
-      const features = showOpportunities
+      const features = showPotential
         ? opportunityZones.map((z) => ({
             type: "Feature" as const,
             properties: { title: z.title },
@@ -718,7 +722,7 @@ export default function DevelopmentMap({
     renderPotentialSiteMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    showActivity,
+    showPlans,
     showOpportunities,
     showPotential,
     projects,

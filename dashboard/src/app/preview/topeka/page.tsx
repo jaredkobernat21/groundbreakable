@@ -120,7 +120,7 @@ export default async function TopekaPreviewPage() {
           opportunityZones={opportunityZones}
           growthAreas={growthAreas}
           potentialSites={potentialSites}
-          initialCategory="activity"
+          initialCategory="plans"
         />
 
         <NewsSection

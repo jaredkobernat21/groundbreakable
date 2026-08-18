@@ -3,26 +3,27 @@
 import { useState } from "react";
 import {
   NEUTRAL_ICON_COLOR,
-  OPPORTUNITIES_COLOR,
   OPPORTUNITY_SIGNAL_PRIORITY,
   OPPORTUNITY_TYPE_LABEL,
   type OpportunityType,
 } from "@/lib/types";
 import { OPPORTUNITY_SIGNAL_ICON, opportunityIconSvgMarkup } from "@/lib/markerIcons";
 
-// Same breakdown pattern as DevelopmentLegend for Activity, but counts by
+// Same breakdown pattern as DevelopmentLegend for Plans, but counts by
 // signal rather than by a single category -- a property can carry more
 // than one signal at once, so counts here can sum to more than the total
 // number of opportunities. Collapsed by default, same reasoning as
 // DevelopmentLegend: don't cover the map with two tall stacks on load.
+// Favorable Zoning used to have a row here too, but it moved to
+// PotentialLegend -- it's a future-development-capacity signal (zoning),
+// not a property-level distress/acquisition one, so it groups with
+// Growth Areas/Potential Sites now instead.
 export default function OpportunityLegend({
   counts,
   total,
-  zoneCount,
 }: {
   counts: Partial<Record<OpportunityType, number>>;
   total: number;
-  zoneCount: number;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -69,14 +70,6 @@ export default function OpportunityLegend({
               <span className="text-white/30">{counts[type] ?? 0}</span>
             </li>
           ))}
-          <li className="flex items-center gap-2 border-t border-white/10 pt-1.5 text-xs text-white/70">
-            <span
-              className="h-3 w-3 shrink-0 rounded-sm border-2"
-              style={{ borderColor: OPPORTUNITIES_COLOR, borderStyle: "dashed" }}
-            />
-            <span className="flex-1">Favorable Zoning Areas</span>
-            <span className="text-white/30">{zoneCount}</span>
-          </li>
         </ul>
       )}
     </div>

@@ -96,14 +96,6 @@ export default function MapKey() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="h-4 w-4 shrink-0 rounded-sm border-2 border-dashed border-[#1c1c1c]/35" />
-            <div>
-              <div className="text-xs font-medium text-[#1c1c1c]">Watch Zone</div>
-              <div className="text-[11px] text-[#1c1c1c]/45">Where the most planning activity is happening</div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
             <span
               className="h-4 w-4 shrink-0 rounded-sm border-2"
               style={{ borderColor: OPPORTUNITIES_COLOR, borderStyle: "dashed" }}
@@ -130,6 +122,14 @@ export default function MapKey() {
             <div>
               <div className="text-xs font-medium text-[#1c1c1c]">Potential Site</div>
               <div className="text-[11px] text-[#1c1c1c]/45">Zoom in to reveal — a site worth watching</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="h-4 w-4 shrink-0 rounded-sm border-2 border-dashed border-[#1c1c1c]/35" />
+            <div>
+              <div className="text-xs font-medium text-[#1c1c1c]">Watch Zone</div>
+              <div className="text-[11px] text-[#1c1c1c]/45">Where the most planning activity is happening</div>
             </div>
           </div>
         </div>

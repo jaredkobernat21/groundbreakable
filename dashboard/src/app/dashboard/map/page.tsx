@@ -6,7 +6,7 @@ import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts", "potential"];
+const VALID_CATEGORIES: MapCategory[] = ["all", "plans", "opportunities", "potential"];
 
 // The dedicated Map view (Phase 3 of the architecture review) -- same
 // DevelopmentIntelligenceView component and the same getMapLayerData
@@ -33,7 +33,7 @@ export default async function MapPage({
 
   const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
     ? (searchParams.category as MapCategory)
-    : "activity";
+    : "plans";
 
   const selectType = searchParams.selectType;
   const initialSelection: { type: "project" | "opportunity"; id: string } | null =

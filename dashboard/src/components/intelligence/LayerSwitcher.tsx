@@ -1,19 +1,22 @@
 import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR, POTENTIAL_COLOR } from "@/lib/types";
 
-export type MapSegment = "all" | "activity" | "opportunities" | "potential";
+export type MapSegment = "all" | "plans" | "opportunities" | "potential";
 
 const SEGMENTS: { key: MapSegment; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "activity", label: "Planning" },
+  { key: "plans", label: "Plans" },
   { key: "opportunities", label: "Opportunities" },
   { key: "potential", label: "Potential" },
 ];
 
 // The only filter control on the map -- deliberately just one small,
 // minimal toggle. "All" shows everything at once (including catalysts, and
-// every Activity phase); "Planning" and "Opportunities" narrow to just
-// that layer. Lives inside the map itself (top-center overlay), not as a
-// separate bar above it.
+// every Plans phase); "Plans" and "Opportunities" narrow to just that
+// layer. Favorable Zoning lives under Potential (not Opportunities) --
+// it's about a parcel's future development capacity via zoning, not a
+// distress/acquisition signal, so it belongs with Growth Areas/Potential
+// Sites, not with the property-level signal pins. Lives inside the map
+// itself (top-center overlay), not as a separate bar above it.
 export default function LayerSwitcher({
   segment,
   onSelectSegment,
@@ -26,7 +29,7 @@ export default function LayerSwitcher({
       {SEGMENTS.map((s) => {
         const active = segment === s.key;
         const dotColor =
-          s.key === "activity"
+          s.key === "plans"
             ? ACTIVITY_COLOR
             : s.key === "opportunities"
               ? OPPORTUNITIES_COLOR

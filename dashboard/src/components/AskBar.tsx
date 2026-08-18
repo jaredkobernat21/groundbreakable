@@ -159,7 +159,7 @@ export default function AskBar({
               segment.type && segment.id ? (
                 <Link
                   key={i}
-                  href={`/dashboard/map?market=${marketSlug}&category=${segment.type === "project" ? "activity" : "opportunities"}&select=${segment.id}&selectType=${segment.type}`}
+                  href={`/dashboard/map?market=${marketSlug}&category=${segment.type === "project" ? "plans" : "opportunities"}&select=${segment.id}&selectType=${segment.type}`}
                   className="font-semibold text-[#1c1c1c] underline decoration-2 decoration-[#1c1c1c]/40 underline-offset-2 hover:decoration-[#1c1c1c]"
                 >
                   {segment.text}

@@ -18,6 +18,7 @@ import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
 import DevelopmentMap from "./DevelopmentMap";
 import DevelopmentLegend from "./DevelopmentLegend";
 import OpportunityLegend from "./OpportunityLegend";
+import PotentialLegend from "./PotentialLegend";
 import ProjectDetailPanel from "./ProjectDetailPanel";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import CatalystDetailPanel, { findNearbySignals } from "./CatalystDetailPanel";
@@ -27,22 +28,15 @@ import PotentialSiteDetailPanel from "./PotentialSiteDetailPanel";
 import LayerSwitcher, { type MapSegment } from "./LayerSwitcher";
 import MapKey from "./MapKey";
 
-export type MapCategory = "all" | "activity" | "opportunities" | "catalysts" | "potential";
+export type MapCategory = MapSegment;
 
-// Single All/Planning/Opportunities toggle -- that's the whole filter
-// surface now (no per-phase, per-category, or per-property-type chips, and
-// no separate Catalysts toggle). Every phase within Planning (planning/
-// active/completed) shows together whenever that segment is visible; "All"
-// shows everything at once. Catalyst watch zones always render regardless
-// of segment (see DevelopmentMap) -- there's no equivalent "catalysts"
-// segment anymore, so a legacy "catalysts"-only landing just falls back to
-// "all".
-function initialSegment(category: MapCategory): MapSegment {
-  if (category === "activity") return "activity";
-  if (category === "opportunities") return "opportunities";
-  if (category === "potential") return "potential";
-  return "all";
-}
+// Single All/Plans/Opportunities/Potential toggle -- that's the whole
+// filter surface now (no per-phase, per-category, or per-property-type
+// chips, and no separate Catalysts toggle). Every phase within Plans
+// (planning/active/completed) shows together whenever that segment is
+// visible; "All" shows everything at once. Catalyst watch zones always
+// render regardless of segment (see DevelopmentMap) -- there's no
+// equivalent "catalysts" segment.
 
 // Orchestrates the map + segment toggle + legend + detail panel as one
 // reusable unit. Market-agnostic -- nothing here is Topeka-specific.
@@ -55,7 +49,7 @@ export default function DevelopmentIntelligenceView({
   opportunityZones,
   growthAreas,
   potentialSites,
-  initialCategory = "activity",
+  initialCategory = "plans",
   initialSelection = null,
 }: {
   market: Market;
@@ -71,8 +65,8 @@ export default function DevelopmentIntelligenceView({
   // specific project/opportunity pin on mount.
   initialSelection?: { type: "project" | "opportunity"; id: string } | null;
 }) {
-  const [segment, setSegment] = useState<MapSegment>(initialSegment(initialCategory));
-  const showActivity = segment === "all" || segment === "activity";
+  const [segment, setSegment] = useState<MapSegment>(initialCategory);
+  const showPlans = segment === "all" || segment === "plans";
   const showOpportunities = segment === "all" || segment === "opportunities";
   const showPotential = segment === "all" || segment === "potential";
 
@@ -239,7 +233,7 @@ export default function DevelopmentIntelligenceView({
       <div className="relative h-[640px]">
         <DevelopmentMap
           market={market}
-          showActivity={showActivity}
+          showPlans={showPlans}
           showOpportunities={showOpportunities}
           showPotential={showPotential}
           projects={phaseProjects}
@@ -270,18 +264,23 @@ export default function DevelopmentIntelligenceView({
           </div>
         </div>
 
-        {(showActivity || showOpportunities) && (
+        {(showPlans || showOpportunities || showPotential) && (
           <div className="pointer-events-none absolute left-3 top-16 z-10 flex flex-col gap-3 sm:top-3">
-            {showActivity && (
+            {showPlans && (
               <div className="pointer-events-auto">
                 <DevelopmentLegend counts={phaseCounts} total={phaseProjects.length} />
               </div>
             )}
             {showOpportunities && (
               <div className="pointer-events-auto">
-                <OpportunityLegend
-                  counts={signalCounts}
-                  total={opportunities.length}
+                <OpportunityLegend counts={signalCounts} total={opportunities.length} />
+              </div>
+            )}
+            {showPotential && (
+              <div className="pointer-events-auto">
+                <PotentialLegend
+                  growthAreaCount={growthAreas.length}
+                  potentialSiteCount={potentialSites.length}
                   zoneCount={opportunityZones.length}
                 />
               </div>
@@ -332,8 +331,8 @@ export default function DevelopmentIntelligenceView({
         )}
       </div>
 
-      {showActivity && phaseProjects.length === 0 && (
-        <p className="text-sm text-white/40">No matching Activity signals for {market.name} right now.</p>
+      {showPlans && phaseProjects.length === 0 && (
+        <p className="text-sm text-white/40">No matching Plans activity for {market.name} right now.</p>
       )}
       {showOpportunities && opportunities.length === 0 && (
         <p className="text-sm text-white/40">
@@ -341,10 +340,10 @@ export default function DevelopmentIntelligenceView({
           opportunities tool once sourced.
         </p>
       )}
-      {showPotential && growthAreas.length === 0 && potentialSites.length === 0 && (
+      {showPotential && growthAreas.length === 0 && potentialSites.length === 0 && opportunityZones.length === 0 && (
         <p className="text-sm text-white/40">
-          No Growth Areas or Potential Sites curated yet for {market.name} — add them from the admin
-          Potential tools once researched.
+          No Growth Areas, Potential Sites, or Favorable Zoning curated yet for {market.name} — add them
+          from the admin Potential tools once researched.
         </p>
       )}
     </div>

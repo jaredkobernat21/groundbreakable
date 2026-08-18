@@ -10,7 +10,7 @@ import type { Market, UpcomingDecisionWithSource } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_CATEGORIES: MapCategory[] = ["all", "activity", "opportunities", "catalysts", "potential"];
+const VALID_CATEGORIES: MapCategory[] = ["all", "plans", "opportunities", "potential"];
 
 export default async function DashboardPage({
   searchParams,
@@ -35,7 +35,7 @@ export default async function DashboardPage({
 
   const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
     ? (searchParams.category as MapCategory)
-    : "activity";
+    : "plans";
 
   // Deep-link from the AskBar's "View on map" link -- pre-selects and
   // flies to a specific project/opportunity pin named by the AI's answer.
