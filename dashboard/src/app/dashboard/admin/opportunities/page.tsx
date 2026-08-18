@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OPPORTUNITY_TYPE_LABEL, type Market, type OpportunityWithSource } from "@/lib/types";
+import { getAllActiveSignals, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
 import { createOpportunity } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -25,14 +26,17 @@ export default async function AdminOpportunitiesPage() {
     redirect("/dashboard");
   }
 
-  const [{ data: markets }, { data: opportunities }] = await Promise.all([
+  const [{ data: markets }, { data: opportunities }, { data: activeSignals }] = await Promise.all([
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
     supabase
       .from("opportunities")
       .select("*, source:sources(*)")
       .order("last_verified_at", { ascending: false })
       .returns<OpportunityWithSource[]>(),
+    getAllActiveSignals(supabase),
   ]);
+
+  const hydratedOpportunities = hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []);
 
   return (
     <div className="space-y-10">
@@ -254,10 +258,10 @@ export default async function AdminOpportunitiesPage() {
 
       <section>
         <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-white/60">
-          All Opportunities ({(opportunities ?? []).length})
+          All Opportunities ({hydratedOpportunities.length})
         </h2>
         <div className="space-y-3">
-          {(opportunities ?? []).map((opportunity) => (
+          {hydratedOpportunities.map((opportunity) => (
             <div key={opportunity.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
               <div className="text-xs uppercase tracking-wide text-white/40">
                 {opportunity.signals.map((s) => OPPORTUNITY_TYPE_LABEL[s]).join(" + ")}
@@ -276,7 +280,7 @@ export default async function AdminOpportunitiesPage() {
               )}
             </div>
           ))}
-          {(opportunities ?? []).length === 0 && (
+          {hydratedOpportunities.length === 0 && (
             <p className="text-sm text-white/40">No opportunities entered yet.</p>
           )}
         </div>

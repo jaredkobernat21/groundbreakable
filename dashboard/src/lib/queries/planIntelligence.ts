@@ -3,12 +3,14 @@ import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
 import type {
   GrowthArea,
   Market,
+  OpportunityType,
   PlanCategory,
   PotentialSiteWithSource,
   ProjectEventWithProject,
   ProjectEventWithSource,
   ProjectPartyWithCompany,
   ProjectWithSource,
+  Signal,
   SignalWithSource,
   ZoningLandUseWithSource,
 } from "@/lib/types";
@@ -144,6 +146,36 @@ export async function getActiveSignals(supabase: SupabaseClient, marketId: strin
     .is("resolved_date", null)
     .order("detected_date", { ascending: false })
     .returns<SignalWithSource[]>();
+}
+
+// Same as getActiveSignals but across every market -- for the admin
+// Opportunities list, which (unlike every investor-facing page) isn't
+// scoped to one market at a time.
+export async function getAllActiveSignals(supabase: SupabaseClient) {
+  return supabase.from("signals").select("*").is("resolved_date", null).returns<Signal[]>();
+}
+
+// Replaces an opportunity's frozen signals[] (set once at creation, per
+// opportunities_sync_signals's Phase 2 comment) with what's actually
+// still active in the `signals` table -- a signal resolving (e.g. a lien
+// getting paid off) disappears from here even though the array column
+// never gets rewritten. Falls back to the stored array only if a row
+// somehow has zero live signals, so a marker never goes signal-less.
+export function hydrateOpportunitySignals<T extends { id: string; signals: OpportunityType[] }>(
+  opportunities: T[],
+  activeSignals: Pick<Signal, "opportunity_id" | "signal_type">[]
+): T[] {
+  const byOpportunity = new Map<string, OpportunityType[]>();
+  for (const signal of activeSignals) {
+    if (!signal.opportunity_id) continue;
+    const existing = byOpportunity.get(signal.opportunity_id);
+    if (existing) existing.push(signal.signal_type);
+    else byOpportunity.set(signal.opportunity_id, [signal.signal_type]);
+  }
+  return opportunities.map((opportunity) => {
+    const live = byOpportunity.get(opportunity.id);
+    return live && live.length > 0 ? { ...opportunity, signals: live } : opportunity;
+  });
 }
 
 // Potential's two map layers (Phase 5). Both tables start empty for every

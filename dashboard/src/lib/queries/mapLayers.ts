@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getGrowthAreas, getPotentialSites } from "@/lib/queries/planIntelligence";
+import { getActiveSignals, getGrowthAreas, getPotentialSites, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
 import type {
   CatalystWithSource,
   OpportunityWithSource,
@@ -24,6 +24,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
     { data: opportunityZones },
     { data: growthAreas },
     { data: potentialSites },
+    { data: activeSignals },
   ] = await Promise.all([
     supabase
       .from("projects")
@@ -52,12 +53,13 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
       .returns<OpportunityZoneWithSource[]>(),
     getGrowthAreas(supabase, marketId),
     getPotentialSites(supabase, marketId),
+    getActiveSignals(supabase, marketId),
   ]);
 
   return {
     projects: projects ?? [],
     parcels: parcels ?? [],
-    opportunities: opportunities ?? [],
+    opportunities: hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []),
     catalysts: catalysts ?? [],
     opportunityZones: opportunityZones ?? [],
     growthAreas: growthAreas ?? [],

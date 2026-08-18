@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { selectMarket } from "@/lib/selectMarket";
 import { resolveActivityPhase } from "@/lib/activityPhase";
-import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
+import { getActiveSignals, getRecentProjectEvents, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
 import { eventTypeLabel } from "@/lib/projectEventDisplay";
 import {
   PLAN_CATEGORY_LABEL,
@@ -75,25 +75,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No accessible market found." }, { status: 404 });
   }
 
-  const [{ data: projects }, { data: opportunities }, { data: catalysts }, { data: recentUpdates }, { data: decisions }] =
-    await Promise.all([
-      supabase.from("projects").select("*").eq("market_id", market.id).returns<ProjectWithSource[]>(),
-      supabase.from("opportunities").select("*").eq("market_id", market.id).returns<OpportunityWithSource[]>(),
-      supabase.from("catalysts").select("*").eq("market_id", market.id).returns<CatalystWithSource[]>(),
-      getRecentProjectEvents(supabase, market.id, 20),
-      supabase
-        .from("upcoming_decisions")
-        .select("*")
-        .eq("market_id", market.id)
-        .order("decision_date", { ascending: true })
-        .limit(10)
-        .returns<UpcomingDecisionWithSource[]>(),
-    ]);
+  const [
+    { data: projects },
+    { data: opportunities },
+    { data: catalysts },
+    { data: recentUpdates },
+    { data: decisions },
+    { data: activeSignals },
+  ] = await Promise.all([
+    supabase.from("projects").select("*").eq("market_id", market.id).returns<ProjectWithSource[]>(),
+    supabase.from("opportunities").select("*").eq("market_id", market.id).returns<OpportunityWithSource[]>(),
+    supabase.from("catalysts").select("*").eq("market_id", market.id).returns<CatalystWithSource[]>(),
+    getRecentProjectEvents(supabase, market.id, 20),
+    supabase
+      .from("upcoming_decisions")
+      .select("*")
+      .eq("market_id", market.id)
+      .order("decision_date", { ascending: true })
+      .limit(10)
+      .returns<UpcomingDecisionWithSource[]>(),
+    getActiveSignals(supabase, market.id),
+  ]);
 
   const { context, keyMap } = buildContext(
     market,
     projects ?? [],
-    opportunities ?? [],
+    hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []),
     catalysts ?? [],
     recentUpdates ?? [],
     decisions ?? []
