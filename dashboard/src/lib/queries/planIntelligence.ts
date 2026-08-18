@@ -4,6 +4,7 @@ import type {
   GrowthArea,
   Market,
   OpportunityType,
+  OpportunityZoneWithSource,
   PlanCategory,
   PotentialSiteWithSource,
   ProjectEventWithProject,
@@ -212,4 +213,30 @@ export async function getZoningLandUse(
     .eq("layer_type", layerType)
     .order("last_verified_at", { ascending: false })
     .returns<ZoningLandUseWithSource[]>();
+}
+
+// Reshapes zoning_land_use rows into the OpportunityZoneWithSource shape
+// (boundary/zoning_district/rezoning_notes) that DevelopmentMap and
+// OpportunityZoneDetailPanel already render -- a read-compatibility shim
+// so the map's "Favorable Zoning" layer can switch to the real PostGIS
+// table (zoning_land_use has a spatial index; opportunity_zones stored
+// raw GeoJSON in jsonb) without every consumer needing new field names.
+// layer_type/district_code's broader vocabulary is dropped here since
+// nothing downstream reads it yet -- current_zoning is the only layer
+// getMapLayerData asks for, matching what opportunity_zones only ever held.
+export function zoningLandUseAsOpportunityZone(rows: ZoningLandUseWithSource[]): OpportunityZoneWithSource[] {
+  return rows.map((row) => ({
+    id: row.id,
+    market_id: row.market_id,
+    title: row.title,
+    description: row.description,
+    zoning_district: row.district_code,
+    rezoning_notes: row.regulatory_notes,
+    boundary: row.geom,
+    source_id: row.source_id,
+    confidence: row.confidence,
+    last_verified_at: row.last_verified_at,
+    created_at: row.created_at,
+    source: row.source,
+  }));
 }

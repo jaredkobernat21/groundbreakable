@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getActiveSignals, getGrowthAreas, getPotentialSites, hydrateOpportunitySignals } from "@/lib/queries/planIntelligence";
-import type {
-  CatalystWithSource,
-  OpportunityWithSource,
-  OpportunityZoneWithSource,
-  Parcel,
-  ProjectWithSource,
-} from "@/lib/types";
+import {
+  getActiveSignals,
+  getGrowthAreas,
+  getPotentialSites,
+  getZoningLandUse,
+  hydrateOpportunitySignals,
+  zoningLandUseAsOpportunityZone,
+} from "@/lib/queries/planIntelligence";
+import type { CatalystWithSource, OpportunityWithSource, Parcel, ProjectWithSource } from "@/lib/types";
 
 // The map's seven layers, fetched together. Shared by the Overview page's
 // embedded map and the dedicated /dashboard/map page (Phase 3) so the
@@ -21,7 +22,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
     { data: parcels },
     { data: opportunities },
     { data: catalysts },
-    { data: opportunityZones },
+    { data: zoningLandUse },
     { data: growthAreas },
     { data: potentialSites },
     { data: activeSignals },
@@ -45,12 +46,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
       .eq("market_id", marketId)
       .order("last_verified_at", { ascending: false })
       .returns<CatalystWithSource[]>(),
-    supabase
-      .from("opportunity_zones")
-      .select("*, source:sources(*)")
-      .eq("market_id", marketId)
-      .order("last_verified_at", { ascending: false })
-      .returns<OpportunityZoneWithSource[]>(),
+    getZoningLandUse(supabase, marketId),
     getGrowthAreas(supabase, marketId),
     getPotentialSites(supabase, marketId),
     getActiveSignals(supabase, marketId),
@@ -61,7 +57,7 @@ export async function getMapLayerData(supabase: SupabaseClient, marketId: string
     parcels: parcels ?? [],
     opportunities: hydrateOpportunitySignals(opportunities ?? [], activeSignals ?? []),
     catalysts: catalysts ?? [],
-    opportunityZones: opportunityZones ?? [],
+    opportunityZones: zoningLandUseAsOpportunityZone(zoningLandUse ?? []),
     growthAreas: growthAreas ?? [],
     potentialSites: potentialSites ?? [],
   };
