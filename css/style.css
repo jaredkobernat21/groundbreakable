@@ -1,8 +1,7 @@
 /* ---------------------------------------------------
    Groundbreakable — Development Intelligence by ROQ
-   Light, premium, spacious. Colors mirror the live
-   dashboard's signal palette: Activity (orange),
-   Opportunities (green), Catalysts (gold).
+   Light, premium, spacious. Dark charcoal + gold for
+   the intelligence-partner sections.
 --------------------------------------------------- */
 
 :root{
@@ -21,9 +20,16 @@
   --sand:#F4F2ED;
   --sand-line:#E9E6DE;
 
-  --activity:#f97316;
-  --opportunities:#22c55e;
-  --catalysts:#eab308;
+  --gold:#c9a24b;
+  --gold-deep:#a9822e;
+
+  --charcoal:#14171a;
+  --charcoal-soft:#1b1f22;
+  --on-dark:#f3f1ea;
+  --on-dark-70:rgba(243,241,234,0.72);
+  --on-dark-45:rgba(243,241,234,0.45);
+  --on-dark-line:rgba(243,241,234,0.14);
+  --on-dark-line-soft:rgba(243,241,234,0.08);
 
   --serif:"Sora", sans-serif;
   --sans:"Inter", sans-serif;
@@ -111,9 +117,24 @@ button{ font-family:inherit; }
   white-space:nowrap;
 }
 .btn:hover{ transform:translateY(-1px); }
+.btn svg{ width:16px; height:16px; flex-shrink:0; }
 .btn--line{ background:transparent; color:var(--ink); border-color:var(--ink-12); }
 .btn--line:hover{ border-color:var(--ink-25); background:var(--paper-soft); }
 .btn--sm{ padding:9px 16px; font-size:12.5px; }
+.btn--gold{ background:var(--gold); color:#20180a; box-shadow:0 18px 36px -18px rgba(201,162,75,0.65); }
+.btn--gold:hover{ background:#d4ae5c; }
+.btn--ghost-light{ background:transparent; color:var(--on-dark); border-color:rgba(243,241,234,0.32); }
+.btn--ghost-light:hover{ border-color:rgba(243,241,234,0.6); background:rgba(243,241,234,0.06); }
+
+.link-arrow{
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:13.5px; font-weight:600; color:var(--ink);
+  border-bottom:1px solid var(--ink-12);
+  padding-bottom:2px;
+  transition:gap .18s ease, border-color .18s ease, color .18s ease;
+}
+.link-arrow svg{ width:14px; height:14px; transition:transform .18s ease; }
+.link-arrow:hover{ gap:12px; border-color:var(--gold-deep); color:var(--gold-deep); }
 
 /* ---------- Nav ---------- */
 .nav{
@@ -174,109 +195,137 @@ button{ font-family:inherit; }
 }
 .nav__mobile .btn{ margin-top:14px; }
 
-/* ---------- Orb Intro ----------
-   Sits above the hero headline -- the animating black/charcoal particle
-   orb (see initOrb in js/main.js) plus a one-line tagline. */
-.orb-intro{
-  padding:56px 0 0;
-  text-align:center;
-}
-.orb-intro__canvas{
-  width:clamp(140px,16vw,200px);
-  height:clamp(140px,16vw,200px);
-  margin:0 auto;
-  filter:drop-shadow(0 0 28px rgba(28,28,28,0.18));
-}
-.orb-intro__tagline{
-  margin:26px 0 0;
-  font-family:var(--serif);
-  font-weight:800;
-  font-size:clamp(22px,3vw,32px);
-  letter-spacing:-0.005em;
-  color:var(--ink);
-}
-
 /* ---------- Hero ----------
-   Order: headline -> brand still -> description -> map shot -> CTA.
-   Each block is its own centered wrap so spacing stays even regardless
-   of which piece moves. */
-.hero{ padding:96px 0 100px; }
-.hero__copy{
-  max-width:680px;
-  margin:56px auto 0;
-  text-align:center;
+   Full-bleed photo hero: background image + dark scrim, headline, sub,
+   CTAs, and a short truthful stats row all sit in one centered wrap. */
+.hero{
+  position:relative;
+  min-height:clamp(560px,78vh,760px);
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  color:var(--on-dark);
+}
+.hero__bg{ position:absolute; inset:0; z-index:0; }
+.hero__bgimg{ width:100%; height:100%; object-fit:cover; object-position:center 60%; }
+.hero__scrim{
+  position:absolute; inset:0;
+  background:
+    linear-gradient(90deg, rgba(10,12,10,0.82) 0%, rgba(10,12,10,0.55) 42%, rgba(10,12,10,0.18) 72%, rgba(10,12,10,0.08) 100%),
+    linear-gradient(0deg, rgba(10,12,10,0.55) 0%, rgba(10,12,10,0) 46%);
+}
+.hero__content{
+  position:relative;
+  z-index:1;
+  padding:120px 0 72px;
 }
 .hero__title{
   font-family:var(--serif);
   font-weight:700;
-  font-size:clamp(38px,5.2vw,60px);
-  line-height:1.08;
+  font-size:clamp(38px,5.6vw,64px);
+  line-height:1.06;
   letter-spacing:-0.02em;
-  color:var(--ink);
-  margin:0;
+  color:var(--on-dark);
+  margin:0 0 22px;
+  max-width:14ch;
+  text-shadow:0 2px 24px rgba(0,0,0,0.25);
 }
-.hero__midcopy{
-  max-width:680px;
-  margin:56px auto 0;
-  text-align:center;
+.hero__title em{
+  font-style:italic;
+  font-family:var(--serif);
+  color:var(--gold);
 }
 .hero__sub{
   font-size:17.5px;
-  color:var(--ink-55);
-  max-width:52ch;
+  color:var(--on-dark-70);
+  max-width:46ch;
+  margin:0 0 40px;
+}
+.hero__message{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(18px,2.2vw,24px);
+  line-height:1.35;
+  color:var(--on-dark);
+  max-width:34ch;
+  margin:0 0 18px;
+}
+.hero__actions{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
+
+/* ---------- Differentiator (light, centered statement) ---------- */
+.differentiator{ padding:120px 0; text-align:center; }
+.differentiator__inner{ max-width:760px; margin:0 auto; }
+.differentiator__title{ max-width:none; margin-left:auto; margin-right:auto; }
+.differentiator__title em{ font-style:italic; font-family:var(--serif); color:var(--gold-deep); }
+.differentiator__sub{ margin-left:auto; margin-right:auto; margin-bottom:32px; }
+
+.pull-line{
+  font-family:var(--serif);
+  font-style:italic;
+  font-weight:500;
+  font-size:clamp(17px,2vw,20px);
+  color:var(--gold-deep);
+  max-width:44ch;
   margin:0 auto;
 }
+.pull-line--sm{ margin:20px 0; text-align:left; font-size:16px; }
 
-/* ---------- Hero images ----------
-   Two flat photo assets, swapped per breakpoint via <picture>: a cinematic
-   brand still, then the product map screenshot. Static images (not live
-   DOM/JS) stay crisp at any size and carry no interactivity to imply. */
-.heroshot{
-  display:block;
-  width:100%;
-  height:auto;
-  border-radius:22px;
+/* ---------- Approach (dark, centered 2-up) ---------- */
+.approach{ padding:120px 0; background:var(--charcoal); color:var(--on-dark); }
+.approach__head{ max-width:640px; margin:0 auto; text-align:center; }
+.approach__head .eyebrow{ color:var(--gold); }
+.approach__head .section__title{ color:var(--on-dark); max-width:none; margin-left:auto; margin-right:auto; margin-bottom:0; }
+
+.pillars__grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:64px; max-width:920px; margin:64px auto 0; }
+.pillar{ text-align:center; display:flex; flex-direction:column; align-items:center; }
+.pillar__chip{
+  width:64px; height:64px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:24px;
+  border:1px solid rgba(201,162,75,0.4);
+  color:var(--gold);
+}
+.pillar__chip svg{ width:24px; height:24px; }
+.pillar h3{ font-family:var(--serif); font-size:19px; font-weight:600; color:var(--on-dark); margin:0 0 12px; display:flex; align-items:baseline; gap:10px; justify-content:center; }
+.pillar__num{ font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:0.08em; color:var(--gold); }
+.pillar__lead{ font-size:15px; font-weight:600; color:var(--on-dark); margin:0 0 8px; max-width:32ch; }
+.pillar p{ font-size:14.5px; color:var(--on-dark-70); margin:0 0 22px; max-width:36ch; }
+.pillar__arrow{ color:var(--gold); display:flex; }
+.pillar__arrow svg{ width:16px; height:16px; }
+
+.flow{
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+  gap:10px 12px;
+  margin-top:72px;
+  padding-top:56px;
+  border-top:1px solid var(--on-dark-line-soft);
+}
+.flow__step{
+  font-size:11.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--on-dark-70);
+  padding:9px 16px;
+  border:1px solid var(--on-dark-line);
+  border-radius:999px;
+}
+.flow__step--last{ color:var(--gold); border-color:rgba(201,162,75,0.4); }
+.flow__arrow{ color:var(--gold); font-size:14px; }
+
+/* ---------- Showcase (light, split copy + product frame) ---------- */
+.showcase{ padding:120px 0; }
+.showcase__grid{ display:grid; grid-template-columns:0.8fr 1.2fr; gap:64px; align-items:center; }
+.showcase__copy .section__title em{ font-style:italic; font-family:var(--serif); color:var(--gold-deep); }
+.showcase__copy .section__sub{ margin-bottom:32px; }
+.showcase__frame img{
+  display:block; width:100%; height:auto;
+  border-radius:20px;
   border:1px solid var(--ink-08);
   box-shadow:0 60px 120px -50px rgba(28,28,28,0.35);
 }
-.hero__still{
-  max-width:1100px;
-  margin:64px auto 0;
-  padding:0 32px;
-}
-.hero__still--first{ margin-top:0; }
-.hero__shot{
-  max-width:1400px;
-  margin:56px auto 0;
-  padding:0 32px;
-}
-.heroshot__caption{
+.showcase__caption{
   margin:16px 0 0;
   font-size:12.5px;
   color:var(--ink-40);
   text-align:center;
-}
-
-
-/* ---------- Pillars ---------- */
-.pillars{ padding:120px 0; border-top:1px solid var(--ink-06); }
-.pillars__grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ink-06); border:1px solid var(--ink-06); border-radius:var(--radius); overflow:hidden; margin-top:56px; }
-.pillar{ background:var(--paper); padding:38px 34px; }
-.pillar__chip{
-  width:38px; height:38px; border-radius:11px;
-  display:flex; align-items:center; justify-content:center;
-  margin-bottom:22px;
-}
-.pillar__chip svg{ width:18px; height:18px; }
-.pillar--activity .pillar__chip{ background:rgba(249,115,22,0.12); color:var(--activity); }
-.pillar--opportunities .pillar__chip{ background:rgba(34,197,94,0.12); color:var(--opportunities); }
-.pillar--catalysts .pillar__chip{ background:rgba(234,179,8,0.14); color:#a16207; }
-.pillar h3{ font-family:var(--serif); font-size:19px; font-weight:600; color:var(--ink); margin:0 0 10px; }
-.pillar p{ font-size:14.5px; color:var(--ink-55); margin:0 0 20px; max-width:34ch; }
-.pillar__tags{ display:flex; flex-wrap:wrap; gap:6px; }
-.pillar__tags span{
-  font-size:11px; font-weight:500; color:var(--ink-55);
-  padding:5px 10px; border:1px solid var(--ink-08); border-radius:999px;
 }
 
 /* ---------- Markets ---------- */
@@ -303,6 +352,11 @@ button{ font-family:inherit; }
 .market-card__state{ font-size:12.5px; color:var(--ink-40); margin:0; }
 .market-card__illo{ flex:1; margin:16px 0; border-radius:10px; background:var(--paper); border:1px solid var(--ink-06); position:relative; overflow:hidden; min-height:64px; }
 .market-card--soon .market-card__illo{ background:var(--sand); }
+.market-card--live .market-card__illo{
+  background-image:url("../images/desktop-map.webp");
+  background-size:cover;
+  background-position:center;
+}
 .market-card__link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--ink); margin-top:auto; }
 .market-card__link svg{ width:13px; height:13px; }
 
@@ -311,6 +365,7 @@ button{ font-family:inherit; }
 .about__inner{ display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; }
 .about .section__title{ max-width:14ch; }
 .about p.section__sub{ margin-bottom:0; }
+.about__footnote{ font-size:13px; color:var(--ink-40); margin:0; }
 
 .footer{ border-top:1px solid var(--ink-06); padding:44px 0; }
 .footer__inner{ display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
@@ -327,16 +382,127 @@ button{ font-family:inherit; }
   .footer__copy{ width:auto; margin-left:auto; }
 }
 
+/* ---------- Intake form (get-started.html) ---------- */
+.intake{ padding:120px 0 140px; }
+.intake__wrap{ max-width:720px; }
+.intake__intro{ margin-bottom:56px; }
+.intake__title{ max-width:none; }
+
+.intake__honeypot{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+
+.intake__form{ display:flex; flex-direction:column; gap:52px; }
+.intake__group{ border:none; margin:0; padding:0; }
+.intake__group legend{
+  display:flex; align-items:baseline; gap:12px;
+  width:100%;
+  margin:0 0 20px;
+  padding:0;
+}
+.intake__num{ font-family:var(--serif); font-weight:600; font-size:13px; color:var(--gold-deep); }
+.intake__q{ font-family:var(--serif); font-weight:600; font-size:18px; color:var(--ink); }
+.intake__q em{ font-style:normal; font-family:var(--sans); font-weight:500; font-size:12.5px; color:var(--ink-40); margin-left:6px; }
+
+.intake__options{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.option{
+  display:flex; align-items:center; gap:10px;
+  padding:13px 16px;
+  border:1px solid var(--ink-12);
+  border-radius:12px;
+  cursor:pointer;
+  font-size:14px; color:var(--ink-70);
+  transition:border-color .16s ease, background .16s ease;
+}
+.option:hover{ border-color:var(--ink-25); background:var(--paper-soft); }
+.option input{ accent-color:var(--gold-deep); width:16px; height:16px; flex-shrink:0; }
+.option:has(input:checked){ border-color:var(--gold-deep); background:rgba(201,162,75,0.08); color:var(--ink); }
+
+.intake__input{
+  width:100%;
+  font-family:var(--sans);
+  font-size:15px;
+  color:var(--ink);
+  background:var(--paper);
+  border:1px solid var(--ink-12);
+  border-radius:12px;
+  padding:14px 16px;
+  transition:border-color .16s ease;
+}
+.intake__input::placeholder{ color:var(--ink-40); }
+.intake__input:focus{ outline:none; border-color:var(--gold-deep); }
+.intake__textarea{ resize:vertical; min-height:100px; font-family:var(--sans); }
+
+.intake__helper{ margin:8px 0 0; font-size:12.5px; color:var(--ink-40); }
+
+.intake__checkbox{
+  display:flex; align-items:center; gap:10px;
+  margin-top:12px;
+  font-size:13.5px; color:var(--ink-70);
+  cursor:pointer;
+}
+.intake__checkbox input{ accent-color:var(--gold-deep); width:16px; height:16px; flex-shrink:0; }
+
+.intake__reassurance{
+  font-family:var(--serif);
+  font-style:italic;
+  font-size:14.5px;
+  color:var(--gold-deep);
+  margin:0 0 4px;
+  max-width:48ch;
+}
+
+.intake__contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.intake__field{ display:flex; flex-direction:column; gap:8px; }
+.intake__field label{ font-size:13px; font-weight:600; color:var(--ink-70); }
+.intake__field label em{ font-style:normal; font-weight:500; color:var(--ink-40); margin-left:4px; }
+
+.intake__error{
+  display:none;
+  margin:8px 0 0;
+  font-size:12.5px;
+  color:#b3441f;
+}
+.intake__error.is-visible{ display:block; }
+.is-invalid .option, .intake__input.is-invalid, .is-invalid.intake__input{ border-color:#b3441f; }
+
+.intake__submit-row{ display:flex; flex-direction:column; align-items:flex-start; gap:14px; }
+.btn--wide{ width:100%; padding:16px 22px; font-size:13.5px; letter-spacing:0.04em; justify-content:center; }
+.btn__spinner{ display:none; width:14px; height:14px; border-radius:50%; border:2px solid rgba(32,24,10,0.3); border-top-color:#20180a; animation:spin .7s linear infinite; }
+.btn--wide.is-loading .btn__spinner{ display:inline-block; }
+.btn--wide.is-loading{ opacity:0.8; cursor:progress; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.intake__submit-error{ font-size:13px; color:#b3441f; margin:0; }
+
+.intake__success{ max-width:520px; padding:40px 0; }
+.intake__success-mark{
+  display:flex; align-items:center; justify-content:center;
+  width:52px; height:52px; border-radius:50%;
+  background:rgba(34,197,94,0.14); color:#15803d;
+  margin-bottom:24px;
+}
+.intake__success-mark svg{ width:24px; height:24px; }
+.intake__success .section__title{ max-width:none; }
+.intake__success .btn{ margin-top:8px; }
+
 /* ---------- Reveal on scroll ---------- */
 .reveal{ opacity:0; transform:translateY(16px); transition:opacity .7s ease, transform .7s ease; }
 .reveal.in{ opacity:1; transform:translateY(0); }
 
 /* ---------- Responsive ---------- */
 @media (max-width:1080px){
-  .pillars__grid{ grid-template-columns:1fr; }
+  .showcase__grid{ grid-template-columns:1fr; gap:40px; }
+  .showcase__copy{ max-width:60ch; }
   .markets__grid{ grid-template-columns:1fr; }
   .market-cards{ grid-template-columns:1fr 1fr; }
   .about__inner{ grid-template-columns:1fr; }
+}
+
+@media (max-width:900px){
+  .nav__inner{ gap:16px; }
+  .nav__links{ gap:18px; }
+}
+
+@media (max-width:640px){
+  .pillars__grid{ grid-template-columns:1fr; gap:48px; max-width:440px; margin-left:auto; margin-right:auto; }
 }
 
 @media (max-width:760px){
@@ -344,13 +510,20 @@ button{ font-family:inherit; }
   .nav__toggle{ display:flex; }
   .nav__mobile.open{ display:flex; }
   .wrap{ padding:0 20px; }
-  .hero{ padding:56px 0 72px; }
-  .hero__midcopy{ margin-top:40px; }
-  .hero__still{ margin-top:40px; padding:0 20px; }
-  .hero__still--first{ margin-top:0; }
-  .hero__shot{ margin-top:36px; padding:0 20px; }
-  .heroshot{ border-radius:16px; }
-  .pillars, .markets, .about{ padding:72px 0; }
+  .hero{ min-height:auto; }
+  .hero__content{ padding:104px 0 56px; }
+  .hero__title{ max-width:none; }
+  .differentiator, .approach, .showcase, .markets, .about{ padding:72px 0; }
   .market-cards{ grid-template-columns:1fr; }
   .section__head{ flex-direction:column; align-items:flex-start; }
+  .btn{ white-space:normal; text-align:center; }
+  .hero__actions .btn, .differentiator .btn{
+    border-radius:14px;
+    font-size:13px;
+    padding:16px 20px;
+    width:100%;
+  }
+  .flow{ justify-content:flex-start; margin-top:48px; padding-top:40px; }
+  .intake{ padding:88px 0 96px; }
+  .intake__options, .intake__contact-grid{ grid-template-columns:1fr; }
 }

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Development Profile — Groundbreakable</title>
+<meta name="description" content="Tell us how you develop. Groundbreakable uses your strategy to identify where development is heading and what opportunities may be worth your attention.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' rx='44' fill='%231C1D1A'/%3E%3Cg fill='none' stroke='%23E6E4DF' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M120 18 L120 2'/%3E%3Cpath d='M84 29 L73 17'/%3E%3Cpath d='M156 29 L167 17'/%3E%3Cpath d='M120 42C89 42 66 65 66 95 66 119 80 136 93 151 103 162 110 173 114 184L126 184C130 173 137 162 147 151 160 136 174 119 174 95 174 65 151 42 120 42Z'/%3E%3Ccircle cx='120' cy='94' r='13' fill='%23E6E4DF' stroke='none'/%3E%3Cpath d='M103 193H137'/%3E%3Cpath d='M108 205H132'/%3E%3Cpath d='M114 215H126L120 222Z' fill='%23E6E4DF' stroke='none'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap nav__inner">
+    <a href="index.html#top" class="brand">
+      <span class="brand__mark">
+        <svg viewBox="0 0 240 240" width="26" height="26" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M120 18 L120 2" stroke-width="6"/>
+            <path d="M84 29 L73 17" stroke-width="6"/>
+            <path d="M156 29 L167 17" stroke-width="6"/>
+            <path d="M120 42C89 42 66 65 66 95C66 119 80 136 93 151C103 162 110 173 114 184L126 184C130 173 137 162 147 151C160 136 174 119 174 95C174 65 151 42 120 42Z" stroke-width="6"/>
+            <circle cx="120" cy="94" r="13" fill="currentColor" stroke="none"/>
+            <path d="M103 193H137" stroke-width="6"/>
+            <path d="M108 205H132" stroke-width="6"/>
+            <path d="M114 215H126L120 222Z" fill="currentColor" stroke="none"/>
+          </g>
+        </svg>
+      </span>
+      <span class="brand__text">
+        GROUNDBREAKABLE
+        <em>Development Intelligence &middot; by ROQ</em>
+      </span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="index.html#product">Approach</a>
+      <a href="index.html#showcase">Platform</a>
+      <a href="index.html#markets">Markets</a>
+      <a href="index.html#about">About</a>
+    </nav>
+
+    <div class="nav__cta">
+      <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
+    </div>
+
+    <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="nav__mobile" id="navMobile">
+    <a href="index.html#product">Approach</a>
+    <a href="index.html#showcase">Platform</a>
+    <a href="index.html#markets">Markets</a>
+    <a href="index.html#about">About</a>
+    <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
+  </div>
+</header>
+
+<main>
+  <section class="intake">
+    <div class="wrap intake__wrap">
+
+      <div class="intake__intro reveal">
+        <p class="eyebrow">Development Profile</p>
+        <h1 class="section__title intake__title">Tell us how you develop.</h1>
+        <p class="section__sub">
+          We'll use your strategy to identify where development is heading and what opportunities may
+          be worth your attention.
+        </p>
+      </div>
+
+      <form class="intake__form reveal" id="intakeForm" novalidate>
+
+        <!-- honeypot: hidden from real users, bots often fill every field -->
+        <div class="intake__honeypot" aria-hidden="true">
+          <label for="companyWebsite">Company website</label>
+          <input type="text" id="companyWebsite" name="companyWebsite" tabindex="-1" autocomplete="off">
+        </div>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">01</span>
+            <span class="intake__q">What do you develop? <em>Select all that apply</em></span>
+          </legend>
+          <div class="intake__options" data-group="developTypes">
+            <label class="option"><input type="checkbox" name="developTypes" value="Single-family"><span>Single-family</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Multifamily"><span>Multifamily</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Build-to-rent"><span>Build-to-rent</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Industrial"><span>Industrial</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Retail"><span>Retail</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Mixed-use"><span>Mixed-use</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Commercial"><span>Commercial</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Land"><span>Land</span></label>
+            <label class="option"><input type="checkbox" name="developTypes" value="Other"><span>Other</span></label>
+          </div>
+          <p class="intake__error" data-error-for="developTypes">Select at least one option.</p>
+        </fieldset>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">02</span>
+            <span class="intake__q">Where do you currently develop?</span>
+          </legend>
+          <input class="intake__input" type="text" id="currentMarkets" name="currentMarkets" placeholder="Cities, metros, counties, states, or regions">
+          <label class="intake__checkbox">
+            <input type="checkbox" id="openToNewMarkets" name="openToNewMarkets">
+            <span>We're open to new markets</span>
+          </label>
+          <p class="intake__error" data-error-for="currentMarkets">Let us know where you develop, or check that you're open to new markets.</p>
+        </fieldset>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">03</span>
+            <span class="intake__q">What makes an area attractive to you?</span>
+          </legend>
+          <textarea class="intake__input intake__textarea" id="areaAttractive" name="areaAttractive" rows="3"></textarea>
+          <p class="intake__helper">Population growth, infrastructure investment, housing demand, employment growth, favorable municipalities, expanding suburbs, etc.</p>
+          <p class="intake__error" data-error-for="areaAttractive">Tell us what makes an area attractive to you.</p>
+        </fieldset>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">04</span>
+            <span class="intake__q">What typically makes a site work for you?</span>
+          </legend>
+          <textarea class="intake__input intake__textarea" id="siteCriteria" name="siteCriteria" rows="3"></textarea>
+          <p class="intake__helper">Typical acreage, density, utilities, access, zoning, price range, entitlement tolerance, or other requirements.</p>
+          <p class="intake__error" data-error-for="siteCriteria">Tell us what typically makes a site work for you.</p>
+        </fieldset>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">05</span>
+            <span class="intake__q">What would be most valuable for Groundbreakable to uncover? <em>Select all that apply</em></span>
+          </legend>
+          <div class="intake__options" data-group="uncoverPriorities">
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Emerging development areas"><span>Emerging development areas</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Infrastructure-driven growth"><span>Infrastructure-driven growth</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Zoning / land-use changes"><span>Zoning / land-use changes</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Development activity"><span>Development activity</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Expansion into new markets"><span>Expansion into new markets</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Potential development sites"><span>Potential development sites</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Buildability"><span>Buildability</span></label>
+            <label class="option"><input type="checkbox" name="uncoverPriorities" value="Something else"><span>Something else</span></label>
+          </div>
+          <p class="intake__error" data-error-for="uncoverPriorities">Select at least one option.</p>
+        </fieldset>
+
+        <fieldset class="intake__group">
+          <legend>
+            <span class="intake__num">06</span>
+            <span class="intake__q">Where should we send your intelligence?</span>
+          </legend>
+          <div class="intake__contact-grid">
+            <div class="intake__field">
+              <label for="fullName">Name</label>
+              <input class="intake__input" type="text" id="fullName" name="fullName" autocomplete="name" required>
+              <p class="intake__error" data-error-for="fullName">Let us know your name.</p>
+            </div>
+            <div class="intake__field">
+              <label for="companyName">Company</label>
+              <input class="intake__input" type="text" id="companyName" name="companyName" autocomplete="organization" required>
+              <p class="intake__error" data-error-for="companyName">Let us know your company.</p>
+            </div>
+            <div class="intake__field">
+              <label for="email">Email</label>
+              <input class="intake__input" type="email" id="email" name="email" autocomplete="email" required>
+              <p class="intake__error" data-error-for="email">Enter a valid email address.</p>
+            </div>
+            <div class="intake__field">
+              <label for="phone">Phone <em>Optional</em></label>
+              <input class="intake__input" type="tel" id="phone" name="phone" autocomplete="tel">
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="intake__submit-row">
+          <p class="intake__reassurance">No searches to build. No databases to dig through. We learn your strategy and find what matters.</p>
+          <button type="submit" class="btn btn--gold btn--wide" id="intakeSubmit">
+            <span class="btn__label">SHOW ME WHERE TO LOOK</span>
+            <span class="btn__spinner" aria-hidden="true"></span>
+          </button>
+          <p class="intake__submit-error" id="intakeSubmitError" role="alert" hidden>
+            Something went wrong sending your request. Please try again in a moment.
+          </p>
+        </div>
+      </form>
+
+      <div class="intake__success" id="intakeSuccess" hidden>
+        <span class="intake__success-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <h2 class="section__title">Profile received.</h2>
+        <p class="section__sub">
+          Thanks for telling us how you develop — someone from the Groundbreakable team will follow up
+          with intelligence tailored to your strategy.
+        </p>
+        <a href="index.html#top" class="btn btn--line">Back to home</a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <span class="brand__mark">
+        <svg viewBox="0 0 240 240" width="24" height="24" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M120 18 L120 2" stroke-width="6"/>
+            <path d="M84 29 L73 17" stroke-width="6"/>
+            <path d="M156 29 L167 17" stroke-width="6"/>
+            <path d="M120 42C89 42 66 65 66 95C66 119 80 136 93 151C103 162 110 173 114 184L126 184C130 173 137 162 147 151C160 136 174 119 174 95C174 65 151 42 120 42Z" stroke-width="6"/>
+            <circle cx="120" cy="94" r="13" fill="currentColor" stroke="none"/>
+            <path d="M103 193H137" stroke-width="6"/>
+            <path d="M108 205H132" stroke-width="6"/>
+            <path d="M114 215H126L120 222Z" fill="currentColor" stroke="none"/>
+          </g>
+        </svg>
+      </span>
+      <div>
+        <p class="footer__name">GROUNDBREAKABLE</p>
+        <p class="footer__tag">Development Intelligence · by ROQ</p>
+      </div>
+    </div>
+
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html#product">Approach</a>
+      <a href="index.html#markets">Markets</a>
+      <a href="https://app.groundbreakable.com/login" target="_blank" rel="noopener">Sign in</a>
+    </nav>
+
+    <p class="footer__copy">&copy; <span id="year"></span> Groundbreakable, a ROQ company. All rights reserved.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/intake.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
