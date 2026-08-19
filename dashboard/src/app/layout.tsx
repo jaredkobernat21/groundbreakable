@@ -3,7 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Groundbreakable",
-  description: "Local market intelligence for real estate investors",
+  description: "Development intelligence for real estate investors and developers.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
