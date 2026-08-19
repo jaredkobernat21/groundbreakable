@@ -103,6 +103,14 @@ export default function DevelopmentMap({
   const markersRef = useRef<Map<string, Marker>>(new Map());
   const potentialSiteMarkersRef = useRef<Map<string, Marker>>(new Map());
   const readyRef = useRef(false);
+  // Mirrors readyRef as real state so the marker/layer-render effect below
+  // (keyed on `ready`) reliably re-fires once the map finishes loading --
+  // without it, a segment change that lands during the async map-load
+  // window gets silently dropped: the "load" handler is a native listener
+  // registered once on mount, so calling render functions directly from it
+  // closes over that mount render's stale showPlans/showOpportunities/
+  // showPotential instead of whatever the user last selected.
+  const [ready, setReady] = useState(false);
   const selectedParcelIdRef = useRef<string | null>(null);
   const selectedAreaFeatureRef = useRef<{ source: string; id: string } | null>(null);
   const radiusAnimTokenRef = useRef(0);
@@ -143,6 +151,7 @@ export default function DevelopmentMap({
       map.on("load", () => {
         if (cancelled) return;
         readyRef.current = true;
+        setReady(true);
 
         muteBasemapLayers(map);
 
@@ -437,10 +446,10 @@ export default function DevelopmentMap({
         zoomGateOpenRef.current = map.getZoom() >= POTENTIAL_SITE_MIN_ZOOM;
         setPotentialSiteZoomGateOpen(zoomGateOpenRef.current);
 
-        renderMarkers();
-        renderParcels();
-        renderAreaLayers();
-        renderPotentialSiteMarkers();
+        // Initial marker/layer render is left to the `ready`-keyed effect
+        // below rather than called directly here -- that effect always
+        // runs with the current render's props, while this handler is a
+        // native listener locked to whatever closure existed at mount.
       });
     });
 
@@ -453,6 +462,7 @@ export default function DevelopmentMap({
       mapRef.current?.remove();
       mapRef.current = null;
       readyRef.current = false;
+      setReady(false);
       selectedParcelIdRef.current = null;
       selectedAreaFeatureRef.current = null;
       zoomGateOpenRef.current = false;
@@ -713,7 +723,10 @@ export default function DevelopmentMap({
     }
   }
 
-  // Re-render markers/parcels/areas when the data or view changes.
+  // Re-render markers/parcels/areas when the data or view changes -- also
+  // keyed on `ready` so a segment change that lands while the map is still
+  // loading gets picked up the instant it finishes, instead of being stuck
+  // showing whatever was current when the map's "load" event fired.
   useEffect(() => {
     if (!readyRef.current) return;
     renderMarkers();
@@ -722,6 +735,7 @@ export default function DevelopmentMap({
     renderPotentialSiteMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    ready,
     showPlans,
     showOpportunities,
     showPotential,
