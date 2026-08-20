@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import AskBar from "@/components/AskBar";
-import NewsSection from "@/components/NewsSection";
-import CatalystSpotlight from "@/components/CatalystSpotlight";
 import DevelopmentIntelligenceView from "@/components/intelligence/DevelopmentIntelligenceView";
 import { getMapLayerData } from "@/lib/queries/mapLayers";
-import { getRecentProjectEvents } from "@/lib/queries/planIntelligence";
-import type { Market, UpcomingDecisionWithSource } from "@/lib/types";
+import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -67,31 +64,8 @@ export default async function TopekaPreviewPage() {
     );
   }
 
-  const [
-    { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites },
-    { data: recentActivity },
-    { data: decisions },
-  ] = await Promise.all([
-    getMapLayerData(supabase, market.id),
-    getRecentProjectEvents(supabase, market.id, 5),
-    supabase
-      .from("upcoming_decisions")
-      .select("*, source:sources(*)")
-      .eq("market_id", market.id)
-      .eq("status", "scheduled")
-      .order("decision_date", { ascending: true })
-      .limit(6)
-      .returns<UpcomingDecisionWithSource[]>(),
-  ]);
-
-  const newOpportunities = [...(opportunities ?? [])]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
-
-  const spotlightCatalyst =
-    (catalysts ?? []).find((c) => c.is_spotlight) ??
-    [...(catalysts ?? [])].sort((a, b) => (b.estimated_value ?? 0) - (a.estimated_value ?? 0))[0] ??
-    null;
+  const { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites } =
+    await getMapLayerData(supabase, market.id);
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
@@ -120,16 +94,8 @@ export default async function TopekaPreviewPage() {
           opportunityZones={opportunityZones}
           growthAreas={growthAreas}
           potentialSites={potentialSites}
-          initialCategory="plans"
+          initialCategory="potential"
         />
-
-        <NewsSection
-          recentActivity={recentActivity ?? []}
-          newOpportunities={newOpportunities}
-          decisions={decisions ?? []}
-        />
-
-        <CatalystSpotlight catalyst={spotlightCatalyst} />
       </main>
     </div>
   );

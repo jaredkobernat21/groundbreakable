@@ -25,6 +25,7 @@ import { resolveActivityPhase } from "@/lib/activityPhase";
 import { bulbMarkerSvgMarkup, pinMarkerSvgMarkup, resolveOpportunityIcon, resolveProjectPhaseIcon } from "@/lib/markerIcons";
 import { formatCurrency } from "@/lib/format";
 import { circlePolygon, polygonCentroid, ONE_MILE_METERS } from "@/lib/geo";
+import type { MapSegment } from "./LayerSwitcher";
 
 const PARCELS_SOURCE_ID = "roq-parcels";
 const CATALYST_AREA_SOURCE_ID = "roq-catalyst-areas";
@@ -44,6 +45,7 @@ const POTENTIAL_SITE_MIN_ZOOM = 13.5;
 
 export default function DevelopmentMap({
   market,
+  segment,
   showPlans,
   showOpportunities,
   showPotential,
@@ -55,6 +57,9 @@ export default function DevelopmentMap({
   growthAreas,
   potentialSites,
   nearbyOpportunityIds,
+  areaActivityProjectIds,
+  areaOpportunityIds,
+  zoningZonesInSelectedGrowthArea,
   selectedProjectId,
   onSelectProject,
   selectedOpportunityId,
@@ -69,6 +74,7 @@ export default function DevelopmentMap({
   onSelectPotentialSite,
 }: {
   market: Market;
+  segment: MapSegment;
   showPlans: boolean;
   showOpportunities: boolean;
   showPotential: boolean;
@@ -85,6 +91,18 @@ export default function DevelopmentMap({
   // works regardless of which segment the user is on. See
   // DevelopmentIntelligenceView for the computation.
   nearbyOpportunityIds: Set<string>;
+  // Momentum-first reveal: Plans projects / Opportunities signals whose
+  // point falls inside the currently-selected Growth Area's polygon --
+  // these render regardless of segment, same idea as nearbyOpportunityIds
+  // above but polygon-scoped instead of radius-scoped. See
+  // DevelopmentIntelligenceView for the computation.
+  areaActivityProjectIds: Set<string>;
+  areaOpportunityIds: Set<string>;
+  // Favorable Zoning zones inside the selected Growth Area -- when the
+  // segment is Potential-only, this replaces the full opportunityZones
+  // list so the momentum-first default view stays uncluttered until an
+  // area is picked (the "All" segment still shows every zone).
+  zoningZonesInSelectedGrowthArea: OpportunityZoneWithSource[];
   selectedProjectId: string | null;
   onSelectProject: (id: string | null) => void;
   selectedOpportunityId: string | null;
@@ -490,56 +508,61 @@ export default function DevelopmentMap({
       // Plans and Opportunities are independent toggles, not exclusive
       // tabs -- both can render simultaneously so "one view shows the
       // whole map" is a reachable default.
-      if (showPlans) {
-        projects.forEach((project) => {
-          const phase = resolveActivityPhase(project.stage, project.date_updated);
-          if (!phase) return; // on_hold/cancelled/stale-completed -- shouldn't reach here if pre-filtered, but stay defensive
-          const color = ACTIVITY_PHASE_COLOR[phase];
+      // Plans markers also force-render for any project inside the
+      // currently-selected Growth Area (areaActivityProjectIds), regardless
+      // of segment -- the Activity half of the momentum-first reveal.
+      projects.forEach((project) => {
+        const isAreaForced = areaActivityProjectIds.has(project.id);
+        if (!showPlans && !isAreaForced) return;
 
-          const el = document.createElement("div");
-          el.className = "roq-marker";
+        const phase = resolveActivityPhase(project.stage, project.date_updated);
+        if (!phase) return; // on_hold/cancelled/stale-completed -- shouldn't reach here if pre-filtered, but stay defensive
+        const color = ACTIVITY_PHASE_COLOR[phase];
 
-          const metric =
-            formatCurrency(project.project_value) ??
-            (project.units != null ? `${project.units.toLocaleString()} units` : null);
-          const icon = resolveProjectPhaseIcon(phase);
+        const el = document.createElement("div");
+        el.className = "roq-marker";
 
-          el.innerHTML = `
-            <div class="roq-marker-card">
-              <span class="roq-marker-card-title">${escapeHtml(project.title)}</span>
-              <span class="roq-marker-card-sub">${escapeHtml(
-                [
-                  project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : null,
-                  project.stage ? PROJECT_STAGE_LABEL[project.stage] : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-              )}</span>
-              ${metric ? `<span class="roq-marker-card-metric" style="color:${color}">${escapeHtml(metric)}</span>` : ""}
-            </div>
-            <div class="roq-marker-line" style="background:${color}"></div>
-            <div class="roq-marker-pin">${pinMarkerSvgMarkup(icon, { fill: color })}</div>
-          `;
-          el.addEventListener("click", (event) => {
-            event.stopPropagation();
-            onSelectProject(project.id);
-          });
+        const metric =
+          formatCurrency(project.project_value) ??
+          (project.units != null ? `${project.units.toLocaleString()} units` : null);
+        const icon = resolveProjectPhaseIcon(phase);
 
-          const marker = new mapboxgl.default.Marker({ element: el, anchor: "bottom" })
-            .setLngLat([project.longitude, project.latitude])
-            .addTo(map);
-          markersRef.current.set(project.id, marker);
-          el.style.opacity = !selectedProjectId || project.id === selectedProjectId ? "1" : "0.35";
-          el.classList.toggle("is-selected", project.id === selectedProjectId);
+        el.innerHTML = `
+          <div class="roq-marker-card">
+            <span class="roq-marker-card-title">${escapeHtml(project.title)}</span>
+            <span class="roq-marker-card-sub">${escapeHtml(
+              [
+                project.plan_category ? PLAN_CATEGORY_LABEL[project.plan_category] : null,
+                project.stage ? PROJECT_STAGE_LABEL[project.stage] : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            )}</span>
+            ${metric ? `<span class="roq-marker-card-metric" style="color:${color}">${escapeHtml(metric)}</span>` : ""}
+          </div>
+          <div class="roq-marker-line" style="background:${color}"></div>
+          <div class="roq-marker-pin">${pinMarkerSvgMarkup(icon, { fill: color })}</div>
+        `;
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          onSelectProject(project.id);
         });
-      }
+
+        const marker = new mapboxgl.default.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([project.longitude, project.latitude])
+          .addTo(map);
+        markersRef.current.set(project.id, marker);
+        el.style.opacity = !selectedProjectId || project.id === selectedProjectId ? "1" : "0.35";
+        el.classList.toggle("is-selected", project.id === selectedProjectId);
+      });
 
       // Opportunities render whenever the segment is on, PLUS any
-      // opportunity within 1 mile of the currently-selected project --
-      // that's the "click a property pin, nearby opportunities pop up"
-      // reveal, and it works even on the Plans-only segment.
+      // opportunity within 1 mile of the currently-selected project, PLUS
+      // any opportunity inside the currently-selected Growth Area -- that's
+      // the "click a property/area, nearby opportunities pop up" reveal,
+      // and it works even on the Plans-only segment.
       opportunities.forEach((opp) => {
-        const isNearbyForced = nearbyOpportunityIds.has(opp.id);
+        const isNearbyForced = nearbyOpportunityIds.has(opp.id) || areaOpportunityIds.has(opp.id);
         if (!showOpportunities && !isNearbyForced) return;
 
         const el = document.createElement("div");
@@ -652,37 +675,32 @@ export default function DevelopmentMap({
   }
 
   // Catalyst watch zones and opportunity (favorable-zoning) zones -- area
-  // layers independent of markers/parcels. Catalysts render on every
-  // segment; favorable zoning only when the Potential segment is active
-  // -- it's a future-development-capacity signal (zoning), not a
-  // property-level distress/acquisition one, so it lives with Growth
-  // Areas/Potential Sites rather than the Opportunities signal pins.
-  // Same "clear the source when the segment is off" pattern as
-  // renderParcels.
+  // layers independent of markers/parcels. Catalysts are disabled for now
+  // (product direction: momentum-first default shouldn't compete with an
+  // always-on layer) -- the source/layers/click handlers stay registered
+  // against an always-empty source so re-enabling is a one-line revert.
+  // Favorable zoning only renders on the Potential-only segment once a
+  // Growth Area is selected (scoped to zoningZonesInSelectedGrowthArea) --
+  // it's the Buildability tab's map counterpart, revealed the same way
+  // Activity/Opportunity pins are. On every other segment (notably "All")
+  // it keeps showing the full opportunityZones list, unchanged. Same
+  // "clear the source when the segment is off" pattern as renderParcels.
   function renderAreaLayers() {
     const map = mapRef.current;
     if (!map) return;
 
     if (map.getSource(CATALYST_AREA_SOURCE_ID)) {
-      const features = catalysts.map((c) => ({
-        type: "Feature" as const,
-        properties: { id: c.id },
-        geometry: c.boundary ?? circlePolygon(c.longitude, c.latitude, c.influence_radius_meters),
-      }));
-      (map.getSource(CATALYST_AREA_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+      (map.getSource(CATALYST_AREA_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
     }
     if (map.getSource(CATALYST_LABEL_SOURCE_ID)) {
-      const features = catalysts.map((c) => ({
-        type: "Feature" as const,
-        properties: { title: c.title },
-        geometry: { type: "Point" as const, coordinates: [c.longitude, c.latitude] },
-      }));
-      (map.getSource(CATALYST_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+      (map.getSource(CATALYST_LABEL_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
     }
+
+    const visibleZones = segment === "potential" ? zoningZonesInSelectedGrowthArea : opportunityZones;
 
     if (map.getSource(OPPORTUNITY_ZONES_SOURCE_ID)) {
       const features = showPotential
-        ? opportunityZones.map((z) => ({
+        ? visibleZones.map((z) => ({
             type: "Feature" as const,
             properties: { id: z.id },
             geometry: z.boundary,
@@ -692,7 +710,7 @@ export default function DevelopmentMap({
     }
     if (map.getSource(OPPORTUNITY_ZONE_LABEL_SOURCE_ID)) {
       const features = showPotential
-        ? opportunityZones.map((z) => ({
+        ? visibleZones.map((z) => ({
             type: "Feature" as const,
             properties: { title: z.title },
             geometry: { type: "Point" as const, coordinates: [polygonCentroid(z.boundary).lng, polygonCentroid(z.boundary).lat] },
@@ -748,6 +766,10 @@ export default function DevelopmentMap({
     potentialSites,
     potentialSiteZoomGateOpen,
     nearbyOpportunityIds,
+    areaActivityProjectIds,
+    areaOpportunityIds,
+    zoningZonesInSelectedGrowthArea,
+    segment,
   ]);
 
   // Selection: fly the camera in, fade the unrelated markers in that
@@ -761,9 +783,11 @@ export default function DevelopmentMap({
     markersRef.current.forEach((marker, id) => {
       const isProjectMarker = projects.some((p) => p.id === id);
       const relevantSelectedId = isProjectMarker ? selectedProjectId : selectedOpportunityId;
-      // A nearby-forced opportunity marker (radius reveal) stays at full
-      // opacity as long as no other opportunity is explicitly selected.
-      const isNearbyForced = !isProjectMarker && nearbyOpportunityIds.has(id) && !selectedOpportunityId;
+      // A forced marker (radius reveal or in-area reveal) stays at full
+      // opacity as long as nothing else in its own collection is selected.
+      const isNearbyForced = isProjectMarker
+        ? areaActivityProjectIds.has(id) && !selectedProjectId
+        : (nearbyOpportunityIds.has(id) || areaOpportunityIds.has(id)) && !selectedOpportunityId;
       marker.getElement().style.opacity =
         !relevantSelectedId || id === relevantSelectedId || isNearbyForced ? "1" : "0.35";
       marker.getElement().classList.toggle("is-selected", id === relevantSelectedId);
@@ -861,9 +885,14 @@ export default function DevelopmentMap({
       const area = growthAreas.find((g) => g.id === selectedGrowthAreaId);
       if (area) {
         const center = polygonCentroid(area.geom);
+        // Zooms *into* the area (crossing POTENTIAL_SITE_MIN_ZOOM) rather
+        // than the old "zoom out to at most 13" -- this is the
+        // momentum-first "expand" gesture, and needs to clear the
+        // Potential Site zoom gate so those pins reveal alongside the
+        // forced Activity/Opportunity markers.
         map.flyTo({
           center: [center.lng, center.lat],
-          zoom: Math.min(map.getZoom(), 13),
+          zoom: Math.max(map.getZoom(), 14),
           pitch: 40,
           duration: 1200,
           essential: true,
@@ -900,6 +929,8 @@ export default function DevelopmentMap({
     growthAreas,
     potentialSites,
     nearbyOpportunityIds,
+    areaActivityProjectIds,
+    areaOpportunityIds,
   ]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {

@@ -29,7 +29,7 @@ export default function PotentialLegend({
         aria-expanded={expanded}
         className="flex w-full items-center gap-3 p-3 text-left"
       >
-        <span className="flex-1 text-sm font-medium text-white/85">Potential</span>
+        <span className="flex-1 text-sm font-medium text-white/85">Momentum</span>
         <span className="text-sm text-white/40">{total}</span>
         <svg
           viewBox="0 0 24 24"

@@ -14,7 +14,7 @@ import type {
   ProjectWithSource,
 } from "@/lib/types";
 import { resolveActivityPhase } from "@/lib/activityPhase";
-import { filterWithinRadius, ONE_MILE_METERS } from "@/lib/geo";
+import { filterWithinRadius, ONE_MILE_METERS, pointInPolygon, polygonCentroid } from "@/lib/geo";
 import DevelopmentMap from "./DevelopmentMap";
 import DevelopmentLegend from "./DevelopmentLegend";
 import OpportunityLegend from "./OpportunityLegend";
@@ -26,7 +26,6 @@ import OpportunityZoneDetailPanel from "./OpportunityZoneDetailPanel";
 import GrowthAreaDetailPanel from "./GrowthAreaDetailPanel";
 import PotentialSiteDetailPanel from "./PotentialSiteDetailPanel";
 import LayerSwitcher, { type MapSegment } from "./LayerSwitcher";
-import MapKey from "./MapKey";
 
 export type MapCategory = MapSegment;
 
@@ -204,6 +203,37 @@ export default function DevelopmentIntelligenceView({
     ? (growthAreas.find((g) => g.id === selectedPotentialSite.growth_area_id) ?? null)
     : null;
 
+  // A selected Growth Area's momentum breakdown: Plans-pillar projects and
+  // Opportunities signals whose point falls inside the area's polygon, plus
+  // Favorable Zoning zones whose centroid does -- same "share what's
+  // already loaded, just filter it" pattern as nearbyOpportunities below,
+  // just polygon-based instead of radius-based. Feeds both the map's
+  // forced-visible markers and GrowthAreaDetailPanel's tabs.
+  const activityProjectsInSelectedGrowthArea = useMemo(() => {
+    if (!selectedGrowthArea) return [];
+    return phaseProjects.filter((p) =>
+      pointInPolygon({ lat: p.latitude, lng: p.longitude }, selectedGrowthArea.geom)
+    );
+  }, [selectedGrowthArea, phaseProjects]);
+  const opportunitiesInSelectedGrowthArea = useMemo(() => {
+    if (!selectedGrowthArea) return [];
+    return opportunities.filter((o) =>
+      pointInPolygon({ lat: o.latitude, lng: o.longitude }, selectedGrowthArea.geom)
+    );
+  }, [selectedGrowthArea, opportunities]);
+  const zoningZonesInSelectedGrowthArea = useMemo(() => {
+    if (!selectedGrowthArea) return [];
+    return opportunityZones.filter((z) => pointInPolygon(polygonCentroid(z.boundary), selectedGrowthArea.geom));
+  }, [selectedGrowthArea, opportunityZones]);
+  const areaActivityProjectIds = useMemo(
+    () => new Set(activityProjectsInSelectedGrowthArea.map((p) => p.id)),
+    [activityProjectsInSelectedGrowthArea]
+  );
+  const areaOpportunityIds = useMemo(
+    () => new Set(opportunitiesInSelectedGrowthArea.map((o) => o.id)),
+    [opportunitiesInSelectedGrowthArea]
+  );
+
   // The project-pin "premium reveal": opportunities within 1 mile of the
   // selected project. Computed once here and shared by the map (which
   // forces those markers visible even off the Opportunities segment) and
@@ -228,11 +258,10 @@ export default function DevelopmentIntelligenceView({
 
   return (
     <div className="space-y-3">
-      <MapKey />
-
       <div className="relative h-[640px]">
         <DevelopmentMap
           market={market}
+          segment={segment}
           showPlans={showPlans}
           showOpportunities={showOpportunities}
           showPotential={showPotential}
@@ -244,6 +273,9 @@ export default function DevelopmentIntelligenceView({
           growthAreas={growthAreas}
           potentialSites={potentialSites}
           nearbyOpportunityIds={nearbyOpportunityIds}
+          areaActivityProjectIds={areaActivityProjectIds}
+          areaOpportunityIds={areaOpportunityIds}
+          zoningZonesInSelectedGrowthArea={zoningZonesInSelectedGrowthArea}
           selectedProjectId={selectedProjectId}
           onSelectProject={selectProject}
           selectedOpportunityId={selectedOpportunityId}
@@ -317,7 +349,12 @@ export default function DevelopmentIntelligenceView({
         {selectedGrowthArea && (
           <GrowthAreaDetailPanel
             growthArea={selectedGrowthArea}
+            activityProjectsInArea={activityProjectsInSelectedGrowthArea}
+            opportunitiesInArea={opportunitiesInSelectedGrowthArea}
+            zoningZonesInArea={zoningZonesInSelectedGrowthArea}
             potentialSitesInArea={potentialSitesInSelectedGrowthArea}
+            onSelectProject={selectProject}
+            onSelectOpportunity={selectOpportunity}
             onSelectPotentialSite={selectPotentialSite}
             onClose={() => selectGrowthArea(null)}
           />

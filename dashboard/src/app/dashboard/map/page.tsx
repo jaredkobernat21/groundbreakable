@@ -33,7 +33,7 @@ export default async function MapPage({
 
   const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
     ? (searchParams.category as MapCategory)
-    : "plans";
+    : "potential";
 
   const selectType = searchParams.selectType;
   const initialSelection: { type: "project" | "opportunity"; id: string } | null =

@@ -46,6 +46,32 @@ export function polygonCentroid(geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
   return { lat: sumLat / count, lng: sumLng / count };
 }
 
+// Standard ray-casting point-in-polygon test, run per ring (outer ring
+// only matters for this codebase's admin-traced areas -- none of them
+// carry holes) -- used to scope a Growth Area's momentum breakdown to
+// just the projects/opportunities/zoning zones that actually fall inside
+// it, same "good enough for these hand-traced polygons" spirit as
+// polygonCentroid above.
+export function pointInPolygon(
+  point: { lat: number; lng: number },
+  geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
+): boolean {
+  const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+  return polygons.some((rings) => pointInRing(point, rings[0]));
+}
+
+function pointInRing(point: { lat: number; lng: number }, ring: GeoJSON.Position[]): boolean {
+  const { lng: x, lat: y } = point;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    const intersects = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
 // Approximates a circle of `radiusMeters` around [lng, lat] as a GeoJSON
 // polygon -- plain trig, no turf/geo dependency needed for a marker-sized
 // influence zone.
