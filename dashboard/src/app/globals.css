@@ -97,3 +97,63 @@ body {
 .roq-marker.is-selected .roq-marker-line {
   height: 22px;
 }
+
+/* Groundbreakable Leads map (/leads/map) -- same marker mechanics as the
+   investor map above, warm-white basemap instead of dark, gold instead of
+   orange for the connecting line so it reads as this product's own accent
+   rather than a reskinned dev-intelligence marker. */
+.gbl-map .mapboxgl-ctrl-top-right {
+  top: 8px;
+  right: 8px;
+}
+
+.gbl-marker-card {
+  margin-bottom: 2px;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 1px solid rgba(28, 28, 28, 0.08);
+  background: rgba(255, 255, 255, 0.97);
+  padding: 6px 10px;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(28, 28, 28, 0.12);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.gbl-marker-card-title { font-size: 11px; font-weight: 600; color: #1c1c1c; }
+.gbl-marker-card-sub { font-size: 10px; color: rgba(28, 28, 28, 0.55); }
+.gbl-marker-card-score { font-size: 11px; font-weight: 700; }
+
+.gbl-marker:hover .gbl-marker-card,
+.gbl-marker.is-selected .gbl-marker-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gbl-marker-line {
+  width: 1px;
+  height: 0px;
+  background: #B08D57;
+  opacity: 0.8;
+  transition: height 0.15s ease;
+}
+
+.gbl-marker:hover .gbl-marker-line,
+.gbl-marker.is-selected .gbl-marker-line {
+  height: 20px;
+}
+
+.gbl-marker-pin {
+  transform-origin: bottom center;
+  transition: transform 0.15s ease;
+  filter: drop-shadow(0 1px 2px rgba(28, 28, 28, 0.35));
+}
+
+.gbl-marker:hover .gbl-marker-pin,
+.gbl-marker.is-selected .gbl-marker-pin {
+  transform: scale(1.18);
+}

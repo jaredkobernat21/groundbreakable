@@ -42,6 +42,12 @@ export default async function DashboardLayout({
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
+          <Link
+            href="/leads"
+            className="rounded-full border border-[#B08D57]/40 bg-[#B08D57]/10 px-3 py-1 text-xs font-medium text-[#8a6a3d] hover:bg-[#B08D57]/20"
+          >
+            Groundbreakable Leads →
+          </Link>
           <MarketSwitcher markets={markets ?? []} />
           <span className="hidden sm:inline">{user?.email}</span>
           <SignOutButton />
