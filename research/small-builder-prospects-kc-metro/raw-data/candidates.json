@@ -1,0 +1,96 @@
+{
+  "shortlist": [
+    {
+      "name": "Gary E. Strack Jr.",
+      "business": "Strack Homes",
+      "market": "Gardner, KS (Johnson County)",
+      "address": "16615 Four Corners Road, Gardner, KS 66030",
+      "est_build_count": 3,
+      "build_count_source": "BuildZoom permit aggregate",
+      "team_size_signal": "Business address matches owner's residential address; no employees found",
+      "phone": "(913) 856-7519",
+      "phone_type": "likely direct/cell (tied to home address)",
+      "phone_source": ["Johnson County license record (aggregated via search)", "independent address-correlation source"],
+      "license": "Kansas Residential Contractor license #2015-2198, Active, Johnson County",
+      "confidence": "Medium-High",
+      "pitch_angle": "One-man operation with only 3 permits on record; needs site-finding help he clearly doesn't have staff for"
+    },
+    {
+      "name": "Billy (Bill) Atwood Jr.",
+      "business": "Prairie Sun Homes LLC / Atwood Construction Services LLC",
+      "market": "Basehor, KS (Leavenworth County)",
+      "address": "PO Box 505, Basehor, KS 66007",
+      "est_build_count": 8,
+      "build_count_source": "BuildZoom permit aggregate",
+      "team_size_signal": "Sole named principal on both related LLCs; no employees found",
+      "phone": "(913) 206-4948",
+      "phone_type": "business line, likely owner-answered",
+      "phone_source": ["prairiesunhomes.com contact page", "Johnson County license records for both LLCs"],
+      "license": "Residential Contractor license + 1 other, Johnson County",
+      "confidence": "Medium-High",
+      "pitch_angle": "Directly in the Leavenworth County corridor Groundbreakable's Dan Lynch research already covers"
+    },
+    {
+      "name": "Byron S. Seele / Maggie Seele",
+      "business": "Cedar Nile Homes, Inc.",
+      "market": "Gardner, KS (Johnson County)",
+      "address": "18740 Cedar Niles Rd, Gardner, KS 66030",
+      "est_build_count": 15,
+      "build_count_over_years": 14,
+      "build_count_source": "BuildZoom permit aggregate; years-in-business from BBB (founded 12/6/2011)",
+      "team_size_signal": "Husband-and-wife principals; ~1 home/year pace implies no real crew",
+      "phone": "(913) 856-0116",
+      "phone_type": "business line",
+      "phone_source": ["BBB business profile"],
+      "confidence": "Medium",
+      "pitch_angle": "Persistently small by choice, not new — pitch is bandwidth efficiency, not startup help"
+    },
+    {
+      "name": "Ben Cox",
+      "business": "Sycamore Road Homes",
+      "market": "Kansas City metro (based Platte County, MO side)",
+      "address": "9630 NW Baker Rd, Kansas City, MO 64153",
+      "est_build_count": null,
+      "founded": "early 2024",
+      "team_size_signal": "Solo founder; relationships with outside architects/engineers, not employees",
+      "phone": "(913) 620-4312",
+      "phone_type": "unconfirmed cell vs. office; only number found anywhere for the business",
+      "phone_source": ["sycamoreroadhomes.com contact page"],
+      "confidence": "Medium",
+      "pitch_angle": "Deliberately small-by-design new company; founder explicitly avoiding scale"
+    },
+    {
+      "name": "Tyler Heidebrecht (likely, not independently confirmed)",
+      "business": "Heidebrecht Homes, LLC",
+      "market": "Spring Hill, KS (Johnson County)",
+      "address": "21746 South Race Street, Spring Hill, KS 66083",
+      "est_build_count": null,
+      "bbb_file_opened": "2025-10-27",
+      "team_size_signal": "LinkedIn shows a 'Founder and Owner' profile matching the business name/market, not independently re-verified",
+      "phone": "(913) 368-9555",
+      "phone_type": "business line",
+      "phone_source": ["BBB business profile"],
+      "confidence": "Low-Medium",
+      "pitch_angle": "Newest BBB file of any candidate found — likely earliest-stage",
+      "verification_gap": "owner identity not independently confirmed; LinkedIn profile could not be re-fetched"
+    }
+  ],
+  "not_verified_enough": [
+    {"name": "Timothy J. Mayes", "business": "Gingerbread Homes LLC", "market": "Spring Hill, KS", "gap": "no confirmed phone beyond BuildZoom's shared number", "license": "Wood Framing Contractor + 1 other, Johnson County"},
+    {"name": "Marc Waller", "business": "Integrity Custom Homes LLC", "market": "Leavenworth, KS (15385 Price Rd)", "gap": "no confirmed phone; name-collision with an unrelated SW MO/SE KS company of the same name (417 area code number belongs to the OTHER company, do not use)", "business_started": "2014-09-17", "est_build_count": 9},
+    {"name": null, "business": "Von Tersch Custom Homes", "market": "Basehor/Bonner Springs area (Linwood Rd)", "gap": "Facebook page would not fully render; no owner name or phone confirmed"},
+    {"name": null, "business": "Da Homes", "market": "Tonganoxie, KS", "gap": "no confirmed phone; build volume (18-24 permits/3 yrs) may be too high for 'few builds'"},
+    {"name": "Jim Perry", "business": "Jim Perry Homes Inc", "market": "Lansing, KS", "gap": "no confirmed phone; only 2 reviews at 1.0 rating is a reputation flag, not just a data gap", "est_build_count": 20},
+    {"name": null, "business": "Leahy Homes LLC", "market": "Edgerton, KS", "gap": "no confirmed phone; BuildZoom flags 'no active license on file'"},
+    {"name": null, "business": "Monster Construction / Remington Custom Homes", "market": "De Soto, KS", "gap": "no confirmed phone; BuildZoom flags 'no active license on file'"},
+    {"name": "Robert (Bob) Findley", "business": "Bob the Builder, LLC", "market": "Basehor, KS (16123 Fairmount Rd)", "gap": "persona mismatch — handyman/remodel work, not new-home construction or land development", "business_started": "2018-08-08"}
+  ],
+  "excluded_too_established": [
+    {"business": "Gianni Custom Homes, LLC", "owner": "Joseph Gianni", "market": "Leawood, KS", "reason": "196 permits, ~$2.5M permitted value, 10 years in business"},
+    {"business": "Kessler Custom Homes, Inc.", "owner": "Jennifer & Kyle Kessler", "market": "Gardner, KS", "reason": "28 years experience, Parade of Homes winner"},
+    {"business": "Rob Washam Homes", "owner": "Rob Washam", "market": "Blue Springs, MO", "reason": "36 years in business"},
+    {"business": "Craig Brett Homes, LLC", "owner": "Craig ___", "market": "Gardner, KS", "reason": "~20 years experience, has a team"},
+    {"business": "All Under One Roof", "owner": "Bryan ___", "market": "KC metro", "reason": "Serving KS & MO since 2005; named AIA architect and PE engineer on staff"},
+    {"business": "Legacy Custom Homes, LLC", "owner": null, "market": "Lee's Summit, MO (not Bonner Springs as initially listed)", "reason": "geography mismatch, not persona"}
+  ]
+}
