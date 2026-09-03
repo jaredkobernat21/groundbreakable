@@ -1,0 +1,55 @@
+{
+  "shortlist": [
+    {
+      "name": "Tom Faulhaber",
+      "business": "Faulhaber Custom Homes",
+      "market": "Le Claire, IA (Scott County)",
+      "address_conflict": ["23347 277th Ave, Le Claire, IA 52753 (BuildZoom)", "1302 Woodland Ln, Le Claire, IA 52753-9363 (BBB)"],
+      "est_build_count": 5,
+      "build_count_source": "BuildZoom permit aggregate",
+      "team_size_signal": "Tom Faulhaber and his sons — family crew, not outside staff",
+      "phone": "(563) 529-2739",
+      "phone_type": "business line",
+      "phone_source": ["BuildZoom contractor profile", "BBB business profile (independent match)"],
+      "other_unverified_numbers_seen_not_used": ["(563) 332-6063", "(563) 340-6004"],
+      "bbb_file_opened": "2015-12-15",
+      "confidence": "Medium-High",
+      "pitch_angle": "Multi-decade family operation still at low volume; likely land-constrained, not staffed for site-scouting"
+    },
+    {
+      "name": "Ryan Carstensen",
+      "business": "Core Designs LLC",
+      "market": "Le Claire, IA (Scott County)",
+      "address": "29 Sandstone Ct, Le Claire, IA 52753-9250",
+      "est_build_count": 5,
+      "build_count_source": "BuildZoom permit aggregate (sample)",
+      "team_size_signal": "Solo owner-operator, architecture background (Iowa State)",
+      "phone": "(563) 570-7116",
+      "phone_type": "business line",
+      "phone_source": ["BuildZoom contractor profile", "BBB business profile (independent match, same address)"],
+      "bbb_file_opened": "2021-10-01",
+      "bbb_rating": "A+",
+      "confidence": "Medium-High",
+      "pitch_angle": "Solo, transparency/simplicity-branded custom builder serving IA+IL sides of Quad Cities; buildability screening fits his brand directly",
+      "note": "license status shows inactive/expired on BuildZoom but Iowa has no GC license, only revenue-based registration — not treated as disqualifying"
+    }
+  ],
+  "not_verified_enough": [
+    {"name": "James Rasche", "business": "Encore Homes LLC", "market": "Princeton, IA", "est_build_count": 3, "gap": "single-source only; 2 reviews at 1/5 stars citing disorganization/communication issues"},
+    {"name": "William Bruce", "business": "Bill Bruce Builders Inc", "market": "Eldridge, IA", "est_build_count": 18, "gap": "work mix mostly plumbing/additions, only 3 of 18 permits new-construction; volume above ~15 ceiling; single source"},
+    {"name": "Virginia & William Haycraft", "business": "Haycraft Builders Inc", "market": "Eldridge, IA", "gap": "kitchen/bath/basement remodel focus, likely persona mismatch; license inactive; no permit count or second source"},
+    {"name": "William Engler", "business": "Suitable Builders Inc", "market": "Princeton, IA", "gap": "no permit count; license expired 2020; no second source; family business"},
+    {"name": "Michael J. Sissel", "business": "Sissel Construction LLC", "market": "Walcott, IA", "gap": "no permit count; license expired 2022; no second source"},
+    {"name": null, "business": "Stone River Builders Inc", "market": "Le Claire, IA", "gap": "owner name not found; license inactive; single source"},
+    {"name": "Daniel Ryan", "business": "Quality Custom Homes LLC", "market": "Davenport, IA", "gap": "no permit count; license expired mid-2026; no second source"},
+    {"name": "Vance Mattson", "business": "Cornerstone Construction Group LLC", "market": "Blue Grass, IA", "gap": "electrical/additions/garage/roofing work, likely persona mismatch; license inactive; 3-person team borderline"},
+    {"name": "Robert Aaron", "business": "Delta X LLC", "market": "Blue Grass, IA", "gap": "persona mismatch — pool/spa and demolition work, not home building"}
+  ],
+  "excluded_too_established": [
+    {"business": "Jared Kerkhoff Homes Inc (Kerkhoff Homes)", "owner": "Jared Kerkhoff", "market": "Bettendorf, IA", "reason": "founded 2000, luxury $600K+ custom builder, longstanding QCBR member — 25+ years, despite only 3 permits showing on BuildZoom"},
+    {"business": "Diamond Builders of Davenport", "owner": "Colin & Paula Woods", "market": "Long Grove, IA", "reason": "founded 1999, 11-50 employees, 2020 'Best Homebuilder' award, Parade of Homes recognition"},
+    {"business": "Mike Stych Builders Inc", "owner": "Mike Stych", "market": "Muscatine, IA", "reason": "started 1993, '30+ years experience', markets itself as a premier regional builder; also outside primary Scott County focus"},
+    {"business": "Dan Dolan Homes / Dolan Corp", "owner": "Dan Dolan", "market": "Davenport, IA", "reason": "same family runs a multifamily apartment property-management portfolio — real infrastructure beyond a solo builder"},
+    {"business": "Grove Custom Home Builders LLC", "owner": "Andrew Grove", "market": "Council Bluffs, IA", "reason": "geography mismatch — western Iowa near Omaha, not the Quad Cities"}
+  ]
+}

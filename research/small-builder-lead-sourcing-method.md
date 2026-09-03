@@ -93,6 +93,28 @@ For each market run, create `research/<name>-<market>/` containing:
   market-appropriate tracker) with status and market tag, so they're workable
   day to day rather than living only in a static document.
 
+## Notes from additional market runs
+
+- **BuildZoom's permit count is a recent-years sample, not a career total.**
+  On the Davenport/Quad Cities run (2026-09-03), three candidates with low
+  BuildZoom permit counts (3-4 permits) turned out on independent search to
+  be 15-30-year-old, real-team businesses — BuildZoom simply doesn't carry
+  their full history. A low permit count is suggestive, not sufficient:
+  always separately confirm years-in-business and team size before treating
+  someone as early-stage.
+- **"License status" means different things in different states — check what
+  the local requirement actually is before treating it as a signal.** Johnson
+  County, KS has a real contractor license, and "active" there was meaningful
+  corroboration. Iowa has no general contractor license at all (only a
+  Division of Labor revenue-based registration above $2,000/yr), so
+  BuildZoom's Iowa "license: inactive/expired" flag showed up on plenty of
+  real, active, well-reviewed businesses — it was correctly not treated as
+  disqualifying in that market. Don't carry a state's license semantics into
+  a different state.
+- **BBB profile + BuildZoom profile matching independently (same owner name,
+  phone, and ideally address) is a reliable Medium-High bar** even without a
+  government license record — used for both Iowa shortlist candidates.
+
 ## Cold-outreach opener (first text)
 
 Short, self-identifying, references something specific to the lead, ends with
