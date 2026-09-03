@@ -1,0 +1,55 @@
+{
+  "shortlist": [
+    {"business": "Jayden 11 Palace Inc", "market": "Bronx (Castle Hill)", "address": "682 Castle Hill Avenue", "phone": "7188243403", "how_new_evidence": "inspection_date=1900-01-01 (not yet inspected); independently confirmed by NYC Restaurant Grades site as not yet graded", "web_presence": "none found beyond the official inspection-grade listing", "confidence": "High", "pitch_angle": "Zero digital footprint at all -- ideal timing for a full website+payments+Maps setup before their first customers arrive via search"},
+    {"business": "JDA Food LLC", "market": "Brooklyn (Grand St, Williamsburg)", "address": "617 Grand Street", "phone": "3473948905", "how_new_evidence": "inspection_date=1900-01-01; NYC Restaurant Grades confirms not yet graded", "web_presence": "none found", "confidence": "High", "pitch_angle": "Same zero-footprint profile as Jayden 11 Palace -- brand new with nothing online yet"},
+    {"business": "M A Pizza & Hotdog Inc", "market": "Manhattan (Ludlow St, Lower East Side)", "address": "153 Ludlow Street", "phone": "6466427988", "how_new_evidence": "inspection_date=1900-01-01; corporate entity formed September 2025 per NY company registry", "web_presence": "none found -- no website, delivery platform, or social listing surfaced", "confidence": "High", "pitch_angle": "New pizza/hotdog spot in a dense, competitive LES corridor with zero web presence -- needs to be findable fast"},
+    {"name": "Garry Vilbon", "business": "Garry Vilbon", "market": "Brooklyn (Flatbush Ave)", "phone": "7187373433", "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "none found under this name anywhere", "confidence": "Medium", "pitch_angle": "Unclear if concept is even public-facing yet -- worth a direct call to find out what's being built", "gap": "could not independently confirm this is an operating/open business"},
+    {"business": "Smash Time Burger Co", "market": "Bronx (E Tremont Ave)", "phone": "9179933501", "how_new_evidence": "inspection_date=1900-01-01; a reviewer notes trying it on its opening weekend", "web_presence": "no owned website; DoorDash/Grubhub/Seamless/Yelp only", "confidence": "Medium-High", "pitch_angle": "Family-run new burger spot getting real customer traction on delivery platforms but has no home base (owned site) of its own"},
+    {"business": "Casa Mulberry", "market": "Manhattan (Mulberry St)", "phone": null, "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "no owned website found; Toast/Grubhub/Seamless listings only", "confidence": "Medium", "pitch_angle": "New Little Italy pizza spot relying entirely on third-party ordering platforms"},
+    {"business": "A Taste of Seafood", "market": "Brooklyn", "phone": "7184838920", "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "no owned website; ChowNow/DoorDash/Uber Eats/Instagram only", "confidence": "Medium", "pitch_angle": "Seafood counter with real delivery-platform activity but no branded site of its own"},
+    {"name": "Simone Viola & Chiara", "business": "Bar Lento", "market": "Manhattan (Chelsea, 158 8th Ave)", "phone": null, "how_new_evidence": "inspection_date=1900-01-01; press coverage as of May 2026 described it as pre-opening with no announced date", "web_presence": "no website found as of last press mention", "confidence": "Medium", "pitch_angle": "Italian couple's new wine bar, possibly still pre-launch -- best-timed prospect on this list if so"},
+    {"business": "Canarsie Fish and Chips", "market": "Brooklyn (Canarsie)", "phone": "3477154841", "how_new_evidence": "inspection_date=1900-01-01; LLC registered 2024, storefront opening appears to lag the filing", "web_presence": "no owned website; Yelp/Seamless only", "confidence": "Medium", "pitch_angle": "New storefront opening well after LLC formation -- a common delayed-launch pattern; needs full digital setup for opening"},
+    {"business": "The Roosevelt Pizza (Roosevelt Pizza Express)", "market": "Queens (Jackson Heights)", "phone": "7184339324", "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "no owned website; likely reopening of a closed '99 Cent Pizza Express' at the same address", "confidence": "Medium", "pitch_angle": "A reopening/rebrand under a new name -- needs fresh branding and an owned web presence to distinguish from the prior business"},
+    {"business": "Urban Crust Pizza & Grill", "market": "Brooklyn (Liberty Ave)", "phone": null, "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "no confirmed owned website (a similarly-named domain may belong to a different business)", "confidence": "Low-Medium", "pitch_angle": "Halal-certified pizza/grill spot on delivery platforms only", "gap": "domain ownership ambiguous"},
+    {"business": "Fuleen Palace (New Fuleen Palace Restaurant)", "market": "Queens (Howard Beach)", "phone": "7188485877", "how_new_evidence": "inspection_date=1900-01-01; 'NEW' in its own Yelp listing name suggests a reopening", "web_presence": "no owned website found", "confidence": "Low-Medium", "pitch_angle": "Possible reopening under new ownership/name -- needs a fresh web identity"},
+    {"business": "Pony's NYC", "market": "Brooklyn (Red Hook)", "phone": null, "how_new_evidence": "inspection_date=1900-01-01; opened by Elana Shvalbe and Michael Furac, previously ran a pop-up bar", "web_presence": "press coverage (Infatuation, whatnow.com) but no owned website found", "confidence": "Low-Medium", "pitch_angle": "Experienced owners with real press but apparently no website of their own yet"},
+    {"business": "Burmese Bites", "market": "Queens (Astoria)", "phone": "9175602480", "how_new_evidence": "inspection_date=1900-01-01", "web_presence": "Facebook page exists; no owned website found; appears to be expanding to a second location", "confidence": "Low-Medium", "pitch_angle": "Small, growing operation relying on Facebook/delivery platforms instead of an owned site"},
+    {"business": "Mazaji Specialty Coffee Corp", "market": "Brooklyn (Bay Ridge)", "phone": "3474920114", "how_new_evidence": "inspection_date=1900-01-01; opened August per press coverage", "web_presence": "already has an owned domain (mazajicoffeebrunch.com), Yelp, Uber Eats", "confidence": "Low (deprioritize)", "pitch_angle": "Genuinely new Yemeni coffee shop but already has basic web presence -- lower urgency than the zero-presence candidates above"}
+  ],
+  "not_verified_enough": [
+    {"business": "Supermarket El Bodegon Latino", "market": "Queens", "gap": "conflicting entity matches (FL chain vs. differently-spelled Corona grocery); likely a grocery, not a restaurant"},
+    {"business": "VSM NY Cafe", "market": "Manhattan (2131 Broadway)", "gap": "shares an address with the established Fairway Market cafe; relationship unclear"},
+    {"business": "Waylon & Caribbean Flames", "market": "unclear", "gap": "resolved to multiple unrelated entities across NYC and Albany"},
+    {"business": "Soy or Spicy", "market": "Queens (tag) / possibly Nassau County", "gap": "address signals point outside NYC's five boroughs -- possible borough-tag data issue"},
+    {"business": "Lanzhou Hand-Pulled Noodles", "market": "Queens (Flushing)", "gap": "extremely common name pattern with multiple independent namesakes in the same neighborhood"},
+    {"business": "Stand 50B", "market": "Manhattan", "gap": "search only surfaced an unrelated, long-established comedy club/restaurant"}
+  ],
+  "excluded_established_or_backed": [
+    {"business": "Amber Room", "reason": "established nightclub/event venue with a full existing site"},
+    {"business": "Oodles", "reason": "established halal ramen bar, owned domain, multiple delivery platforms"},
+    {"business": "Smor (Smør)", "reason": "established since 2019, press-featured, owned site"},
+    {"business": "Starz Coffee Cafe", "reason": "established family business with existing social/platform presence"},
+    {"business": "Thamel NYC", "reason": "established cocktail bar with an owned site"},
+    {"business": "Oyishi Sushi", "reason": "owner's third sushi restaurant -- an experienced multi-unit operator with an owned site"},
+    {"business": "Loopy's Eatery", "reason": "established since 2015, owned site, multi-platform presence"},
+    {"business": "Ler Lers", "reason": "expansion by the owners of the popular Klom Klorm"},
+    {"business": "Bicchiere Wine & Pasta Bar", "reason": "from the team behind the established Madame Bonte group"},
+    {"business": "Ferguson's Country", "reason": "from the team behind the established Baba; has an owned site"},
+    {"business": "Essex Pearl", "reason": "established since 2019 with multiple past locations and an owned site"},
+    {"business": "Janet's Pizzeria", "reason": "owned site, established"},
+    {"business": "Kirbee's", "reason": "opened by nationally famous, press-covered Texas BBQ pitmasters"},
+    {"business": "Elora's", "reason": "established since 1995 with two owned domains"}
+  ],
+  "excluded_chains_missed_by_keyword_filter": [
+    {"business": "Matto Espresso", "reason": "9-location Manhattan chain"},
+    {"business": "Grizzly Coffee & Tea House", "reason": "established Brooklyn mini-chain with press coverage"},
+    {"business": "CoCo Tea JH (CoCo Fresh Tea & Juice)", "reason": "international bubble tea franchise"},
+    {"business": "375 Chicken N Fries", "reason": "confirmed 3-location small chain"}
+  ],
+  "excluded_data_quality": [
+    {"business": "Tumbao", "reason": "not a restaurant -- a fashion/retail pop-up space"},
+    {"business": "Ama Ba", "reason": "permanently closed as of December 2025"},
+    {"business": "Wilt's Berries", "reason": "appears to be a Philadelphia business, not actually in Brooklyn"}
+  ],
+  "raw_pool_note": "3,548 clean, phone-having, not-yet-inspected NYC food establishments remain beyond the 42 individually checked here -- supports a substantially longer follow-up list."
+}
