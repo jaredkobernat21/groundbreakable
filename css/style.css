@@ -195,6 +195,63 @@ button{ font-family:inherit; }
 }
 .nav__mobile .btn{ margin-top:14px; }
 
+/* ---------- Nav overlay (home hero only) ----------
+   On the home page the nav floats transparent over the hero photo so
+   the hero fills the full screen, then becomes the normal solid bar
+   once scrolled past it. Only index.html adds the --overlay modifier;
+   every other page keeps the plain sticky/solid .nav untouched. */
+.nav--overlay{
+  position:fixed;
+  top:0; left:0; right:0;
+  background:transparent;
+  border-bottom-color:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.nav--overlay::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:linear-gradient(to bottom, rgba(20,18,14,0.58) 0%, rgba(20,18,14,0.24) 65%, rgba(20,18,14,0) 100%);
+  transition:opacity .35s ease;
+}
+.nav--overlay .brand__mark,
+.nav--overlay .brand__text,
+.nav--overlay .nav__links a,
+.nav--overlay .nav__toggle span{
+  color:#FFFFFF;
+  transition:color .3s ease;
+}
+.nav--overlay .brand__text em{ color:rgba(255,255,255,0.65); }
+.nav--overlay .nav__links a:hover{ color:#FFFFFF; opacity:0.75; }
+.nav--overlay .nav__cta .btn--line{ color:#FFFFFF; border-color:rgba(255,255,255,0.35); }
+.nav--overlay .nav__cta .btn--line:hover{ border-color:rgba(255,255,255,0.6); background:rgba(255,255,255,0.1); }
+
+.nav--overlay.is-scrolled{
+  background:rgba(255,255,255,0.86);
+  backdrop-filter:blur(14px) saturate(160%);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+  border-bottom-color:var(--ink-06);
+}
+.nav--overlay.is-scrolled::before{ opacity:0; }
+.nav--overlay.is-scrolled .brand__mark,
+.nav--overlay.is-scrolled .brand__text,
+.nav--overlay.is-scrolled .nav__links a,
+.nav--overlay.is-scrolled .nav__toggle span{ color:var(--ink); }
+.nav--overlay.is-scrolled .brand__text em{ color:var(--ink-40); }
+.nav--overlay.is-scrolled .nav__links a:hover{ color:var(--ink); opacity:1; }
+.nav--overlay.is-scrolled .nav__cta .btn--line{ color:var(--ink); border-color:var(--ink-12); }
+.nav--overlay.is-scrolled .nav__cta .btn--line:hover{ border-color:var(--ink-25); background:var(--paper-soft); }
+
+/* The mobile menu panel itself is only ever visible against its own
+   solid background, so it always reads in dark ink regardless of
+   the bar's current transparent/solid state above it. */
+.nav--overlay .nav__mobile,
+.nav--overlay .nav__mobile a:not(.btn){ color:var(--ink-70); }
+.nav--overlay .nav__mobile{ background:var(--paper); }
+
 /* ---------- Hero ----------
    Full-bleed, full-height photo hero: a single centered white headline
    over the render, nothing else — matches the roqhome.com /build.html

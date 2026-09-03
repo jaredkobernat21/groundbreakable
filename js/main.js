@@ -19,6 +19,22 @@
     });
   }
 
+  /* ---- Overlay header (home hero only) ----
+     Only present when the header has the --overlay modifier (index.html) —
+     floats transparent over the full-screen hero, then solidifies once
+     the hero has scrolled past. */
+  var overlayNav = document.querySelector(".nav--overlay");
+  var heroEl = document.querySelector(".hero");
+  if (overlayNav && heroEl) {
+    var onNavScroll = function () {
+      var threshold = Math.max(12, heroEl.offsetHeight - overlayNav.offsetHeight);
+      overlayNav.classList.toggle("is-scrolled", window.scrollY > threshold);
+    };
+    onNavScroll();
+    window.addEventListener("scroll", onNavScroll, { passive: true });
+    window.addEventListener("resize", onNavScroll, { passive: true });
+  }
+
   /* ---- Scroll reveal ---- */
   var revealEls = document.querySelectorAll(".reveal");
   if ("IntersectionObserver" in window) {
