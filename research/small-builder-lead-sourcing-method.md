@@ -114,6 +114,25 @@ For each market run, create `research/<name>-<market>/` containing:
 - **BBB profile + BuildZoom profile matching independently (same owner name,
   phone, and ideally address) is a reliable Medium-High bar** even without a
   government license record — used for both Iowa shortlist candidates.
+- **A state with a real, mandatory contractor license is a structural
+  phone-yield advantage — look for a third-party mirror of the state
+  register if the official portal blocks scripted access.** On the Raleigh,
+  NC run (2026-09-03), the official NCLBGC license portal blocked scripted
+  access the same way the KS/IA county portals did, but a third-party mirror
+  (nccontractorcheck.com) exposed the same license register — including
+  phone number directly — as plain scrapable HTML, city by city. That single
+  source landed 5/5 shortlist candidates with a corroborated phone (KC also
+  hit 5/5; Iowa, with no state license at all, hit only 2/2). When a market
+  is in a state with mandatory GC licensing, actively look for this kind of
+  mirror before falling back to BBB/company-site-only sourcing.
+- **Treat a "revoked" license as its own category, distinct from
+  "inactive/expired" — a hard disqualifier, not a confidence penalty.**
+  Expired/inactive is usually administrative (a renewal lapse, or — as in
+  Iowa — a state with no real licensing regime at all) and shouldn't
+  disqualify on its own. Revoked means the licensing board took action
+  against the contractor specifically. First seen on the Raleigh run (Aiken
+  Construction Inc, NC license revoked 2026-05-17) — excluded outright
+  despite an otherwise well-corroborated phone number.
 
 ## Cold-outreach opener (first text)
 

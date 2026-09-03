@@ -1,0 +1,108 @@
+{
+  "shortlist": [
+    {
+      "name": "Robert \"Bob\" Kopp",
+      "business": "Bosh Builders LLC",
+      "market": "Fuquay-Varina, NC",
+      "address": "1441 E Broad St, Suite 163, Fuquay Varina, NC 27526",
+      "est_build_count": 5,
+      "build_count_source": "BuildZoom permit aggregate (top 37%)",
+      "founded": 2013,
+      "team_size_signal": "2-10 employees (LinkedIn)",
+      "phone": "(919) 770-4788",
+      "phone_type": "business line",
+      "phone_source": ["General web search (LinkedIn/BBB/ZoomInfo aggregate)", "nccontractorcheck.com NCLBGC mirror (License L.108145, Active, qualifier Robert C. Kopp)"],
+      "confidence": "Medium-High",
+      "pitch_angle": "Small 2-10 person shop; site-scouting/buildability service is a real time-saver, not redundant staff"
+    },
+    {
+      "name": "Michael Sean Carew",
+      "business": "Carew Homes LLC",
+      "market": "Rolesville, NC",
+      "est_build_count": 3,
+      "build_count_source": "BuildZoom permit aggregate ($250,000 total)",
+      "team_size_signal": "Solo-qualifier LLC; no other staff found",
+      "phone": "(919) 669-6233",
+      "phone_type": "business line",
+      "phone_source": ["nccontractorcheck.com NCLBGC mirror (Active)", "BuildZoom (matching owner/address)"],
+      "confidence": "Medium-High",
+      "pitch_angle": "Cleanest 'few builds' signal in this market — 3 permits total"
+    },
+    {
+      "name": "Jesse Conniff",
+      "business": "Boreal Homes Inc",
+      "market": "Fuquay-Varina, NC",
+      "address": "4105 Planters Glen Ct., Fuquay Varina, NC 27526",
+      "est_build_count": 15,
+      "build_count_over_years": 3,
+      "build_count_source": "BuildZoom permit aggregate",
+      "founded": 2015,
+      "team_size_signal": "Single named incorporator; no team evidence found",
+      "phone": "(919) 291-0031",
+      "phone_type": "business line",
+      "phone_source": ["nccontractorcheck.com NCLBGC mirror (License L.76304, Active, Intermediate)", "BBB profile", "Houzz profile"],
+      "confidence": "Medium-High",
+      "pitch_angle": "Active ~5 homes/year small operation; worth confirming if he's at capacity or still land-shopping"
+    },
+    {
+      "name": "Edward \"Ed\" Donahue III",
+      "business": "Ed Donahue Builders LLC",
+      "market": "Rolesville, NC",
+      "address": "200 Watkins Farm Road, Rolesville, NC 27571",
+      "est_build_count": null,
+      "in_business_since": 2009,
+      "team_size_signal": "Sole license qualifier for both the LLC and himself individually — no other qualifier on file, strong owner-operator signal",
+      "phone": "(919) 673-8156",
+      "phone_type": "business line",
+      "phone_source": ["nccontractorcheck.com NCLBGC mirror", "city-data.com business registration (matching address)"],
+      "confidence": "Medium",
+      "pitch_angle": "Long-running true owner-operator; does both residential and commercial work, may have less bandwidth for dedicated site-finding",
+      "verification_gap": "no independent permit-count source found"
+    },
+    {
+      "name": "Bulmaro Rodriguez",
+      "business": "BRC Homes Inc",
+      "market": "Wake Forest, NC",
+      "address": "12801 Camp Kanata Rd, Wake Forest, NC 27587",
+      "est_build_count": null,
+      "entity_founded": 2019,
+      "owner_licensed_since": 2008,
+      "owner_prior_business": "ABJ Roofing Inc, since 1993",
+      "team_size_signal": "No employees found; experienced individual operator, newer entity",
+      "phone": "(919) 562-1081",
+      "phone_type": "business line",
+      "phone_source": ["nccontractorcheck.com NCLBGC mirror", "city-data.com incorporation record"],
+      "confidence": "Medium",
+      "pitch_angle": "Experienced contractor pivoting into a newer, smaller home-building venture",
+      "verification_gap": "no BRC-Homes-specific permit count found"
+    }
+  ],
+  "not_verified_enough": [
+    {"name": "Mark A. Anderson", "business": "Built Right Homes LLC", "market": "Wake Forest, NC", "est_build_count": 2, "gap": "no active license on file (BuildZoom); phone single-sourced"},
+    {"name": "Paul Phipps", "business": "Signature Builders", "market": "Zebulon, NC", "est_build_count": 7, "gap": "phone found but not independently corroborated (not in nccontractorcheck.com's first-60 Zebulon listing, no BBB match found)"},
+    {"name": "John Graham Spencer III (likely)", "business": "Dwelling Place Builders LLC", "market": "Knightdale, NC", "gap": "active license but no phone found anywhere"},
+    {"name": null, "business": "MB Homes Construction", "market": "Zebulon/Youngsville, NC", "est_build_count": 11, "gap": "no active license on file; not found in nccontractorcheck.com Youngsville listing; no phone found"},
+    {"name": "Chad Metzger (Managing Member), Christopher Dean (Member)", "business": "Provision Building Co., LLC", "market": "Raleigh, NC", "est_build_count": 41, "build_count_over_years": 3, "phone": "(919) 625-3751", "gap": "well-corroborated phone but permit volume (41/3yr) may exceed the 'few builds' ceiling; years-in-business unconfirmed"},
+    {"name": null, "business": "Berkshire Builders LLC", "market": "Wake Forest, NC", "phone": "(919) 437-7337", "gap": "phone confirmed via state-license mirror only; zero external evidence of build count, team size, or actual home-builder persona fit"},
+    {"name": null, "business": "Butler Homes LLC", "market": "Fuquay-Varina, NC", "est_build_count": 10, "build_count_over_years": 3, "phone": "(919) 616-6902", "gap": "operates as 'Construction & Remodeling' — persona-mismatch risk"},
+    {"name": "Stephen Cochran", "business": "Believe Builders LLC", "market": "Fuquay-Varina, NC", "phone": "(919) 369-6523", "founded": 2016, "gap": "service list spans remodeling/additions/decks/insurance-repairs alongside home building — persona-mismatch risk, no permit count found"}
+  ],
+  "excluded_too_established": [
+    {"business": "Urban Building Solutions LLC", "owner": "Hank / Thomas H. McCullough III", "market": "Raleigh, NC", "reason": "114 permits, business started 2007 (~19 yrs)"},
+    {"business": "Redeeming Development Group / RDG", "owner": "Chris Hodges & Coburn Murray", "market": "Apex, NC", "reason": "174 permits; self-described as 'a leader in the Triangle market'"},
+    {"business": "Cornerstone Custom Home Builders Inc", "owner": "William Franklin Longson", "market": "Zebulon, NC", "reason": "founded 1995 (~30 yrs), 30 permits"},
+    {"business": "JVC Homes Inc", "owner": "Robert Jones", "market": "Wake Forest, NC", "reason": "303 permits"},
+    {"business": "Norris Homes, Inc.", "owner": "Michael A. Norris", "market": "Clayton, NC", "reason": "incorporated 2002 (~24 yrs), 55 permits"},
+    {"business": "Haven Homes LLC", "owner": "Chris Sanders", "market": "Wake Forest, NC", "reason": "over 30 years of custom home building experience"},
+    {"business": "Associate Builders, Inc.", "owner": "Stephen \"Mike\" Burrows", "market": "Wake Forest, NC", "reason": "founded 1983 (~43 yrs)"},
+    {"business": "Blackwell Builders, Inc.", "owner": "Ginger / Karl Blackwell", "market": "Wake Forest, NC", "reason": "founded 1995 (~30 yrs), 27 permits/3yr"},
+    {"business": "Zeigler Classic Homes and Renovations, Inc.", "owner": "Julia / Craig Zeigler", "market": "Rolesville, NC", "reason": "founded 1987 (~39 yrs); also estate-homes/remodeling/light-commercial persona mismatch"}
+  ],
+  "disqualified_revoked_license": [
+    {"business": "Aiken Construction Inc", "owner": null, "market": "Raleigh, NC", "phone": "(919) 669-5307", "reason": "NC license #13166 revoked 05-17-2026 (not merely expired) — treated as a hard disqualifier"}
+  ],
+  "data_quality_dead_ends": [
+    {"business": "\"Sdp Builders\" (Youngsville, NC)", "reason": "search results kept resolving to an apparently unrelated Stephen D. Prater Builder, Inc. with an implausibly large 629-permit figure"},
+    {"business": "\"Freeman Custom Homes\" (Clayton, NC)", "reason": "search results kept resolving to Freeman's Custom Homes, Inc. of Kernersville, NC — a different city/company"}
+  ]
+}
