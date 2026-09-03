@@ -1,0 +1,782 @@
+[
+  {
+    "slug": "babka-bailout-llc",
+    "business": "Babka Bailout LLC",
+    "borough": "Manhattan (42 West 42 Street)",
+    "phone": "(917) 304-4929"
+  },
+  {
+    "slug": "guac-chips",
+    "business": "Guac & Chips",
+    "borough": "Manhattan (3853 Broadway)",
+    "phone": "(646) 730-3990"
+  },
+  {
+    "slug": "d-n-bakery-caf",
+    "business": "D\u00e4n Bakery & Caf\u00e9",
+    "borough": "Manhattan (1431 York Avenue)",
+    "phone": "(646) 637-4113"
+  },
+  {
+    "slug": "paulie-gee-s-slice-shop",
+    "business": "Paulie Gee'S Slice Shop",
+    "borough": "Manhattan (100 1 Avenue)",
+    "phone": "(929) 720-6676"
+  },
+  {
+    "slug": "jazz-genius",
+    "business": "Jazz Genius",
+    "borough": "Manhattan (151 Essex Street)",
+    "phone": "(212) 875-5299"
+  },
+  {
+    "slug": "naya-bryant-park-llc",
+    "business": "Naya Bryant Park LLC",
+    "borough": "Manhattan (500 5 Avenue)",
+    "phone": "(212) 597-9184"
+  },
+  {
+    "slug": "pavin86",
+    "business": "Pavin86",
+    "borough": "Manhattan (1663 1 Avenue)",
+    "phone": "(347) 398-4583"
+  },
+  {
+    "slug": "stout-markets-inc",
+    "business": "Stout Markets Inc",
+    "borough": "Manhattan (1328 Broadway)",
+    "phone": "(718) 791-9245"
+  },
+  {
+    "slug": "eroni-t-inc",
+    "business": "Eroni T Inc",
+    "borough": "Manhattan (293 Mercer Street)",
+    "phone": "(646) 208-7786"
+  },
+  {
+    "slug": "clientele-cafe-llc",
+    "business": "Clientele Cafe LLC",
+    "borough": "Manhattan (200 Bowery)",
+    "phone": "(732) 859-2072"
+  },
+  {
+    "slug": "monkey-brothers-lab",
+    "business": "Monkey Brothers Lab",
+    "borough": "Manhattan (206 Audubon Avenue)",
+    "phone": "(347) 972-7197"
+  },
+  {
+    "slug": "el-barrio-nyc",
+    "business": "El Barrio NYC",
+    "borough": "Manhattan (88 E 111Th St)",
+    "phone": "(347) 645-3265"
+  },
+  {
+    "slug": "arepitas-ny-corporation",
+    "business": "Arepitas NY Corporation",
+    "borough": "Manhattan (42 Broadway)",
+    "phone": "(917) 260-9570"
+  },
+  {
+    "slug": "gooey-on-the-inside",
+    "business": "Gooey On The Inside",
+    "borough": "Manhattan (119 Christopher Street)",
+    "phone": "(917) 651-7587"
+  },
+  {
+    "slug": "sakara-sushi-std-5",
+    "business": "Sakara Sushi (Std 5)",
+    "borough": "Manhattan (47 Broadway)",
+    "phone": "(347) 828-6745"
+  },
+  {
+    "slug": "crunchy-dog",
+    "business": "Crunchy Dog",
+    "borough": "Manhattan (10 Doyers Street)",
+    "phone": "(929) 251-0876"
+  },
+  {
+    "slug": "woops",
+    "business": "Woops!",
+    "borough": "Manhattan (151 West 34 Street)",
+    "phone": "(631) 848-6659"
+  },
+  {
+    "slug": "bid-restaurant",
+    "business": "Bid Restaurant",
+    "borough": "Manhattan (1334 York Avenue)",
+    "phone": "(212) 564-7530"
+  },
+  {
+    "slug": "blimpie",
+    "business": "Blimpie",
+    "borough": "Manhattan (863 Broadway)",
+    "phone": "(212) 229-9373"
+  },
+  {
+    "slug": "1509-lex-ave-corp",
+    "business": "1509 Lex Ave Corp",
+    "borough": "Manhattan (1509 Lexington Avenue)",
+    "phone": "(347) 885-6523"
+  },
+  {
+    "slug": "panca-bk",
+    "business": "Panca Bk",
+    "borough": "Manhattan (593A Vanderbilt Ave)",
+    "phone": "(917) 825-3305"
+  },
+  {
+    "slug": "md-siddique",
+    "business": "Md Siddique",
+    "borough": "Manhattan (288 8 Avenue)",
+    "phone": "(347) 479-7762"
+  },
+  {
+    "slug": "talea-beer-co",
+    "business": "Talea Beer Co.",
+    "borough": "Manhattan (441 Amsterdam Avenue)",
+    "phone": "(646) 476-3756"
+  },
+  {
+    "slug": "members-only",
+    "business": "Members Only",
+    "borough": "Manhattan (53 West 8 Street)",
+    "phone": "(929) 237-8204"
+  },
+  {
+    "slug": "hubani",
+    "business": "Hubani",
+    "borough": "Manhattan (180 1 Avenue)",
+    "phone": "(212) 658-1801"
+  },
+  {
+    "slug": "sabor-mestizo-inc",
+    "business": "Sabor Mestizo Inc.",
+    "borough": "Manhattan (123 East 110 Street)",
+    "phone": "(347) 266-2458"
+  },
+  {
+    "slug": "radha-krishan-of-6th-ave-inc",
+    "business": "Radha Krishan Of 6Th Ave Inc.",
+    "borough": "Manhattan (1001 Avenue Of The Americas)",
+    "phone": "(718) 207-3764"
+  },
+  {
+    "slug": "another-story",
+    "business": "Another Story",
+    "borough": "Manhattan (979 3 Avenue)",
+    "phone": "(917) 251-2157"
+  },
+  {
+    "slug": "zhengxin-chicken-steak",
+    "business": "Zhengxin Chicken Steak",
+    "borough": "Manhattan (67 Bayard Street)",
+    "phone": "(212) 791-9888"
+  },
+  {
+    "slug": "the-jin",
+    "business": "The Jin",
+    "borough": "Manhattan (856 10 Avenue)",
+    "phone": "(212) 223-3488"
+  },
+  {
+    "slug": "island-bwoy-kitchen-llc",
+    "business": "Island Bwoy Kitchen LLC",
+    "borough": "Manhattan (750 8 Avenue)",
+    "phone": "(212) 920-6522"
+  },
+  {
+    "slug": "birriales4-llc",
+    "business": "Birriales4 LLC",
+    "borough": "Manhattan (154 8 Avenue)",
+    "phone": "(646) 409-6766"
+  },
+  {
+    "slug": "savor-coffee-more",
+    "business": "Savor Coffee & More",
+    "borough": "Manhattan (621 Amsterdam Avenue)",
+    "phone": "(914) 924-4485"
+  },
+  {
+    "slug": "reve-coffee",
+    "business": "Reve Coffee",
+    "borough": "Manhattan (135 West 24 Street)",
+    "phone": "(530) 551-2192"
+  },
+  {
+    "slug": "ruay-mak-jing-corp",
+    "business": "Ruay Mak Jing Corp",
+    "borough": "Manhattan (830 9 Avenue)",
+    "phone": "(917) 446-4888"
+  },
+  {
+    "slug": "t-shop",
+    "business": "T Shop",
+    "borough": "Manhattan (247 Elizabeth Street)",
+    "phone": "(718) 886-2573"
+  },
+  {
+    "slug": "love-thy-neighbor",
+    "business": "Love Thy Neighbor",
+    "borough": "Manhattan (55 Christopher Street)",
+    "phone": "(347) 743-4764"
+  },
+  {
+    "slug": "golden-child",
+    "business": "Golden Child",
+    "borough": "Manhattan (444 Park Avenue South)",
+    "phone": "(772) 696-3085"
+  },
+  {
+    "slug": "e-e-noodles-inc",
+    "business": "E & E Noodles, Inc.",
+    "borough": "Manhattan (42 West 38 Street)",
+    "phone": "(646) 852-7672"
+  },
+  {
+    "slug": "fazenda",
+    "business": "Fazenda",
+    "borough": "Manhattan (177 Mott St)",
+    "phone": "(857) 756-6107"
+  },
+  {
+    "slug": "glaze-grand-central",
+    "business": "Glaze Grand Central",
+    "borough": "Manhattan (451 Lexington Avenue)",
+    "phone": "(646) 770-6026"
+  },
+  {
+    "slug": "blue-alloy-llc",
+    "business": "Blue Alloy LLC",
+    "borough": "Manhattan (106 Rivington Street)",
+    "phone": "(718) 879-0027"
+  },
+  {
+    "slug": "shingane-highline-line-llc",
+    "business": "Shingane Highline Line Llc.",
+    "borough": "Manhattan (42 Broadway)",
+    "phone": "(201) 925-7140"
+  },
+  {
+    "slug": "ground-central-coffee-company",
+    "business": "Ground Central Coffee Company",
+    "borough": "Manhattan (55 East 52 Street)",
+    "phone": "929 341 6623"
+  },
+  {
+    "slug": "wepa-arepa",
+    "business": "Wepa Arepa",
+    "borough": "Manhattan (2 Fort Washington Avenue)",
+    "phone": "(917) 842-7682"
+  },
+  {
+    "slug": "la-pizza-roma",
+    "business": "La Pizza Roma",
+    "borough": "Manhattan (20 Avenue A)",
+    "phone": "(631) 264-5363"
+  },
+  {
+    "slug": "whiskey-blue",
+    "business": "Whiskey Blue",
+    "borough": "Manhattan (108 Greenwich Street)",
+    "phone": "(646) 220-7040"
+  },
+  {
+    "slug": "orwashers-bakery",
+    "business": "Orwashers Bakery",
+    "borough": "Manhattan (66 West 84 Street)",
+    "phone": "(516) 864-1952"
+  },
+  {
+    "slug": "xiangyun-inc",
+    "business": "Xiangyun Inc",
+    "borough": "Manhattan (63 Cooper Square)",
+    "phone": "(201) 423-5900"
+  },
+  {
+    "slug": "duo-yi-inc",
+    "business": "Duo Yi Inc.",
+    "borough": "Manhattan (239 West 105 Street)",
+    "phone": "(917) 519-0605"
+  },
+  {
+    "slug": "sada-3ws-llc",
+    "business": "Sada 3Ws LLC",
+    "borough": "Manhattan (195 Freedom Place)",
+    "phone": "(516) 353-4321"
+  },
+  {
+    "slug": "ars-nova-theater",
+    "business": "Ars Nova Theater",
+    "borough": "Manhattan (27 Barrow Street)",
+    "phone": "(212) 489-9800"
+  },
+  {
+    "slug": "mango-east-village-llc",
+    "business": "Mango East Village LLC",
+    "borough": "Manhattan (23 Saint Marks Place)",
+    "phone": "(646) 266-9195"
+  },
+  {
+    "slug": "circle",
+    "business": "Circle",
+    "borough": "Manhattan (1 World Trade Center)",
+    "phone": "(781) 065-842_"
+  },
+  {
+    "slug": "tamarindo",
+    "business": "Tamarindo",
+    "borough": "Manhattan (4250 Broadway)",
+    "phone": "(646) 934-4029"
+  },
+  {
+    "slug": "srb-brooklyn-llc",
+    "business": "Srb Brooklyn LLC",
+    "borough": "Brooklyn (177 2 Avenue)",
+    "phone": "(347) 504-5950"
+  },
+  {
+    "slug": "kampos-taverna",
+    "business": "Kampos Taverna",
+    "borough": "Brooklyn (8413 3 Avenue)",
+    "phone": "(347) 857-0516"
+  },
+  {
+    "slug": "8411-18th-bakery-corp",
+    "business": "8411 18Th Bakery Corp",
+    "borough": "Brooklyn (8411 18 Avenue)",
+    "phone": "(718) 621-3300"
+  },
+  {
+    "slug": "6917-5th-food-corp",
+    "business": "6917 5Th Food Corp",
+    "borough": "Brooklyn (6917 5 Avenue)",
+    "phone": "(929) 350-9091"
+  },
+  {
+    "slug": "qingheli-inc",
+    "business": "Qingheli Inc.",
+    "borough": "Brooklyn (5413 8 Avenue)",
+    "phone": "(347) 278-4658"
+  },
+  {
+    "slug": "wang-cai-88-inc",
+    "business": "Wang Cai 88 Inc",
+    "borough": "Brooklyn (610 50 Street)",
+    "phone": "(917) 863-5559"
+  },
+  {
+    "slug": "lucky-house-chen-inc",
+    "business": "Lucky House Chen Inc",
+    "borough": "Brooklyn (1736 Nostrand Avenue)",
+    "phone": "(718) 666-6300"
+  },
+  {
+    "slug": "makimbo-delicias-mexican-food-corp",
+    "business": "Makimbo Delicias Mexican Food Corp.",
+    "borough": "Brooklyn (1508 Mermaid Avenue)",
+    "phone": "(631) 805-3446"
+  },
+  {
+    "slug": "east-coast-street-tacos",
+    "business": "East Coast Street Tacos",
+    "borough": "Brooklyn (538 3 Avenue)",
+    "phone": "(845) 255-5193"
+  },
+  {
+    "slug": "abdullah-sweets",
+    "business": "Abdullah Sweets",
+    "borough": "Brooklyn (91 Church Avenue)",
+    "phone": "(347) 984-6598"
+  },
+  {
+    "slug": "spartan-variety-and-entertainment",
+    "business": "Spartan Variety And Entertainment",
+    "borough": "Brooklyn (1151 East 92 Street)",
+    "phone": "(347) 299-6447"
+  },
+  {
+    "slug": "el-carrito-rojo-foods-corp",
+    "business": "El Carrito Rojo Foods Corp",
+    "borough": "Brooklyn (3029 Stillwell Avenue)",
+    "phone": "(646) 407-9438"
+  },
+  {
+    "slug": "deal-good-1-corp",
+    "business": "Deal-Good-1 Corp",
+    "borough": "Brooklyn (287 Bedford Avenue)",
+    "phone": "(201) 391-4303"
+  },
+  {
+    "slug": "black-box-eatz-llc",
+    "business": "Black Box Eatz LLC",
+    "borough": "Brooklyn (675 Flatbush Avenue)",
+    "phone": "(929) 227-0720"
+  },
+  {
+    "slug": "table-87",
+    "business": "Table 87",
+    "borough": "Brooklyn (850 3 Avenue)",
+    "phone": "(347) 860-2542"
+  },
+  {
+    "slug": "bk-halal-grill",
+    "business": "Bk Halal Grill",
+    "borough": "Brooklyn (133 Park Avenue)",
+    "phone": "(347) 440-5853"
+  },
+  {
+    "slug": "mimi-jacks",
+    "business": "Mimi & Jacks",
+    "borough": "Brooklyn (1444 Coney Island Avenue)",
+    "phone": "(718) 813-6656"
+  },
+  {
+    "slug": "cafe-jezero",
+    "business": "Cafe Jezero",
+    "borough": "Brooklyn (274A Avenue X)",
+    "phone": "(917) 885-2397"
+  },
+  {
+    "slug": "iftandlue-kabab-house",
+    "business": "Iftandlue Kabab House",
+    "borough": "Brooklyn (1416 Avenue J)",
+    "phone": "(347) 772-7199"
+  },
+  {
+    "slug": "zilu-s-essen",
+    "business": "Zilu'S Essen",
+    "borough": "Brooklyn (3715 13 Avenue)",
+    "phone": "(347) 351-9408"
+  },
+  {
+    "slug": "chronos",
+    "business": "Chronos",
+    "borough": "Brooklyn (2670 Coney Island Avenue)",
+    "phone": "(929) 233-0710"
+  },
+  {
+    "slug": "greenpoint-comedy-club",
+    "business": "Greenpoint Comedy Club",
+    "borough": "Brooklyn (66 Greenpoint Avenue)",
+    "phone": "(347) 457-5227"
+  },
+  {
+    "slug": "roseberry",
+    "business": "Roseberry",
+    "borough": "Brooklyn (2219 Avenue X)",
+    "phone": "(347) 615-0109"
+  },
+  {
+    "slug": "rinconcito-bite",
+    "business": "Rinconcito Bite",
+    "borough": "Brooklyn (989 Nostrand Avenue)",
+    "phone": "(347) 636-5016"
+  },
+  {
+    "slug": "bayridge-wings-inc",
+    "business": "Bayridge Wings Inc.",
+    "borough": "Brooklyn (7504 5 Avenue)",
+    "phone": "(718) 501-5917"
+  },
+  {
+    "slug": "8-bar-inc",
+    "business": "8 Bar Inc.",
+    "borough": "Brooklyn (317 Knickerbocker Avenue)",
+    "phone": "(646) 306-9213"
+  },
+  {
+    "slug": "cafe-kervan",
+    "business": "Cafe Kervan",
+    "borough": "Brooklyn (1687 86 Street)",
+    "phone": "(347) 735-2233"
+  },
+  {
+    "slug": "gyro-king",
+    "business": "Gyro King",
+    "borough": "Brooklyn (984 Coney Island Avenue)",
+    "phone": "(718) 421-6600"
+  },
+  {
+    "slug": "joj-chix-llc",
+    "business": "Joj Chix LLC",
+    "borough": "Brooklyn (1811 Emmons Avenue)",
+    "phone": "(347) 272-5189"
+  },
+  {
+    "slug": "lucky-xinghui-cuisine-inc",
+    "business": "Lucky Xinghui Cuisine Inc",
+    "borough": "Brooklyn (9212 4 Avenue)",
+    "phone": "(347) 328-7417"
+  },
+  {
+    "slug": "arthouse",
+    "business": "Arthouse",
+    "borough": "Brooklyn (2717 Avenue U)",
+    "phone": "(917) 330-2724"
+  },
+  {
+    "slug": "farina",
+    "business": "Farina",
+    "borough": "Brooklyn (338 Hamilton Avenue)",
+    "phone": "(718) 938-4130"
+  },
+  {
+    "slug": "light-switch-cafe",
+    "business": "Light Switch Cafe",
+    "borough": "Brooklyn (333 Court Street)",
+    "phone": "(347) 413-0475"
+  },
+  {
+    "slug": "fuel-fever",
+    "business": "Fuel Fever",
+    "borough": "Brooklyn (8615 18 Avenue)",
+    "phone": "(718) 259-8448"
+  },
+  {
+    "slug": "layla-jones",
+    "business": "Layla Jones",
+    "borough": "Brooklyn (214 Court Street)",
+    "phone": "(718) 624-2361"
+  },
+  {
+    "slug": "my-life-nutrition-herbalife",
+    "business": "My Life Nutrition (Herbalife)",
+    "borough": "Queens (45-07 30 Avenue)",
+    "phone": "(347) 405-3281"
+  },
+  {
+    "slug": "rolly-kimbab",
+    "business": "Rolly Kimbab",
+    "borough": "Queens (61-23 Springfield Boulevard)",
+    "phone": "(347) 408-4172"
+  },
+  {
+    "slug": "xi-zhi-yi-zu",
+    "business": "Xi Zhi Yi Zu",
+    "borough": "Queens (37-11 Main Street)",
+    "phone": "(646) 707-8500"
+  },
+  {
+    "slug": "cafe-sparrow",
+    "business": "Cafe Sparrow",
+    "borough": "Queens (30-08 37 Street)",
+    "phone": "(917) 478-1522"
+  },
+  {
+    "slug": "9018-rest-corp",
+    "business": "9018 Rest. Corp.",
+    "borough": "Queens (90-18 Roosevelt Avenue)",
+    "phone": "(347) 553-1888"
+  },
+  {
+    "slug": "crystal-lake-senior-day-care",
+    "business": "Crystal Lake Senior Day Care",
+    "borough": "Queens (145-18 34 Avenue)",
+    "phone": "(646) 707-5808"
+  },
+  {
+    "slug": "barry-s-lic",
+    "business": "Barry'S Lic",
+    "borough": "Queens (28-07 Jackson Avenue)",
+    "phone": "(816) 665-1819"
+  },
+  {
+    "slug": "fu-shun-spicy-mix-inc",
+    "business": "Fu Shun Spicy Mix Inc.",
+    "borough": "Queens (136-21 Roosevelt Avenue)",
+    "phone": "(646) 920-6321"
+  },
+  {
+    "slug": "ncl-new-york-inc",
+    "business": "Ncl New York Inc.",
+    "borough": "Queens (42-32 College Point Boulevard)",
+    "phone": "(347) 654-3740"
+  },
+  {
+    "slug": "gayang",
+    "business": "Gayang",
+    "borough": "Queens (85-32 Grand Avenue)",
+    "phone": "(929) 532-5692"
+  },
+  {
+    "slug": "tony-s-tacos",
+    "business": "Tony'S Tacos",
+    "borough": "Queens (90-15 Queens Boulevard)",
+    "phone": "(516) 459-0692"
+  },
+  {
+    "slug": "hj-noodles-dumplings-inc",
+    "business": "Hj Noodles & Dumplings Inc.",
+    "borough": "Queens (136-21 Roosevelt Avenue)",
+    "phone": "(718) 866-8628"
+  },
+  {
+    "slug": "someori-gukbap-restaurant-inc",
+    "business": "Someori Gukbap Restaurant Inc.",
+    "borough": "Queens (150-05 Northern Boulevard)",
+    "phone": "(917) 704-1101"
+  },
+  {
+    "slug": "pa-nash-eurosoul",
+    "business": "Pa-Nash Eurosoul",
+    "borough": "Queens (144-14 243 Street)",
+    "phone": "(516) 286-1754"
+  },
+  {
+    "slug": "xuejiao-zhang",
+    "business": "Xuejiao Zhang",
+    "borough": "Queens (146-34 Georgia Road)",
+    "phone": "(929) 389-8288"
+  },
+  {
+    "slug": "golden-night-restaurant-inc",
+    "business": "Golden Night Restaurant Inc",
+    "borough": "Queens (136-31 Roosevelt Avenue)",
+    "phone": "(917) 328-5912"
+  },
+  {
+    "slug": "yifan-snack-inc",
+    "business": "Yifan Snack Inc.",
+    "borough": "Queens (135-12A Roosevelt Avenue)",
+    "phone": "(929) 899-7688"
+  },
+  {
+    "slug": "adult-day-care",
+    "business": "Adult Day Care",
+    "borough": "Queens (199-03 32 Avenue)",
+    "phone": "(646) 233-4777"
+  },
+  {
+    "slug": "7-express-food-inc",
+    "business": "7 Express Food Inc.",
+    "borough": "Queens (136-21 Roosevelt Avenue)",
+    "phone": "(917) 908-0678"
+  },
+  {
+    "slug": "ra-famous-pizza-inc",
+    "business": "Ra Famous Pizza Inc.",
+    "borough": "Queens (87-10 Rockaway Beach Boulevard)",
+    "phone": "(347) 659-0828"
+  },
+  {
+    "slug": "mika-s-dumplings-jacky-s-fried-nick-s-ri",
+    "business": "Mika'S Dumplings / Jacky'S Fried / Nick'S Rice Bowl / Late Night Korean Express",
+    "borough": "Queens (40-05 Skillman Avenue)",
+    "phone": "(917) 526-1879"
+  },
+  {
+    "slug": "jc-sushi",
+    "business": "Jc Sushi",
+    "borough": "Queens (32-06 Broadway)",
+    "phone": "(917) 818-5699"
+  },
+  {
+    "slug": "yuzu-sushi",
+    "business": "Yuzu Sushi",
+    "borough": "Queens (64-60 Dry Harbor Road)",
+    "phone": "(929) 257-5975"
+  },
+  {
+    "slug": "leah-cafe",
+    "business": "Leah Cafe",
+    "borough": "Queens (55-11 Northern Boulevard)",
+    "phone": "(347) 456-5395"
+  },
+  {
+    "slug": "kpbn-corporation-village-kebab-grill",
+    "business": "Kpbn Corporation/ Village Kebab & Grill",
+    "borough": "Queens (218-14 Hempstead Avenue)",
+    "phone": "(917) 885-8887"
+  },
+  {
+    "slug": "onda-sushi",
+    "business": "Onda Sushi",
+    "borough": "Queens (24-26 47 Street)",
+    "phone": "(551) 587-3060"
+  },
+  {
+    "slug": "kiss-entertainment",
+    "business": "Kiss Entertainment",
+    "borough": "Queens (130-35 91 Avenue)",
+    "phone": "(347) 564-5406"
+  },
+  {
+    "slug": "enri-lushi",
+    "business": "Enri Lushi",
+    "borough": "Bronx (414 City Island Avenue)",
+    "phone": "(646) 243-3627"
+  },
+  {
+    "slug": "jimmy-s",
+    "business": "Jimmy'S",
+    "borough": "Bronx (1161 Castle Hill Avenue)",
+    "phone": "(646) 915-2219"
+  },
+  {
+    "slug": "food-95-corp",
+    "business": "Food 95 Corp",
+    "borough": "Bronx (548 East 138 Street)",
+    "phone": "(347) 231-9574"
+  },
+  {
+    "slug": "bakelicious-by-chef-manny-inc",
+    "business": "Bakelicious By Chef Manny Inc",
+    "borough": "Bronx (636 Walton Avenue)",
+    "phone": "(646) 228-4582"
+  },
+  {
+    "slug": "ronaldy-bare",
+    "business": "Ronaldy Bare",
+    "borough": "Bronx (1220 Ogden Avenue)",
+    "phone": "(347) 431-1171"
+  },
+  {
+    "slug": "noir-restaurant-lounge-llc",
+    "business": "Noir. Restaurant Lounge LLC",
+    "borough": "Bronx (3638 Bailey Avenue)",
+    "phone": "(203) 997-3750"
+  },
+  {
+    "slug": "house-burger",
+    "business": "House Burger",
+    "borough": "Bronx (769 Burke Avenue)",
+    "phone": "(914) 882-8637"
+  },
+  {
+    "slug": "marlon-unstoppable-scoops-squeeze",
+    "business": "Marlon Unstoppable Scoops & Squeeze",
+    "borough": "Bronx (1178 East Gun Hill Road)",
+    "phone": "(347) 532-1090"
+  },
+  {
+    "slug": "mansion",
+    "business": "Mansion",
+    "borough": "Staten Island (141 Mansion Avenue)",
+    "phone": "(718) 605-9200"
+  },
+  {
+    "slug": "cd-burger-hylan-blvd-corp",
+    "business": "Cd Burger Hylan Blvd Corp.",
+    "borough": "Staten Island (1458 Hylan Boulevard)",
+    "phone": "(718) 255-4111"
+  },
+  {
+    "slug": "kaifeng-kosher-inc",
+    "business": "Kaifeng Kosher Inc",
+    "borough": "Staten Island (953 Jewett Avenue)",
+    "phone": "(646) 801-9224"
+  },
+  {
+    "slug": "filoncino-cafe",
+    "business": "Filoncino Cafe",
+    "borough": "Staten Island (4569 Amboy Road)",
+    "phone": "(718) 317-1241"
+  },
+  {
+    "slug": "seafood-hibachi-i-inc",
+    "business": "Seafood Hibachi I Inc.",
+    "borough": "Staten Island (364 Bay Street)",
+    "phone": "(917) 833-3968"
+  }
+]

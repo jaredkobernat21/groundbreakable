@@ -91,7 +91,20 @@ Full detail on every candidate considered is in `raw-data/candidates.json`.
 
 ---
 
-## 6. Data sources
+## 6. Batch 2 — larger unverified pull (2026-09-03)
+
+Session's WebSearch quota was exhausted mid-project, which blocked the per-candidate "does this already have a website" verification step that made the first 15 trustworthy. Rather than guess, pulled a second, larger batch directly from the same proven source (Socrata API, same `inspection_date=1900-01-01` filter) using only direct data fetches — no search, no individual verification.
+
+**Method:** re-ran the full `inspection_date=1900-01-01` query (3,741 raw records), applied the same filters as batch 1 (missing borough/phone/street dropped, shared-institutional-phone dedup, chain-keyword blocklist, excluded airport/terminal addresses, excluded the 42 businesses already checked in batch 1) → **2,742 clean candidates remained**. Took a borough-proportional sample of **130** (Manhattan 55, Brooklyn 35, Queens 27, Bronx 8, Staten Island 5) for the tracker; **~2,600 more remain in the pool** for a future pull.
+
+**Known caveats on this batch, since it wasn't individually checked:**
+- No web-presence check was done — every entry shows "not checked yet" rather than a real none/partial/has-site read.
+- Keyword-based chain filtering alone is admittedly imperfect (per the batch-1 finding) — a few likely non-fits were spotted on inspection and flagged in the tracker as "not a fit" (Blimpie — likely the sandwich chain; a senior/adult day care facility and an Herbalife nutrition club that appear in the permit data but aren't restaurants; a comedy club; an entertainment venue), but the remaining 124 have not been individually vetted the way batch 1's 42 were.
+- Business names came through the API in inconsistent casing/whitespace and were lightly cleaned programmatically — expect occasional formatting artifacts (e.g. a stray possessive-apostrophe capitalization).
+
+Full batch-2 data: `raw-data/batch2-unverified.json`.
+
+## 7. Data sources
 
 - NYC DOHMH Restaurant Inspection Results, Socrata dataset `43nn-pn8j` (`data.cityofnewyork.us`), including its own metadata/data-dictionary description.
-- Individual web searches per candidate (news/press, Yelp, Google-indexed business listings, delivery platforms, Instagram/Facebook, company sites) for the persona/web-presence check.
+- Individual web searches per candidate (news/press, Yelp, Google-indexed business listings, delivery platforms, Instagram/Facebook, company sites) for the persona/web-presence check (batch 1 only).
