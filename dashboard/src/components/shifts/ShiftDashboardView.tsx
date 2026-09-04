@@ -9,7 +9,6 @@ import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 
 const ALL_CATEGORIES: ShiftCategory[] = [
-  "ownership",
   "distress",
   "compliance",
   "development",

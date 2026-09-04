@@ -7,7 +7,6 @@ import type { ShiftAudience, ShiftCategory, ShiftImpact } from "./types";
 // as the old Opportunities "alertTriangle").
 
 export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
-  ownership: "Ownership",
   distress: "Distress",
   compliance: "Compliance",
   development: "Development",
@@ -16,7 +15,6 @@ export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
 };
 
 export const SHIFT_CATEGORY_COLOR: Record<ShiftCategory, string> = {
-  ownership: "#818cf8", // indigo
   distress: "#ef4444", // red
   compliance: "#eab308", // amber
   development: "#f97316", // orange
@@ -25,7 +23,6 @@ export const SHIFT_CATEGORY_COLOR: Record<ShiftCategory, string> = {
 };
 
 export const SHIFT_CATEGORY_ICON_PATHS: Record<ShiftCategory, string[]> = {
-  ownership: ["M4 10h16v10H4z", "M9 5l3-3 3 3", "M12 2v6"],
   distress: [
     "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     "M12 9v4",

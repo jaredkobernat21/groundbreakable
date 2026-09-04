@@ -655,7 +655,6 @@ export type PotentialSiteWithSource = PotentialSite & { source: Source | null };
 // See supabase/migrations/20260904000000_roq_shift_schema.sql.
 
 export type ShiftCategory =
-  | "ownership"
   | "distress"
   | "compliance"
   | "development"
