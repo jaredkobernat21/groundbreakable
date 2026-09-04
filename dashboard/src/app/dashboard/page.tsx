@@ -24,10 +24,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     );
   }
 
-  // Fetch the 30-day superset once -- the widest window the filter bar
-  // offers -- and let ShiftDashboardView narrow to 7d/category/audience
-  // client-side, no round-trip per filter change.
-  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("30d") });
+  // Fetch the widest window the filter bar offers ("all") once, and let
+  // ShiftDashboardView narrow to 7d/30d/90d/category/audience client-side,
+  // no round-trip per filter change.
+  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("all") });
 
   return (
     <div className="space-y-8">

@@ -12,11 +12,12 @@ import {
 
 const ALL_AUDIENCES = Object.keys(SHIFT_AUDIENCE_LABEL) as ShiftAudience[];
 
-// The whole filter surface: six category toggle chips (multi-select, all on
-// by default), the 7d/30d date-range control, and an audience/persona
-// dropdown. Purely client-side state -- the server fetch already covers the
-// widest window (30 days); narrowing to 7 days or a category/persona subset
-// is instant, no round-trip. See ShiftDashboardView.
+// The whole filter surface: category toggle chips (multi-select, all on
+// by default), the 7d/30d/90d/all date-range control, and an
+// audience/persona dropdown. Purely client-side state -- the server fetch
+// already covers the widest window ("all"); narrowing to any shorter range
+// or a category/persona subset is instant, no round-trip. See
+// ShiftDashboardView.
 export default function ShiftFilters({
   categories,
   onToggleCategory,

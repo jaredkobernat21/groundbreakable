@@ -10,10 +10,10 @@ import ShiftDetailPanel from "./ShiftDetailPanel";
 
 // Orchestrates filters + map + feed + detail panel as one reusable unit,
 // same role DevelopmentIntelligenceView played for the old pillar model.
-// `shifts` is the server-fetched 30-day superset (the widest window the
-// filter bar offers) -- every filter (range/category/audience) narrows it
-// client-side, so switching between 7d/30d or toggling a category is
-// instant with no round-trip.
+// `shifts` is the server-fetched "all time" superset (the widest window
+// the filter bar offers) -- every filter (range/category/audience) narrows
+// it client-side, so switching between 7d/30d/90d/all or toggling a
+// category is instant with no round-trip.
 export default function ShiftDashboardView({ market, shifts }: { market: Market; shifts: ShiftWithSource[] }) {
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");

@@ -102,15 +102,25 @@ export const SHIFT_AUDIENCE_LABEL: Record<ShiftAudience, string> = {
 // Same shape as purchaseWindowToDate() in lib/leads/constants.ts, scoped
 // down to the two windows the shift dashboard actually offers.
 
-export type ShiftDateRange = "7d" | "30d";
+// "all" isn't unbounded in practice -- it's the widest window the server
+// fetches (see shiftDateRangeToDate below), just wide enough that no real
+// shift seeded so far falls outside it. Added 2026-09-04 after Bonner
+// Springs shipped with every single shift older than 30 days (a
+// significant, still-relevant rezoning from ~6 months back would
+// otherwise just vanish) -- the same gap already seen with Topeka's tax
+// liens, just total instead of partial that time.
+export type ShiftDateRange = "7d" | "30d" | "90d" | "all";
 
 export const SHIFT_DATE_RANGES: { value: ShiftDateRange; label: string }[] = [
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
+  { value: "90d", label: "Last 90 days" },
+  { value: "all", label: "All time" },
 ];
 
 export function shiftDateRangeToDate(range: ShiftDateRange): string {
-  const days = range === "7d" ? 7 : 30;
+  if (range === "all") return "2000-01-01";
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d.toISOString().slice(0, 10);

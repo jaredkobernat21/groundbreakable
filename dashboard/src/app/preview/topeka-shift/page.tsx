@@ -52,7 +52,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
     );
   }
 
-  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("30d") });
+  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("all") });
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
