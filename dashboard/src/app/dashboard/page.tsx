@@ -1,19 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import AskBar from "@/components/AskBar";
-import DevelopmentIntelligenceView, { type MapCategory } from "@/components/intelligence/DevelopmentIntelligenceView";
+import ShiftDashboardView from "@/components/shifts/ShiftDashboardView";
 import { selectMarket } from "@/lib/selectMarket";
-import { getMapLayerData } from "@/lib/queries/mapLayers";
+import { getShifts } from "@/lib/queries/shifts";
+import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const VALID_CATEGORIES: MapCategory[] = ["all", "plans", "opportunities", "potential"];
-
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: { market?: string; category?: string; select?: string; selectType?: string };
-}) {
+export default async function DashboardPage({ searchParams }: { searchParams: { market?: string } }) {
   const supabase = createClient();
 
   // RLS scopes this to markets the signed-in investor has access to.
@@ -30,20 +24,10 @@ export default async function DashboardPage({
     );
   }
 
-  const category: MapCategory = VALID_CATEGORIES.includes(searchParams.category as MapCategory)
-    ? (searchParams.category as MapCategory)
-    : "potential";
-
-  // Deep-link from the AskBar's "View on map" link -- pre-selects and
-  // flies to a specific project/opportunity pin named by the AI's answer.
-  const selectType = searchParams.selectType;
-  const initialSelection: { type: "project" | "opportunity"; id: string } | null =
-    searchParams.select && (selectType === "project" || selectType === "opportunity")
-      ? { type: selectType, id: searchParams.select }
-      : null;
-
-  const { projects, parcels, opportunities, catalysts, opportunityZones, growthAreas, potentialSites } =
-    await getMapLayerData(supabase, market.id);
+  // Fetch the 30-day superset once -- the widest window the filter bar
+  // offers -- and let ShiftDashboardView narrow to 7d/category/audience
+  // client-side, no round-trip per filter change.
+  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("30d") });
 
   return (
     <div className="space-y-8">
@@ -51,21 +35,7 @@ export default async function DashboardPage({
         {market.name}, {market.state}
       </h1>
 
-      <AskBar marketName={market.name} marketSlug={market.slug} />
-
-      <DevelopmentIntelligenceView
-        key={`${market.id}-${category}-${searchParams.select ?? ""}`}
-        market={market}
-        projects={projects ?? []}
-        parcels={parcels ?? []}
-        opportunities={opportunities ?? []}
-        catalysts={catalysts ?? []}
-        opportunityZones={opportunityZones ?? []}
-        growthAreas={growthAreas ?? []}
-        potentialSites={potentialSites ?? []}
-        initialCategory={category}
-        initialSelection={initialSelection}
-      />
+      <ShiftDashboardView key={market.id} market={market} shifts={shifts} />
     </div>
   );
 }

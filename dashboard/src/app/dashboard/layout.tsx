@@ -24,14 +24,11 @@ export default async function DashboardLayout({
         <div className="flex items-center gap-4 sm:gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
             <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">ROQ Shift</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm text-[#1c1c1c]/50">
             <Link href="/dashboard" className="hover:text-[#1c1c1c]">
               Overview
-            </Link>
-            <Link href="/dashboard/map" className="hover:text-[#1c1c1c]">
-              Map
             </Link>
             <Link href="/dashboard/timeline" className="hover:text-[#1c1c1c]">
               Timeline

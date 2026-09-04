@@ -648,3 +648,45 @@ export type PotentialSite = {
 };
 
 export type PotentialSiteWithSource = PotentialSite & { source: Source | null };
+
+// --- Shifts (ROQ Shift) ---
+// The unified source of truth for the market-shift dashboard -- replaces
+// the Plans/Opportunities/Potential pillar model at the primary route.
+// See supabase/migrations/20260904000000_roq_shift_schema.sql.
+
+export type ShiftCategory =
+  | "ownership"
+  | "distress"
+  | "compliance"
+  | "development"
+  | "construction"
+  | "infrastructure";
+
+export type ShiftImpact = "low" | "medium" | "high";
+
+export type ShiftAudience = "agent" | "broker" | "investor" | "contractor" | "developer" | "lender";
+
+export type Shift = {
+  id: string;
+  market_id: string;
+  category: ShiftCategory;
+  // Free text subtype (e.g. "tax_lien", "rezoning", "permit_issued") --
+  // not enum-constrained, see the migration comment.
+  shift_type: string;
+  event: string;
+  description: string | null;
+  event_date: string;
+  stage: string | null;
+  impact: ShiftImpact;
+  audience: ShiftAudience[];
+  address: string | null;
+  parcel_id: string | null;
+  lat: number | null;
+  lng: number | null;
+  source_id: string | null;
+  raw_data: Record<string, unknown> | null;
+  detected_at: string;
+  created_at: string;
+};
+
+export type ShiftWithSource = Shift & { source: Source | null };
