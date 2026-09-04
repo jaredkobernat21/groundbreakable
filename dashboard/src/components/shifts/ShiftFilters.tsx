@@ -2,6 +2,7 @@
 
 import type { ShiftAudience, ShiftCategory } from "@/lib/types";
 import {
+  ACTIVE_SHIFT_CATEGORIES,
   SHIFT_AUDIENCE_LABEL,
   SHIFT_CATEGORY_COLOR,
   SHIFT_CATEGORY_LABEL,
@@ -9,7 +10,6 @@ import {
   type ShiftDateRange,
 } from "@/lib/shiftConstants";
 
-const ALL_CATEGORIES = Object.keys(SHIFT_CATEGORY_LABEL) as ShiftCategory[];
 const ALL_AUDIENCES = Object.keys(SHIFT_AUDIENCE_LABEL) as ShiftAudience[];
 
 // The whole filter surface: six category toggle chips (multi-select, all on
@@ -35,7 +35,7 @@ export default function ShiftFilters({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex flex-wrap gap-1.5">
-        {ALL_CATEGORIES.map((category) => {
+        {ACTIVE_SHIFT_CATEGORIES.map((category) => {
           const active = categories.has(category);
           return (
             <button

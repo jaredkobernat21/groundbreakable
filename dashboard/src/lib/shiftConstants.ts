@@ -6,6 +6,20 @@ import type { ShiftAudience, ShiftCategory, ShiftImpact } from "./types";
 // where the concept lines up -- e.g. distress's triangle is the same glyph
 // as the old Opportunities "alertTriangle").
 
+// Phase 1 scope (product decision, 2026-09-04): the dashboard only
+// surfaces "development intelligence" -- Plans/Building/Infrastructure.
+// Business/Property/Distress stay in the schema and keep whatever real
+// data has already been sourced for them (nothing is deleted), they're
+// just not offered as filter chips or included in the default-selected
+// set -- a shift in one of those 3 categories is fetched from the
+// server like any other but never passes the client-side category
+// filter, so it never renders. This is the *only* place that list is
+// defined -- both ShiftFilters (chip list) and ShiftDashboardView
+// (default selection) import it, so they can't drift out of sync the
+// way two independently-hardcoded lists could. Widening back to all 6
+// for Phase 2 is a one-line change here.
+export const ACTIVE_SHIFT_CATEGORIES: ShiftCategory[] = ["plans", "building", "infrastructure"];
+
 export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
   plans: "Plans",
   building: "Building",

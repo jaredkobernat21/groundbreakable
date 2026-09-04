@@ -2,20 +2,11 @@
 
 import { useMemo, useState } from "react";
 import type { Market, ShiftAudience, ShiftCategory, ShiftWithSource } from "@/lib/types";
-import { shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
+import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import ShiftFilters from "./ShiftFilters";
 import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
-
-const ALL_CATEGORIES: ShiftCategory[] = [
-  "plans",
-  "building",
-  "infrastructure",
-  "business",
-  "property",
-  "distress",
-];
 
 // Orchestrates filters + map + feed + detail panel as one reusable unit,
 // same role DevelopmentIntelligenceView played for the old pillar model.
@@ -24,7 +15,7 @@ const ALL_CATEGORIES: ShiftCategory[] = [
 // client-side, so switching between 7d/30d or toggling a category is
 // instant with no round-trip.
 export default function ShiftDashboardView({ market, shifts }: { market: Market; shifts: ShiftWithSource[] }) {
-  const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ALL_CATEGORIES));
+  const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [audience, setAudience] = useState<ShiftAudience | "all">("all");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
