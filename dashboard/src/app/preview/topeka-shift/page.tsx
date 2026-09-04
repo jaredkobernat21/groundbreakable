@@ -57,8 +57,8 @@ export default async function TopekaShiftPreviewPage() {
       </div>
 
       <header className="flex items-center gap-2 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
-        <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-        <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">ROQ Shift</span>
+        <img src="/roq-icon-black.png" alt="" className="h-7 w-7" />
+        <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Shift</span>
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
