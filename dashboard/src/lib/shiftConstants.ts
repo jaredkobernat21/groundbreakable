@@ -7,31 +7,34 @@ import type { ShiftAudience, ShiftCategory, ShiftImpact } from "./types";
 // as the old Opportunities "alertTriangle").
 
 export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
-  distress: "Distress",
-  compliance: "Compliance",
-  development: "Development",
-  construction: "Construction",
+  plans: "Plans",
+  building: "Building",
   infrastructure: "Infrastructure",
+  business: "Business",
+  property: "Property",
+  distress: "Distress",
 };
 
 export const SHIFT_CATEGORY_COLOR: Record<ShiftCategory, string> = {
-  distress: "#ef4444", // red
-  compliance: "#eab308", // amber
-  development: "#f97316", // orange
-  construction: "#3b82f6", // blue
+  plans: "#f97316", // orange
+  building: "#3b82f6", // blue
   infrastructure: "#14b8a6", // teal
+  business: "#818cf8", // indigo
+  property: "#eab308", // amber
+  distress: "#ef4444", // red
 };
 
 export const SHIFT_CATEGORY_ICON_PATHS: Record<ShiftCategory, string[]> = {
+  plans: ["M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z", "M14 3v4h4", "M9 12h6M9 15.5h6M9 8.5h3"],
+  building: ["M13 3l8 8-3 3-8-8z", "M10.5 8.5L3 16l3 3 7.5-7.5"],
+  infrastructure: ["M8 21L10 3", "M16 21L14 3", "M12 4v4M12 11v4M12 18v3"],
+  business: ["M4 8h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z", "M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2", "M4 13h16"],
+  property: ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", "M9 22V12h6v10"],
   distress: [
     "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
     "M12 9v4",
     "M12 17h.01",
   ],
-  compliance: ["M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1z", "M6 5h12v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z", "M9 11h6M9 15h6"],
-  development: ["M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z", "M14 3v4h4", "M9 12h6M9 15.5h6M9 8.5h3"],
-  construction: ["M13 3l8 8-3 3-8-8z", "M10.5 8.5L3 16l3 3 7.5-7.5"],
-  infrastructure: ["M8 21L10 3", "M16 21L14 3", "M12 4v4M12 11v4M12 18v3"],
 };
 
 export function shiftIconSvgMarkup(category: ShiftCategory, opts?: { size?: number; stroke?: string; strokeWidth?: number }): string {
@@ -83,7 +86,7 @@ export const SHIFT_AUDIENCE_LABEL: Record<ShiftAudience, string> = {
 
 // --- Date range filter ---
 // Same shape as purchaseWindowToDate() in lib/leads/constants.ts, scoped
-// down to the two windows ROQ Shift actually offers.
+// down to the two windows the shift dashboard actually offers.
 
 export type ShiftDateRange = "7d" | "30d";
 

@@ -9,11 +9,12 @@ import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 
 const ALL_CATEGORIES: ShiftCategory[] = [
-  "distress",
-  "compliance",
-  "development",
-  "construction",
+  "plans",
+  "building",
   "infrastructure",
+  "business",
+  "property",
+  "distress",
 ];
 
 // Orchestrates filters + map + feed + detail panel as one reusable unit,

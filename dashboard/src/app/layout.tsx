@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ROQ Shift",
-  description: "Market-shift intelligence for real estate professionals.",
+  title: "Groundbreakable",
+  description: "Local market change intelligence for real estate professionals.",
   robots: {
     index: false,
     follow: false,

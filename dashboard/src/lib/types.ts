@@ -649,17 +649,20 @@ export type PotentialSite = {
 
 export type PotentialSiteWithSource = PotentialSite & { source: Source | null };
 
-// --- Shifts (ROQ Shift) ---
+// --- Shifts ---
 // The unified source of truth for the market-shift dashboard -- replaces
 // the Plans/Opportunities/Potential pillar model at the primary route.
-// See supabase/migrations/20260904000000_roq_shift_schema.sql.
+// See supabase/migrations/20260904000000_roq_shift_schema.sql and
+// 20260904120000_recategorize_shift_categories.sql (the six-category
+// PLANS/BUILDING/INFRASTRUCTURE/BUSINESS/PROPERTY/DISTRESS taxonomy).
 
 export type ShiftCategory =
-  | "distress"
-  | "compliance"
-  | "development"
-  | "construction"
-  | "infrastructure";
+  | "plans"
+  | "building"
+  | "infrastructure"
+  | "business"
+  | "property"
+  | "distress";
 
 export type ShiftImpact = "low" | "medium" | "high";
 

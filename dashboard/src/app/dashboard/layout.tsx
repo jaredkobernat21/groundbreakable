@@ -23,8 +23,8 @@ export default async function DashboardLayout({
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-4 sm:gap-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/roq-icon-black.png" alt="" className="h-7 w-7" />
-            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Shift</span>
+            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm text-[#1c1c1c]/50">
             <Link href="/dashboard" className="hover:text-[#1c1c1c]">
