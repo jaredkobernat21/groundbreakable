@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ShiftDashboardView from "@/components/shifts/ShiftDashboardView";
+import MarketSwitcher from "@/components/MarketSwitcher";
 import { getShifts } from "@/lib/queries/shifts";
 import { getActiveProjects } from "@/lib/queries/activeProjects";
 import { getBuildabilityZones } from "@/lib/queries/buildability";
@@ -70,19 +70,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </div>
 
-        <nav className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1" aria-label="Market">
-          {(markets ?? []).map((m) => (
-            <Link
-              key={m.slug}
-              href={`/preview/topeka-shift?market=${m.slug}`}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                m.slug === market.slug ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-              }`}
-            >
-              {m.name}
-            </Link>
-          ))}
-        </nav>
+        <MarketSwitcher markets={markets ?? []} currentSlug={market.slug} />
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">

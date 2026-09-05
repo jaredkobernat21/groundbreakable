@@ -1,37 +1,28 @@
 "use client";
 
-import type { ShiftAudience, ShiftCategory } from "@/lib/types";
-import {
-  ACTIVE_SHIFT_CATEGORIES,
-  SHIFT_AUDIENCE_LABEL,
-  SHIFT_CATEGORY_COLOR,
-  SHIFT_CATEGORY_LABEL,
-  SHIFT_DATE_RANGES,
-  type ShiftDateRange,
-} from "@/lib/shiftConstants";
+import type { ShiftCategory } from "@/lib/types";
+import { ACTIVE_SHIFT_CATEGORIES, SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_LABEL, SHIFT_DATE_RANGES, type ShiftDateRange } from "@/lib/shiftConstants";
 
-const ALL_AUDIENCES = Object.keys(SHIFT_AUDIENCE_LABEL) as ShiftAudience[];
-
-// The whole filter surface: category toggle chips (multi-select, all on
-// by default), the 7d/30d/90d/all date-range control, and an
-// audience/persona dropdown. Purely client-side state -- the server fetch
-// already covers the widest window ("all"); narrowing to any shorter range
-// or a category/persona subset is instant, no round-trip. See
-// ShiftDashboardView.
+// The Momentum filter surface: category toggle chips (multi-select, all on
+// by default) plus the date-range control. The range control is a native
+// select -- collapsed to the current choice by default (Last 7 days),
+// with 30d/90d/All only shown once opened -- rather than a row of
+// always-visible buttons, matching the same "highlight the active one,
+// keep the rest out of the way" convention as MarketSwitcher. The
+// audience/persona dropdown was removed (2026-09-04, per Jared) rather
+// than kept with its "Everyone" default -- nobody was using persona
+// filtering yet, and a dropdown that can only ever be usefully narrowed,
+// never meaningfully cleared, wasn't earning its place in the bar.
 export default function ShiftFilters({
   categories,
   onToggleCategory,
   range,
   onSelectRange,
-  audience,
-  onSelectAudience,
 }: {
   categories: Set<ShiftCategory>;
   onToggleCategory: (category: ShiftCategory) => void;
   range: ShiftDateRange;
   onSelectRange: (range: ShiftDateRange) => void;
-  audience: ShiftAudience | "all";
-  onSelectAudience: (audience: ShiftAudience | "all") => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -59,35 +50,17 @@ export default function ShiftFilters({
         })}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        <select
-          value={audience}
-          onChange={(e) => onSelectAudience(e.target.value as ShiftAudience | "all")}
-          className="rounded-full border border-[#1c1c1c]/15 bg-transparent px-3 py-1.5 text-xs font-medium text-[#1c1c1c]/70"
-        >
-          <option value="all">Everyone</option>
-          {ALL_AUDIENCES.map((a) => (
-            <option key={a} value={a}>
-              {SHIFT_AUDIENCE_LABEL[a]}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1">
-          {SHIFT_DATE_RANGES.map((r) => (
-            <button
-              key={r.value}
-              type="button"
-              onClick={() => onSelectRange(r.value)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                range === r.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <select
+        value={range}
+        onChange={(e) => onSelectRange(e.target.value as ShiftDateRange)}
+        className="ml-auto rounded-full border border-[#1c1c1c]/15 bg-white px-3 py-1.5 text-xs font-medium text-[#1c1c1c] outline-none focus:border-[#1c1c1c]/40"
+      >
+        {SHIFT_DATE_RANGES.map((r) => (
+          <option key={r.value} value={r.value}>
+            {r.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

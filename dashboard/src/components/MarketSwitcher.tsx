@@ -3,7 +3,14 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Market } from "@/lib/types";
 
-export default function MarketSwitcher({ markets }: { markets: Market[] }) {
+// `currentSlug` lets a caller that already resolved the active market
+// server-side (with its own default/fallback logic, e.g. the shift
+// preview page defaulting to Topeka rather than whichever market sorts
+// first alphabetically) pass that resolution in directly, so the select's
+// shown value can't drift from what's actually loaded on the page. Falls
+// back to reading the `market` query param itself when omitted, unchanged
+// from the original behavior every existing caller relies on.
+export default function MarketSwitcher({ markets, currentSlug: currentSlugProp }: { markets: Market[]; currentSlug?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -18,7 +25,7 @@ export default function MarketSwitcher({ markets }: { markets: Market[] }) {
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  const currentSlug = searchParams.get("market");
+  const currentSlug = currentSlugProp ?? searchParams.get("market") ?? undefined;
   const current = markets.find((m) => m.slug === currentSlug);
 
   return (
