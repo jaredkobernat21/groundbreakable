@@ -765,14 +765,30 @@ export const OPPORTUNITY_STRENGTH_LABEL: Record<OpportunityStrength, string> = {
   low: "Low",
 };
 
+export type OpportunityCategory = "distress" | "zoning" | "early_project";
+
+export const OPPORTUNITY_CATEGORY_LABEL: Record<OpportunityCategory, string> = {
+  distress: "Distress",
+  zoning: "Zoning",
+  early_project: "Early Projects",
+};
+
 export type DevelopmentOpportunity = {
   id: string;
   market_id: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  // Nullable -- some rezoning-stage opportunities are only ever
+  // described by intersection in sourced reporting, never geocoded to a
+  // precise point (same reason `shifts.lat/lng` is nullable). No pin
+  // beats a fabricated one.
+  latitude: number | null;
+  longitude: number | null;
   opportunity_type: string;
   strength: OpportunityStrength;
+  category: OpportunityCategory;
+  status: string | null;
+  related_developer: string | null;
+  related_contractor: string | null;
   signals: string[];
   reasons: string[];
   source_ids: string[];

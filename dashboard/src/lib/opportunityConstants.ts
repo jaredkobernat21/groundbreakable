@@ -1,4 +1,4 @@
-import type { OpportunityStrength } from "./types";
+import type { OpportunityCategory, OpportunityStrength } from "./types";
 
 // Gray -> amber -> red: same "severity gradient independent of category"
 // idea as SHIFT_IMPACT_COLOR -- strength is its own dimension, not tied
@@ -7,6 +7,16 @@ export const OPPORTUNITY_STRENGTH_COLOR: Record<OpportunityStrength, string> = {
   low: "#94a3b8",
   medium: "#eab308",
   high: "#ef4444",
+};
+
+// One accent per subcategory (Distress/Zoning/Early Projects) -- distinct
+// from strength's severity gradient, so a card can carry both "which
+// bucket" (color) and "how strong" (the strength badge) without one
+// dimension drowning out the other.
+export const OPPORTUNITY_CATEGORY_COLOR: Record<OpportunityCategory, string> = {
+  distress: "#ef4444", // red -- same family as the shift dashboard's distress category
+  zoning: "#818cf8", // indigo -- same family as Buildability/Momentum's POTENTIAL_COLOR
+  early_project: "#3b82f6", // blue -- same family as Permits/Projects
 };
 
 // The individual `signals` array on a development_opportunities row is

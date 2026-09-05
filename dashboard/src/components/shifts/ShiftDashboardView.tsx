@@ -10,14 +10,17 @@ import type {
   Market,
   MarketIndicatorWithSource,
   MarketOverviewWithSources,
+  OpportunityCategory,
   ProjectPersonWithSource,
   ProjectWithSource,
   ShiftCategory,
   ShiftWithSource,
   ZoningLandUseWithSource,
 } from "@/lib/types";
+import { OPPORTUNITY_CATEGORY_LABEL } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
+import { OPPORTUNITY_CATEGORY_COLOR } from "@/lib/opportunityConstants";
 import { pointInPolygon } from "@/lib/geo";
 import BriefingSummary from "./BriefingSummary";
 import ShiftFilters from "./ShiftFilters";
@@ -93,6 +96,7 @@ const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
 };
 
 const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
+const OPPORTUNITY_CATEGORY_FILTER_OPTIONS = Object.keys(OPPORTUNITY_CATEGORY_LABEL) as OpportunityCategory[];
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 // Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
@@ -137,12 +141,24 @@ export default function ShiftDashboardView({
   const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
   const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
+  const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<Set<OpportunityCategory>>(
+    new Set(OPPORTUNITY_CATEGORY_FILTER_OPTIONS)
+  );
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
       const next = new Set(prev);
       if (next.has(type)) next.delete(type);
       else next.add(type);
+      return next;
+    });
+  }
+
+  function toggleOpportunityCategory(category: OpportunityCategory) {
+    setOpportunityCategoryFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
       return next;
     });
   }
@@ -170,6 +186,11 @@ export default function ShiftDashboardView({
   const filteredInvestments = useMemo(
     () => investments.filter((i) => investmentTypeFilter.has(i.investment_type)),
     [investments, investmentTypeFilter]
+  );
+
+  const filteredOpportunities = useMemo(
+    () => opportunities.filter((o) => opportunityCategoryFilter.has(o.category)),
+    [opportunities, opportunityCategoryFilter]
   );
 
   const developerPeople = useMemo(() => projectPeople.filter((p) => p.role === "developer"), [projectPeople]);
@@ -221,28 +242,25 @@ export default function ShiftDashboardView({
   const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
   const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
-  const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
+  const selectedOpportunity = filteredOpportunities.find((o) => o.id === selectedOpportunityId) ?? null;
 
   // Momentum/Buildability for the selected opportunity are computed here
   // (pointInPolygon against growth_areas/zoning_land_use), not stored on
   // development_opportunities -- same single-source-of-truth reasoning
-  // as the Momentum tab's own area breakdown.
+  // as the Momentum tab's own area breakdown. Some opportunities (see
+  // the "zoning" category's intersection-only rows) have no lat/lng at
+  // all, in which case there's nothing to test against either polygon
+  // layer.
   const selectedOpportunityMomentumArea = useMemo(() => {
-    if (!selectedOpportunity) return null;
-    return (
-      momentumAreas.find((area) =>
-        pointInPolygon({ lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude }, area.geom)
-      ) ?? null
-    );
+    if (!selectedOpportunity || selectedOpportunity.latitude == null || selectedOpportunity.longitude == null) return null;
+    const point = { lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude };
+    return momentumAreas.find((area) => pointInPolygon(point, area.geom)) ?? null;
   }, [selectedOpportunity, momentumAreas]);
 
   const selectedOpportunityBuildabilityZone = useMemo(() => {
-    if (!selectedOpportunity) return null;
-    return (
-      buildabilityZones.find((zone) =>
-        pointInPolygon({ lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude }, zone.geom)
-      ) ?? null
-    );
+    if (!selectedOpportunity || selectedOpportunity.latitude == null || selectedOpportunity.longitude == null) return null;
+    const point = { lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude };
+    return buildabilityZones.find((zone) => pointInPolygon(point, zone.geom)) ?? null;
   }, [selectedOpportunity, buildabilityZones]);
 
   const railCounts = useMemo(() => {
@@ -448,31 +466,51 @@ export default function ShiftDashboardView({
             )}
 
             {view === "opportunities" && (
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-                <div className="relative h-[640px]">
-                  <OpportunityMap
-                    market={market}
-                    opportunities={opportunities}
-                    selectedOpportunityId={selectedOpportunityId}
-                    onSelectOpportunity={setSelectedOpportunityId}
-                  />
-                  {selectedOpportunity && (
-                    <OpportunityDetailPanel
-                      opportunity={selectedOpportunity}
-                      momentumArea={selectedOpportunityMomentumArea}
-                      buildabilityZone={selectedOpportunityBuildabilityZone}
-                      onClose={() => setSelectedOpportunityId(null)}
+              <>
+                <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+                  {OPPORTUNITY_CATEGORY_FILTER_OPTIONS.map((category) => {
+                    const active = opportunityCategoryFilter.has(category);
+                    const color = OPPORTUNITY_CATEGORY_COLOR[category];
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => toggleOpportunityCategory(category)}
+                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
+                        style={active ? { backgroundColor: color, color: "#fff" } : { color: "#1c1c1c80" }}
+                      >
+                        {OPPORTUNITY_CATEGORY_LABEL[category]}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                  <div className="relative h-[640px]">
+                    <OpportunityMap
+                      market={market}
+                      opportunities={filteredOpportunities}
+                      selectedOpportunityId={selectedOpportunityId}
+                      onSelectOpportunity={setSelectedOpportunityId}
                     />
-                  )}
+                    {selectedOpportunity && (
+                      <OpportunityDetailPanel
+                        opportunity={selectedOpportunity}
+                        momentumArea={selectedOpportunityMomentumArea}
+                        buildabilityZone={selectedOpportunityBuildabilityZone}
+                        onClose={() => setSelectedOpportunityId(null)}
+                      />
+                    )}
+                  </div>
+                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                    <OpportunityFeed
+                      opportunities={filteredOpportunities}
+                      selectedOpportunityId={selectedOpportunityId}
+                      onSelectOpportunity={setSelectedOpportunityId}
+                    />
+                  </div>
                 </div>
-                <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                  <OpportunityFeed
-                    opportunities={opportunities}
-                    selectedOpportunityId={selectedOpportunityId}
-                    onSelectOpportunity={setSelectedOpportunityId}
-                  />
-                </div>
-              </div>
+              </>
             )}
 
             {(view === "plans" || view === "permits" || view === "infrastructure") && (

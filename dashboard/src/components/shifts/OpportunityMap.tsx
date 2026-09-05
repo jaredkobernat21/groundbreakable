@@ -75,6 +75,8 @@ export default function OpportunityMap({
 
     import("mapbox-gl").then((mapboxgl) => {
       opportunities.forEach((opp) => {
+        if (opp.latitude == null || opp.longitude == null) return;
+
         const color = OPPORTUNITY_STRENGTH_COLOR[opp.strength];
         const el = document.createElement("div");
         el.className = "roq-marker";
