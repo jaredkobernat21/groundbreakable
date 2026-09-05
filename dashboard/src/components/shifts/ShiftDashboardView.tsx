@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Market, ProjectWithSource, ShiftCategory, ShiftWithSource, ZoningLandUseWithSource } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
@@ -13,24 +14,46 @@ import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
 import BuildabilityDetailPanel from "./BuildabilityDetailPanel";
 
-type View = "momentum" | "projects" | "permits" | "buildability";
+type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability";
 
-// Per Jared (2026-09-04): Projects/Permits are real sidebar destinations
-// (persistent nav, far-left, full height) since they're list-first
-// surfaces; Momentum/Buildability are map-first, so they're a small
-// layer toggle sitting directly above the map instead -- both control
-// groups just set the same `view` state, they're only visually grouped
-// differently. All four buttons stay visible at all times (in their
-// respective spot) so there's always a way back to any of the four,
-// regardless of which is currently active.
-const SIDEBAR_TABS: { value: View; label: string }[] = [
+// Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
+// widens from 4 views to 7 -- "what's coming" (Plans), "what's being
+// built" (Projects), "what's moving" (Permits), "what's enabling growth"
+// (Infrastructure), "where capital is flowing" (Investment), plus the
+// original map-first pair, Momentum ("what's happening right now" --
+// every active category on one map) and Buildability ("where could
+// development happen next," zoning/land-use). Land was considered as an
+// 8th tab but folded into Buildability -- both meant the same thing
+// (favorable-zoning parcels), so there's no separate Land destination.
+//
+// Rail tabs are real sidebar destinations (persistent nav, far-left,
+// full height, under the logo) since they're list-first surfaces;
+// Momentum/Buildability stay map-first, so they're a small layer toggle
+// sitting directly above the map instead -- both control groups just set
+// the same `view` state, they're only visually grouped differently.
+const RAIL_TABS: { value: View; label: string }[] = [
+  { value: "plans", label: "Plans" },
   { value: "projects", label: "Projects" },
   { value: "permits", label: "Permits" },
+  { value: "infrastructure", label: "Infrastructure" },
+  { value: "investment", label: "Investment" },
 ];
 const MAP_LAYER_TABS: { value: View; label: string }[] = [
   { value: "momentum", label: "Momentum" },
   { value: "buildability", label: "Buildability" },
 ];
+
+// Which shift categories feed each rail tab's map+feed view. Investment
+// covers both Business and Property -- neither has real data sourced
+// for any market yet (see 20260904120000_recategorize_shift_categories.sql),
+// so the tab renders the same "nothing here yet" empty state Momentum
+// already shows for an unresearched market, not a broken page.
+const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
+  plans: ["plans"],
+  permits: ["building"],
+  infrastructure: ["infrastructure"],
+  investment: ["business", "property"],
+};
 
 export default function ShiftDashboardView({
   market,
@@ -47,7 +70,7 @@ export default function ShiftDashboardView({
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
-  const [selectedPermitId, setSelectedPermitId] = useState<string | null>(null);
+  const [selectedCategoryShiftId, setSelectedCategoryShiftId] = useState<string | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
 
   function toggleCategory(category: ShiftCategory) {
@@ -64,11 +87,24 @@ export default function ShiftDashboardView({
     return shifts.filter((s) => categories.has(s.category) && s.event_date >= since);
   }, [shifts, categories, range]);
 
-  const permits = useMemo(() => shifts.filter((s) => s.category === "building"), [shifts]);
+  const categoryShifts = useMemo(() => {
+    const wantedCategories = CATEGORIES_BY_VIEW[view];
+    if (!wantedCategories) return [];
+    return shifts.filter((s) => wantedCategories.includes(s.category));
+  }, [shifts, view]);
 
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
-  const selectedPermit = permits.find((s) => s.id === selectedPermitId) ?? null;
+  const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
+
+  const railCounts = useMemo(() => {
+    const counts: Partial<Record<View, number>> = { projects: projects.length };
+    for (const tab of RAIL_TABS) {
+      const wanted = CATEGORIES_BY_VIEW[tab.value];
+      if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
+    }
+    return counts;
+  }, [shifts, projects]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -76,100 +112,136 @@ export default function ShiftDashboardView({
     }`;
   }
 
+  function railTabs() {
+    return RAIL_TABS.map((tab) => (
+      <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={tabButtonClass(view === tab.value, true)}>
+        {tab.label}
+        {railCounts[tab.value] != null && ` (${railCounts[tab.value]})`}
+      </button>
+    ));
+  }
+
   return (
-    <div className="space-y-3">
-      <BriefingSummary shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
+    <div>
+      {/* Persistent far-left rail (desktop): logo, then the six list-first
+          destinations. Fixed so it spans the full page height regardless of
+          where this component sits in the header's centered content column. */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:flex lg:w-56 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-r lg:border-[#1c1c1c]/10 lg:bg-[#f4f2ee] lg:px-4 lg:py-6">
+        <Link href="/dashboard" className="mb-6 flex items-center gap-2">
+          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+          <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+        </Link>
+        <nav className="flex flex-col gap-0.5">{railTabs()}</nav>
+      </aside>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <nav className="flex shrink-0 gap-1 lg:w-44 lg:flex-col lg:gap-0.5">
-          {SIDEBAR_TABS.map((tab) => (
-            <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={tabButtonClass(view === tab.value, true)}>
-              {tab.label}
-              {tab.value === "projects" && ` (${projects.length})`}
-              {tab.value === "permits" && ` (${permits.length})`}
-            </button>
-          ))}
-        </nav>
+      <div className="lg:pl-56">
+        <div className="space-y-3">
+          {/* Below lg the fixed aside is hidden, so the logo needs a home
+              here instead -- otherwise mobile loses all branding. */}
+          <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
+            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
+          </Link>
 
-        <div className="min-w-0 flex-1 space-y-3">
-          {(view === "momentum" || view === "buildability") && (
-            <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-              {MAP_LAYER_TABS.map((tab) => (
-                <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                  view === tab.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-                }`}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Lives here (not in the page above) so it stays inside the
+              lg:pl-56 offset -- a page-level <h1> rendered as this
+              component's sibling would sit outside that padding and get
+              hidden behind the fixed rail at typical viewport widths. */}
+          <h1 className="text-2xl font-semibold text-[#1c1c1c]">
+            {market.name}, {market.state}
+          </h1>
 
-          {view === "momentum" && (
-            <>
-              <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
+          <BriefingSummary shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
 
+          <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{railTabs()}</nav>
+
+          <div className="min-w-0 flex-1 space-y-3">
+            {(view === "momentum" || view === "buildability") && (
+              <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+                {MAP_LAYER_TABS.map((tab) => (
+                  <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                    view === tab.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
+                  }`}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {view === "momentum" && (
+              <>
+                <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
+
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                  <div className="relative h-[640px]">
+                    <ShiftMap
+                      market={market}
+                      shifts={filteredShifts}
+                      selectedShiftId={selectedShiftId}
+                      onSelectShift={setSelectedShiftId}
+                    />
+                    {selectedShift && <ShiftDetailPanel shift={selectedShift} onClose={() => setSelectedShiftId(null)} />}
+                  </div>
+
+                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                    <ShiftFeed shifts={filteredShifts} selectedShiftId={selectedShiftId} onSelectShift={setSelectedShiftId} />
+                  </div>
+                </div>
+
+                {shifts.length === 0 && (
+                  <p className="text-sm text-[#1c1c1c]/40">
+                    No shifts recorded yet for {market.name} — this market hasn't been researched yet.
+                  </p>
+                )}
+              </>
+            )}
+
+            {view === "projects" && (
+              <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                <ProjectsList projects={projects} />
+              </div>
+            )}
+
+            {(view === "plans" || view === "permits" || view === "infrastructure" || view === "investment") && (
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
                 <div className="relative h-[640px]">
                   <ShiftMap
                     market={market}
-                    shifts={filteredShifts}
-                    selectedShiftId={selectedShiftId}
-                    onSelectShift={setSelectedShiftId}
+                    shifts={categoryShifts}
+                    selectedShiftId={selectedCategoryShiftId}
+                    onSelectShift={setSelectedCategoryShiftId}
                   />
-                  {selectedShift && <ShiftDetailPanel shift={selectedShift} onClose={() => setSelectedShiftId(null)} />}
+                  {selectedCategoryShift && (
+                    <ShiftDetailPanel shift={selectedCategoryShift} onClose={() => setSelectedCategoryShiftId(null)} />
+                  )}
                 </div>
-
                 <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                  <ShiftFeed shifts={filteredShifts} selectedShiftId={selectedShiftId} onSelectShift={setSelectedShiftId} />
+                  <ShiftFeed shifts={categoryShifts} selectedShiftId={selectedCategoryShiftId} onSelectShift={setSelectedCategoryShiftId} />
                 </div>
               </div>
+            )}
 
-              {shifts.length === 0 && (
-                <p className="text-sm text-[#1c1c1c]/40">
-                  No shifts recorded yet for {market.name} — this market hasn't been researched yet.
-                </p>
-              )}
-            </>
-          )}
-
-          {view === "projects" && (
-            <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-              <ProjectsList projects={projects} />
-            </div>
-          )}
-
-          {view === "permits" && (
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-              <div className="relative h-[640px]">
-                <ShiftMap market={market} shifts={permits} selectedShiftId={selectedPermitId} onSelectShift={setSelectedPermitId} />
-                {selectedPermit && <ShiftDetailPanel shift={selectedPermit} onClose={() => setSelectedPermitId(null)} />}
+            {view === "buildability" && (
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                <div className="relative h-[640px]">
+                  <BuildabilityMap
+                    market={market}
+                    zones={buildabilityZones}
+                    selectedZoneId={selectedZoneId}
+                    onSelectZone={setSelectedZoneId}
+                  />
+                  {selectedZone && (
+                    <div className="absolute bottom-3 left-3 right-3 max-h-[300px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
+                      <BuildabilityDetailPanel zone={selectedZone} onClose={() => setSelectedZoneId(null)} />
+                    </div>
+                  )}
+                </div>
+                <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <BuildabilityList zones={buildabilityZones} selectedZoneId={selectedZoneId} onSelectZone={setSelectedZoneId} />
+                </div>
               </div>
-              <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <ShiftFeed shifts={permits} selectedShiftId={selectedPermitId} onSelectShift={setSelectedPermitId} />
-              </div>
-            </div>
-          )}
-
-          {view === "buildability" && (
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-              <div className="relative h-[640px]">
-                <BuildabilityMap
-                  market={market}
-                  zones={buildabilityZones}
-                  selectedZoneId={selectedZoneId}
-                  onSelectZone={setSelectedZoneId}
-                />
-                {selectedZone && (
-                  <div className="absolute bottom-3 left-3 right-3 max-h-[300px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
-                    <BuildabilityDetailPanel zone={selectedZone} onClose={() => setSelectedZoneId(null)} />
-                  </div>
-                )}
-              </div>
-              <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <BuildabilityList zones={buildabilityZones} selectedZoneId={selectedZoneId} onSelectZone={setSelectedZoneId} />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

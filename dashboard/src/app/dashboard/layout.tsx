@@ -20,24 +20,14 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-            <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-[#1c1c1c]/50">
-            <Link href="/dashboard" className="hover:text-[#1c1c1c]">
-              Overview
-            </Link>
-            <Link href="/dashboard/timeline" className="hover:text-[#1c1c1c]">
-              Timeline
-            </Link>
-            <Link href="/dashboard/projects" className="hover:text-[#1c1c1c]">
-              Projects
-            </Link>
-          </nav>
-        </div>
+      {/* Logo + the Plans/Projects/Permits/Infrastructure/Investment nav now
+          live in ShiftDashboardView's own far-left rail (under the logo,
+          full page height) instead of here -- this header is just the
+          controls that apply regardless of which dashboard page you're on.
+          The rail is fixed-position, so it overlays this header's left edge
+          on pages that render it; everything below just needs to not put
+          anything there, hence justify-end. */}
+      <header className="flex flex-wrap items-center justify-end gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
           <Link
             href="/leads"

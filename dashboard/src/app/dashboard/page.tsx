@@ -34,12 +34,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const buildabilityZones = await getBuildabilityZones(supabase, market.id);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold text-[#1c1c1c]">
-        {market.name}, {market.state}
-      </h1>
-
-      <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
-    </div>
+    <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
   );
 }

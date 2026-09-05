@@ -64,20 +64,13 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
         Preview — a shared, read-only look at the live Groundbreakable dashboard.
       </div>
 
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
-        <div className="flex items-center gap-2">
-          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
-          <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
-        </div>
-
+      {/* No logo here -- ShiftDashboardView renders it at the top of its own
+          far-left rail, same as the real /dashboard route. */}
+      <header className="flex flex-wrap items-center justify-end gap-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
         <MarketSwitcher markets={markets ?? []} currentSlug={market.slug} />
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="text-2xl font-semibold text-[#1c1c1c]">
-          {market.name}, {market.state}
-        </h1>
-
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
       </main>
     </div>
