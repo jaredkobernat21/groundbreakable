@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  GrowthArea,
   InvestmentType,
   InvestmentWithSource,
   Market,
@@ -13,12 +14,16 @@ import type {
 } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
+import { buildContractorDirectory } from "@/lib/contractors";
+import { pointInPolygon } from "@/lib/geo";
 import BriefingSummary from "./BriefingSummary";
 import ShiftFilters from "./ShiftFilters";
 import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 import ProjectsList from "./ProjectsList";
+import ContractorsList from "./ContractorsList";
+import MomentumAreaDetailPanel from "./MomentumAreaDetailPanel";
 import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
 import BuildabilityDetailPanel from "./BuildabilityDetailPanel";
@@ -27,7 +32,7 @@ import InvestmentFeed from "./InvestmentFeed";
 import InvestmentDetailPanel from "./InvestmentDetailPanel";
 import InvestmentSummary from "./InvestmentSummary";
 
-type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability";
+type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability" | "contractors";
 
 // Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
 // covers 7 views -- "what's coming" (Plans), "what's being built"
@@ -52,6 +57,7 @@ const RAIL_TABS: { value: View; label: string }[] = [
   { value: "permits", label: "Permits" },
   { value: "infrastructure", label: "Infrastructure" },
   { value: "investment", label: "Investment" },
+  { value: "contractors", label: "Contractors" },
   { value: "buildability", label: "Buildability" },
 ];
 
@@ -67,18 +73,30 @@ const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
 
 const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
 
+// Tie-break for "which Momentum Area is the primary one" -- higher wins.
+// Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
+// areas at the same count should still favor whichever one is actually
+// accelerating right now over one that's merely emerging.
+const MOMENTUM_STATE_RANK: Record<GrowthArea["momentum_state"], number> = {
+  accelerating: 2,
+  established: 1,
+  emerging: 0,
+};
+
 export default function ShiftDashboardView({
   market,
   shifts,
   projects,
   buildabilityZones,
   investments,
+  momentumAreas,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
   buildabilityZones: ZoningLandUseWithSource[];
   investments: InvestmentWithSource[];
+  momentumAreas: GrowthArea[];
 }) {
   const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
@@ -88,6 +106,7 @@ export default function ShiftDashboardView({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [investmentTypeFilter, setInvestmentTypeFilter] = useState<Set<InvestmentType>>(new Set(INVESTMENT_TYPE_FILTER_OPTIONS));
   const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
+  const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
@@ -123,19 +142,65 @@ export default function ShiftDashboardView({
     [investments, investmentTypeFilter]
   );
 
+  const contractorDirectory = useMemo(() => buildContractorDirectory(projects, shifts), [projects, shifts]);
+
+  // Every real shift/project whose lat/lng falls inside a Momentum Area's
+  // polygon -- computed client-side (pointInPolygon), not a join table, so
+  // adding/editing an area's boundary never needs a data backfill. Scoped
+  // to the full `shifts`/`projects` lists, not filteredShifts, so an
+  // area's breakdown always explains its whole story regardless of
+  // whatever category/date filter happens to be set on the pin layer.
+  const momentumAreaBreakdowns = useMemo(() => {
+    return momentumAreas.map((area) => {
+      const shiftsByCategory: Partial<Record<ShiftCategory, ShiftWithSource[]>> = {};
+      for (const shift of shifts) {
+        if (shift.lat == null || shift.lng == null) continue;
+        if (!pointInPolygon({ lat: shift.lat, lng: shift.lng }, area.geom)) continue;
+        (shiftsByCategory[shift.category] ??= []).push(shift);
+      }
+      const areaProjects = projects.filter(
+        (p) => p.latitude != null && p.longitude != null && pointInPolygon({ lat: p.latitude, lng: p.longitude }, area.geom)
+      );
+      const count = Object.values(shiftsByCategory).reduce((sum, items) => sum + items.length, 0) + areaProjects.length;
+      return { area, shiftsByCategory, projects: areaProjects, count };
+    });
+  }, [momentumAreas, shifts, projects]);
+
+  const primaryMomentumAreaId = useMemo(() => {
+    if (momentumAreaBreakdowns.length === 0) return null;
+    const sorted = [...momentumAreaBreakdowns].sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      const rankDiff = MOMENTUM_STATE_RANK[b.area.momentum_state] - MOMENTUM_STATE_RANK[a.area.momentum_state];
+      if (rankDiff !== 0) return rankDiff;
+      return a.area.name.localeCompare(b.area.name);
+    });
+    return sorted[0].area.id;
+  }, [momentumAreaBreakdowns]);
+
+  const selectedMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === selectedMomentumAreaId) ?? null;
+
+  function selectMomentumTab() {
+    setView("momentum");
+    setSelectedMomentumAreaId(primaryMomentumAreaId);
+  }
+
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
   const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
   const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
 
   const railCounts = useMemo(() => {
-    const counts: Partial<Record<View, number>> = { projects: projects.length, investment: investments.length };
+    const counts: Partial<Record<View, number>> = {
+      projects: projects.length,
+      investment: investments.length,
+      contractors: contractorDirectory.length,
+    };
     for (const tab of RAIL_TABS) {
       const wanted = CATEGORIES_BY_VIEW[tab.value];
       if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments]);
+  }, [shifts, projects, investments, contractorDirectory]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -145,7 +210,12 @@ export default function ShiftDashboardView({
 
   function railTabs() {
     return RAIL_TABS.map((tab) => (
-      <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={tabButtonClass(view === tab.value, true)}>
+      <button
+        key={tab.value}
+        type="button"
+        onClick={() => (tab.value === "momentum" ? selectMomentumTab() : setView(tab.value))}
+        className={tabButtonClass(view === tab.value, true)}
+      >
         {tab.label}
         {railCounts[tab.value] != null && ` (${railCounts[tab.value]})`}
       </button>
@@ -189,6 +259,23 @@ export default function ShiftDashboardView({
           <div className="min-w-0 flex-1 space-y-3">
             {view === "momentum" && (
               <>
+                {momentumAreaBreakdowns.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+                    {momentumAreaBreakdowns.map(({ area, count }) => (
+                      <button
+                        key={area.id}
+                        type="button"
+                        onClick={() => setSelectedMomentumAreaId(area.id === selectedMomentumAreaId ? null : area.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                          selectedMomentumAreaId === area.id ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
+                        }`}
+                      >
+                        {area.name} ({count})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
 
                 <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
@@ -198,8 +285,26 @@ export default function ShiftDashboardView({
                       shifts={filteredShifts}
                       selectedShiftId={selectedShiftId}
                       onSelectShift={setSelectedShiftId}
+                      momentumAreas={momentumAreas}
+                      selectedMomentumAreaId={selectedMomentumAreaId}
+                      onSelectMomentumArea={setSelectedMomentumAreaId}
                     />
-                    {selectedShift && <ShiftDetailPanel shift={selectedShift} onClose={() => setSelectedShiftId(null)} />}
+                    {selectedShift ? (
+                      <ShiftDetailPanel shift={selectedShift} onClose={() => setSelectedShiftId(null)} />
+                    ) : (
+                      selectedMomentumAreaBreakdown && (
+                        <div className="absolute bottom-3 left-3 right-3 max-h-[320px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
+                          <MomentumAreaDetailPanel
+                            area={selectedMomentumAreaBreakdown.area}
+                            shiftsByCategory={selectedMomentumAreaBreakdown.shiftsByCategory}
+                            projects={selectedMomentumAreaBreakdown.projects}
+                            selectedShiftId={selectedShiftId}
+                            onSelectShift={setSelectedShiftId}
+                            onClose={() => setSelectedMomentumAreaId(null)}
+                          />
+                        </div>
+                      )
+                    )}
                   </div>
 
                   <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
@@ -218,6 +323,12 @@ export default function ShiftDashboardView({
             {view === "projects" && (
               <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
                 <ProjectsList projects={projects} />
+              </div>
+            )}
+
+            {view === "contractors" && (
+              <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                <ContractorsList directory={contractorDirectory} />
               </div>
             )}
 

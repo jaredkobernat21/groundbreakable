@@ -1,6 +1,5 @@
 import type { ShiftWithSource } from "@/lib/types";
 import {
-  SHIFT_AUDIENCE_LABEL,
   SHIFT_CATEGORY_COLOR,
   SHIFT_CATEGORY_LABEL,
   SHIFT_IMPACT_COLOR,
@@ -9,9 +8,9 @@ import {
 } from "@/lib/shiftConstants";
 import { formatDate } from "@/lib/format";
 
-// The five dimensions -- Event, Date, Stage, Impact, Audience -- plus
-// address/source. Same absolute-overlay convention as ProjectDetailPanel/
-// OpportunityDetailPanel etc: right-anchored panel over the map.
+// Event, Date, Stage, Impact -- plus address/source. Same absolute-overlay
+// convention as ProjectDetailPanel/OpportunityDetailPanel etc:
+// right-anchored panel over the map.
 export default function ShiftDetailPanel({ shift, onClose }: { shift: ShiftWithSource; onClose: () => void }) {
   const color = SHIFT_CATEGORY_COLOR[shift.category];
 
@@ -51,12 +50,6 @@ export default function ShiftDetailPanel({ shift, onClose }: { shift: ShiftWithS
         <div>
           <dt className="text-[11px] uppercase tracking-wide text-white/35">Impact</dt>
           <dd style={{ color: SHIFT_IMPACT_COLOR[shift.impact] }}>{SHIFT_IMPACT_LABEL[shift.impact]}</dd>
-        </div>
-        <div>
-          <dt className="text-[11px] uppercase tracking-wide text-white/35">Audience</dt>
-          <dd className="text-white">
-            {shift.audience.length > 0 ? shift.audience.map((a) => SHIFT_AUDIENCE_LABEL[a]).join(", ") : "—"}
-          </dd>
         </div>
       </dl>
 

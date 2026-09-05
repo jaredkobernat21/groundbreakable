@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import MarketSwitcher from "@/components/MarketSwitcher";
@@ -29,12 +28,6 @@ export default async function DashboardLayout({
           anything there, hence justify-end. */}
       <header className="flex flex-wrap items-center justify-end gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
-          <Link
-            href="/leads"
-            className="rounded-full border border-[#B08D57]/40 bg-[#B08D57]/10 px-3 py-1 text-xs font-medium text-[#8a6a3d] hover:bg-[#B08D57]/20"
-          >
-            Groundbreakable Leads →
-          </Link>
           <MarketSwitcher markets={markets ?? []} />
           <span className="hidden sm:inline">{user?.email}</span>
           <SignOutButton />

@@ -22,7 +22,7 @@ export const ACTIVE_SHIFT_CATEGORIES: ShiftCategory[] = ["plans", "building", "i
 
 export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
   plans: "Plans",
-  building: "Building",
+  building: "Permits",
   infrastructure: "Infrastructure",
   business: "Business",
   property: "Property",
