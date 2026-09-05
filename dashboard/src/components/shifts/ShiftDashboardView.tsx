@@ -8,6 +8,8 @@ import type {
   InvestmentType,
   InvestmentWithSource,
   Market,
+  MarketIndicatorWithSource,
+  MarketOverviewWithSources,
   ProjectPersonWithSource,
   ProjectWithSource,
   ShiftCategory,
@@ -35,6 +37,7 @@ import InvestmentSummary from "./InvestmentSummary";
 import OpportunityMap from "./OpportunityMap";
 import OpportunityFeed from "./OpportunityFeed";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
+import MarketOverviewSection from "./MarketOverviewSection";
 
 type View =
   | "plans"
@@ -46,7 +49,8 @@ type View =
   | "opportunities"
   | "buildability"
   | "developers"
-  | "contractors";
+  | "contractors"
+  | "market";
 
 // Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
 // covers 7 views -- "what's coming" (Plans), "what's being built"
@@ -65,6 +69,7 @@ type View =
 // (2026-09-05) once the rail itself existed. All 7 are now equal rail
 // destinations.
 const RAIL_TABS: { value: View; label: string }[] = [
+  { value: "market", label: "Market" },
   { value: "momentum", label: "Momentum" },
   { value: "opportunities", label: "Opportunities" },
   { value: "plans", label: "Plans" },
@@ -108,6 +113,8 @@ export default function ShiftDashboardView({
   momentumAreas,
   projectPeople,
   opportunities,
+  marketIndicators,
+  marketOverview,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -117,6 +124,8 @@ export default function ShiftDashboardView({
   momentumAreas: GrowthArea[];
   projectPeople: ProjectPersonWithSource[];
   opportunities: DevelopmentOpportunityWithSources[];
+  marketIndicators: MarketIndicatorWithSource[];
+  marketOverview: MarketOverviewWithSources | null;
 }) {
   const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
@@ -306,6 +315,8 @@ export default function ShiftDashboardView({
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{railTabs()}</nav>
 
           <div className="min-w-0 flex-1 space-y-3">
+            {view === "market" && <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />}
+
             {view === "momentum" && (
               <>
                 {momentumAreaBreakdowns.length > 0 && (

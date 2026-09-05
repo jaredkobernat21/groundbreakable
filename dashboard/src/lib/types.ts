@@ -782,6 +782,50 @@ export type DevelopmentOpportunity = {
 
 export type DevelopmentOpportunityWithSources = DevelopmentOpportunity & { sources: Source[] };
 
+// --- Market Overview ---
+// City-level growth/economic indicators -- a different kind of data
+// than everything else in this schema (parcel-level events); this
+// answers "is this market growing, slowing, or changing?" at the market
+// level. See market_overview_schema migration.
+
+export type MarketIndicatorTrend = "up" | "down" | "flat";
+
+export type MarketIndicator = {
+  id: string;
+  market_id: string;
+  metric_key: string;
+  label: string;
+  unit: string;
+  current_value: number;
+  current_value_date: string;
+  prior_value: number | null;
+  prior_value_date: string | null;
+  change_absolute: number | null;
+  change_percent: number | null;
+  trend: MarketIndicatorTrend | null;
+  notes: string | null;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type MarketIndicatorWithSource = MarketIndicator & { source: Source | null };
+
+export type MarketOverview = {
+  id: string;
+  market_id: string;
+  summary: string;
+  major_employers: string[];
+  major_employers_note: string | null;
+  recent_employer_changes: string[];
+  new_business_activity: string | null;
+  source_ids: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type MarketOverviewWithSources = MarketOverview & { sources: Source[] };
+
 // --- Investment ---
 // See supabase/migrations/20260905000000_investment_schema.sql -- tracks
 // capital that materially affects development/construction/land value/
