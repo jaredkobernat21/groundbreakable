@@ -581,6 +581,18 @@ export type ZoningLandUse = {
   permitted_uses: string | null;
   regulatory_notes: string | null;
   geom: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  // Buildability fields (added 2026-09-04) -- populated only on
+  // layer_type='current_zoning' rows curated for the dashboard's
+  // Buildability tab. See getBuildabilityZones/BuildabilityDetailPanel.
+  generally_allowed: string | null;
+  may_require_approval: string | null;
+  min_lot_size: string | null;
+  height_limit: string | null;
+  lot_coverage: string | null;
+  parking_requirements: string | null;
+  setbacks: string | null;
+  code_considerations: string | null;
+  buildability_summary: string | null;
   source_id: string;
   confidence: Confidence;
   last_verified_at: string;

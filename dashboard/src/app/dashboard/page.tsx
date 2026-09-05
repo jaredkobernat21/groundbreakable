@@ -3,6 +3,7 @@ import ShiftDashboardView from "@/components/shifts/ShiftDashboardView";
 import { selectMarket } from "@/lib/selectMarket";
 import { getShifts } from "@/lib/queries/shifts";
 import { getActiveProjects } from "@/lib/queries/activeProjects";
+import { getBuildabilityZones } from "@/lib/queries/buildability";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -30,6 +31,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   // no round-trip per filter change.
   const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("all") });
   const projects = await getActiveProjects(supabase, market.id);
+  const buildabilityZones = await getBuildabilityZones(supabase, market.id);
 
   return (
     <div className="space-y-8">
@@ -37,7 +39,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         {market.name}, {market.state}
       </h1>
 
-      <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} />
+      <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
     </div>
   );
 }

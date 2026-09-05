@@ -1,38 +1,64 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Market, ProjectWithSource, ShiftAudience, ShiftCategory, ShiftWithSource } from "@/lib/types";
+import type {
+  Market,
+  ProjectWithSource,
+  ShiftAudience,
+  ShiftCategory,
+  ShiftWithSource,
+  ZoningLandUseWithSource,
+} from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import ShiftFilters from "./ShiftFilters";
 import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 import ProjectsList from "./ProjectsList";
+import BuildabilityMap from "./BuildabilityMap";
+import BuildabilityList from "./BuildabilityList";
+import BuildabilityDetailPanel from "./BuildabilityDetailPanel";
 
-// Orchestrates filters + map + feed + detail panel as one reusable unit,
-// same role DevelopmentIntelligenceView played for the old pillar model.
-// `shifts` is the server-fetched "all time" superset (the widest window
-// the filter bar offers) -- every filter (range/category/audience) narrows
-// it client-side, so switching between 7d/30d/90d/all or toggling a
-// category is instant with no round-trip. `projects` is a second, simpler
-// feed -- persistent "what's currently active" state (see
-// getActiveProjects) rather than a point-in-time change-log -- toggled
-// via the Shifts/Projects tab rather than mixed into the shift filters,
-// since it isn't date- or shift-category-scoped at all.
+type View = "momentum" | "projects" | "permits" | "buildability";
+
+const TABS: { value: View; label: string }[] = [
+  { value: "momentum", label: "Momentum" },
+  { value: "projects", label: "Projects" },
+  { value: "permits", label: "Permits" },
+  { value: "buildability", label: "Buildability" },
+];
+
+// Orchestrates all four dashboard surfaces as one reusable unit, same role
+// DevelopmentIntelligenceView played for the old pillar model:
+// - Momentum: the shift change-log (map + feed + filters) -- what's
+//   labeled `shifts`/`ShiftCategory` internally throughout the codebase
+//   (renaming every type/table for a UI label wasn't worth the churn),
+//   just relabeled "Momentum" in this tab per Jared's naming.
+// - Projects: persistent "what's currently active" state (getActiveProjects),
+//   not date- or category-scoped at all.
+// - Permits: the same shift data as Momentum, hard-filtered to
+//   category='building' -- no separate schema, just a fixed view over
+//   shifts (Jared's choice: a filter, not a new permit-tracking table).
+// - Buildability: zoning-district polygons + what-can-be-built info
+//   (getBuildabilityZones), map + list + detail panel, unrelated to dates.
 export default function ShiftDashboardView({
   market,
   shifts,
   projects,
+  buildabilityZones,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
+  buildabilityZones: ZoningLandUseWithSource[];
 }) {
-  const [view, setView] = useState<"shifts" | "projects">("shifts");
+  const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [audience, setAudience] = useState<ShiftAudience | "all">("all");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+  const [selectedPermitId, setSelectedPermitId] = useState<string | null>(null);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
 
   function toggleCategory(category: ShiftCategory) {
     setCategories((prev) => {
@@ -53,32 +79,32 @@ export default function ShiftDashboardView({
     );
   }, [shifts, categories, range, audience]);
 
+  const permits = useMemo(() => shifts.filter((s) => s.category === "building"), [shifts]);
+
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
+  const selectedPermit = permits.find((s) => s.id === selectedPermitId) ?? null;
+  const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => setView("shifts")}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-            view === "shifts" ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-          }`}
-        >
-          Shifts
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("projects")}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-            view === "projects" ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-          }`}
-        >
-          Projects ({projects.length})
-        </button>
+        {TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => setView(tab.value)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              view === tab.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
+            }`}
+          >
+            {tab.label}
+            {tab.value === "projects" && ` (${projects.length})`}
+            {tab.value === "permits" && ` (${permits.length})`}
+          </button>
+        ))}
       </div>
 
-      {view === "shifts" ? (
+      {view === "momentum" && (
         <>
           <ShiftFilters
             categories={categories}
@@ -111,9 +137,44 @@ export default function ShiftDashboardView({
             </p>
           )}
         </>
-      ) : (
+      )}
+
+      {view === "projects" && (
         <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
           <ProjectsList projects={projects} />
+        </div>
+      )}
+
+      {view === "permits" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_360px]">
+          <div className="relative h-[640px]">
+            <ShiftMap market={market} shifts={permits} selectedShiftId={selectedPermitId} onSelectShift={setSelectedPermitId} />
+            {selectedPermit && <ShiftDetailPanel shift={selectedPermit} onClose={() => setSelectedPermitId(null)} />}
+          </div>
+          <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+            <ShiftFeed shifts={permits} selectedShiftId={selectedPermitId} onSelectShift={setSelectedPermitId} />
+          </div>
+        </div>
+      )}
+
+      {view === "buildability" && (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_360px]">
+          <div className="relative h-[640px]">
+            <BuildabilityMap
+              market={market}
+              zones={buildabilityZones}
+              selectedZoneId={selectedZoneId}
+              onSelectZone={setSelectedZoneId}
+            />
+            {selectedZone && (
+              <div className="absolute bottom-3 left-3 right-3 max-h-[300px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
+                <BuildabilityDetailPanel zone={selectedZone} onClose={() => setSelectedZoneId(null)} />
+              </div>
+            )}
+          </div>
+          <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+            <BuildabilityList zones={buildabilityZones} selectedZoneId={selectedZoneId} onSelectZone={setSelectedZoneId} />
+          </div>
         </div>
       )}
     </div>
