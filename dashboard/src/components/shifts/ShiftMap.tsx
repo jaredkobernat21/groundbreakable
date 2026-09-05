@@ -257,12 +257,37 @@ export default function ShiftMap({
     );
   }
 
+  // Legend: one dot per category actually present in the current shift
+  // list (not every possible category), plus a Momentum Area swatch when
+  // that layer is showing -- relies on the parent always wrapping this
+  // component in a `relative` container (every call site does, for the
+  // detail-panel overlays).
+  const presentCategories = Array.from(new Set(shifts.map((s) => s.category)));
+
   return (
-    <div
-      ref={containerRef}
-      onClick={handleBackgroundClick}
-      className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
-    />
+    <>
+      <div
+        ref={containerRef}
+        onClick={handleBackgroundClick}
+        className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
+      />
+      {(presentCategories.length > 0 || (momentumAreas && momentumAreas.length > 0)) && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-wrap gap-x-3 gap-y-1 rounded-full bg-black/70 px-3 py-1.5 backdrop-blur-sm">
+          {presentCategories.map((category) => (
+            <span key={category} className="flex items-center gap-1.5 text-[11px] text-white/80">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SHIFT_CATEGORY_COLOR[category] }} />
+              {SHIFT_CATEGORY_LABEL[category]}
+            </span>
+          ))}
+          {momentumAreas && momentumAreas.length > 0 && (
+            <span className="flex items-center gap-1.5 text-[11px] text-white/80">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: POTENTIAL_COLOR }} />
+              Momentum area
+            </span>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

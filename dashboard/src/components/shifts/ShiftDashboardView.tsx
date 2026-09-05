@@ -22,7 +22,12 @@ import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } fr
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
 import { OPPORTUNITY_CATEGORY_COLOR } from "@/lib/opportunityConstants";
 import { pointInPolygon } from "@/lib/geo";
+import { formatCurrency } from "@/lib/format";
+import { ICON_PATHS } from "@/lib/icons";
+import { PROJECT_ICON_PATHS } from "@/lib/markerIcons";
+import { SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_ICON_PATHS } from "@/lib/shiftConstants";
 import BriefingSummary from "./BriefingSummary";
+import MetricCardRow, { type MetricCard } from "./MetricCardRow";
 import ShiftFilters from "./ShiftFilters";
 import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
@@ -231,6 +236,8 @@ export default function ShiftDashboardView({
     return sorted[0].area.id;
   }, [momentumAreaBreakdowns]);
 
+  const topMomentumArea = momentumAreas.find((a) => a.id === primaryMomentumAreaId) ?? null;
+
   const selectedMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === selectedMomentumAreaId) ?? null;
 
   function selectMomentumTab() {
@@ -278,6 +285,70 @@ export default function ShiftDashboardView({
     return counts;
   }, [shifts, projects, investments, developerCount, contractorCount, opportunities]);
 
+  // "vs. previous 7 days" on each metric card is a real count of items
+  // dated in the last 7 days -- event_date for shifts, date_announced for
+  // projects, announcement_date for investments -- not a fabricated
+  // trend. Deliberately NOT date_updated for projects: that column gets
+  // bumped by this app's own migrations/admin edits, which would read as
+  // "market activity" when it's really just data curation.
+  const metricCards: MetricCard[] = useMemo(() => {
+    const since7d = shiftDateRangeToDate("7d");
+    const plansDelta = shifts.filter((s) => s.category === "plans" && s.event_date >= since7d).length;
+    const permitsDelta = shifts.filter((s) => s.category === "building" && s.event_date >= since7d).length;
+    const infraDelta = shifts.filter((s) => s.category === "infrastructure" && s.event_date >= since7d).length;
+    const projectsDelta = projects.filter((p) => p.date_announced != null && p.date_announced >= since7d).length;
+    const investmentDelta = investments.filter((i) => i.announcement_date != null && i.announcement_date >= since7d).length;
+    const totalInvestmentAmount = investments.reduce((sum, i) => sum + (i.total_investment_amount ?? 0), 0);
+
+    return [
+      {
+        key: "projects",
+        label: "Projects",
+        value: String(projects.length),
+        weeklyDelta: projectsDelta,
+        iconPaths: PROJECT_ICON_PATHS.building,
+        color: "#3b82f6",
+        onClick: () => setView("projects"),
+      },
+      {
+        key: "plans",
+        label: "Plans",
+        value: String(railCounts.plans ?? 0),
+        weeklyDelta: plansDelta,
+        iconPaths: SHIFT_CATEGORY_ICON_PATHS.plans,
+        color: SHIFT_CATEGORY_COLOR.plans,
+        onClick: () => setView("plans"),
+      },
+      {
+        key: "permits",
+        label: "Permits",
+        value: String(railCounts.permits ?? 0),
+        weeklyDelta: permitsDelta,
+        iconPaths: SHIFT_CATEGORY_ICON_PATHS.building,
+        color: SHIFT_CATEGORY_COLOR.building,
+        onClick: () => setView("permits"),
+      },
+      {
+        key: "infrastructure",
+        label: "Infrastructure",
+        value: String(railCounts.infrastructure ?? 0),
+        weeklyDelta: infraDelta,
+        iconPaths: SHIFT_CATEGORY_ICON_PATHS.infrastructure,
+        color: SHIFT_CATEGORY_COLOR.infrastructure,
+        onClick: () => setView("infrastructure"),
+      },
+      {
+        key: "investment",
+        label: "Investment",
+        value: formatCurrency(totalInvestmentAmount) ?? "$0",
+        weeklyDelta: investmentDelta,
+        iconPaths: ICON_PATHS.dollar,
+        color: "#818cf8",
+        onClick: () => setView("investment"),
+      },
+    ];
+  }, [shifts, projects, investments, railCounts]);
+
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
       active ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/60 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
@@ -309,6 +380,7 @@ export default function ShiftDashboardView({
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </Link>
         <nav className="flex flex-col gap-0.5">{railTabs()}</nav>
+        <p className="mt-auto pt-6 text-xs leading-relaxed text-[#1c1c1c]/40">From insight to a more buildable tomorrow.</p>
       </aside>
 
       <div className="lg:pl-56">
@@ -324,11 +396,21 @@ export default function ShiftDashboardView({
               lg:pl-56 offset -- a page-level <h1> rendered as this
               component's sibling would sit outside that padding and get
               hidden behind the fixed rail at typical viewport widths. */}
-          <h1 className="text-2xl font-semibold text-[#1c1c1c]">
-            {market.name}, {market.state}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-semibold text-[#1c1c1c]">
+              {market.name}, {market.state}
+            </h1>
+            <p className="text-sm text-[#1c1c1c]/50">Smarter development starts here.</p>
+          </div>
 
-          <BriefingSummary shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
+          <BriefingSummary
+            shifts={shifts}
+            projects={projects}
+            buildabilityZones={buildabilityZones}
+            topMomentumArea={topMomentumArea}
+          />
+
+          <MetricCardRow cards={metricCards} />
 
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{railTabs()}</nav>
 
