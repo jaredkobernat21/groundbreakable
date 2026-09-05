@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { Market, ProjectWithSource, ShiftCategory, ShiftWithSource, ZoningLandUseWithSource } from "@/lib/types";
+import type {
+  InvestmentType,
+  InvestmentWithSource,
+  Market,
+  ProjectWithSource,
+  ShiftCategory,
+  ShiftWithSource,
+  ZoningLandUseWithSource,
+} from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
+import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
 import BriefingSummary from "./BriefingSummary";
 import ShiftFilters from "./ShiftFilters";
 import ShiftMap from "./ShiftMap";
@@ -13,6 +22,10 @@ import ProjectsList from "./ProjectsList";
 import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
 import BuildabilityDetailPanel from "./BuildabilityDetailPanel";
+import InvestmentMap from "./InvestmentMap";
+import InvestmentFeed from "./InvestmentFeed";
+import InvestmentDetailPanel from "./InvestmentDetailPanel";
+import InvestmentSummary from "./InvestmentSummary";
 
 type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability";
 
@@ -44,27 +57,29 @@ const MAP_LAYER_TABS: { value: View; label: string }[] = [
 ];
 
 // Which shift categories feed each rail tab's map+feed view. Investment
-// covers both Business and Property -- neither has real data sourced
-// for any market yet (see 20260904120000_recategorize_shift_categories.sql),
-// so the tab renders the same "nothing here yet" empty state Momentum
-// already shows for an unresearched market, not a broken page.
+// is no longer part of this -- as of 2026-09-05 it's backed by its own
+// `investments` table (see supabase/migrations/20260905000000_investment_
+// schema.sql), not a filter over the business/property shift categories.
 const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
   plans: ["plans"],
   permits: ["building"],
   infrastructure: ["infrastructure"],
-  investment: ["business", "property"],
 };
+
+const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
 
 export default function ShiftDashboardView({
   market,
   shifts,
   projects,
   buildabilityZones,
+  investments,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
   buildabilityZones: ZoningLandUseWithSource[];
+  investments: InvestmentWithSource[];
 }) {
   const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
@@ -72,6 +87,17 @@ export default function ShiftDashboardView({
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
   const [selectedCategoryShiftId, setSelectedCategoryShiftId] = useState<string | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [investmentTypeFilter, setInvestmentTypeFilter] = useState<Set<InvestmentType>>(new Set(INVESTMENT_TYPE_FILTER_OPTIONS));
+  const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
+
+  function toggleInvestmentType(type: InvestmentType) {
+    setInvestmentTypeFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }
 
   function toggleCategory(category: ShiftCategory) {
     setCategories((prev) => {
@@ -93,18 +119,24 @@ export default function ShiftDashboardView({
     return shifts.filter((s) => wantedCategories.includes(s.category));
   }, [shifts, view]);
 
+  const filteredInvestments = useMemo(
+    () => investments.filter((i) => investmentTypeFilter.has(i.investment_type)),
+    [investments, investmentTypeFilter]
+  );
+
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
   const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
+  const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
 
   const railCounts = useMemo(() => {
-    const counts: Partial<Record<View, number>> = { projects: projects.length };
+    const counts: Partial<Record<View, number>> = { projects: projects.length, investment: investments.length };
     for (const tab of RAIL_TABS) {
       const wanted = CATEGORIES_BY_VIEW[tab.value];
       if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects]);
+  }, [shifts, projects, investments]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -202,7 +234,55 @@ export default function ShiftDashboardView({
               </div>
             )}
 
-            {(view === "plans" || view === "permits" || view === "infrastructure" || view === "investment") && (
+            {view === "investment" && (
+              <>
+                <InvestmentSummary investments={investments} />
+
+                <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+                  {INVESTMENT_TYPE_FILTER_OPTIONS.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => toggleInvestmentType(type)}
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                        investmentTypeFilter.has(type) ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
+                      }`}
+                    >
+                      {INVESTMENT_TYPE_LABEL[type]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                  <div className="relative h-[640px]">
+                    <InvestmentMap
+                      market={market}
+                      investments={filteredInvestments}
+                      selectedInvestmentId={selectedInvestmentId}
+                      onSelectInvestment={setSelectedInvestmentId}
+                    />
+                    {selectedInvestment && (
+                      <InvestmentDetailPanel investment={selectedInvestment} onClose={() => setSelectedInvestmentId(null)} />
+                    )}
+                  </div>
+                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                    <InvestmentFeed
+                      investments={filteredInvestments}
+                      selectedInvestmentId={selectedInvestmentId}
+                      onSelectInvestment={setSelectedInvestmentId}
+                    />
+                  </div>
+                </div>
+
+                {investments.length === 0 && (
+                  <p className="text-sm text-[#1c1c1c]/40">
+                    No investments recorded yet for {market.name} — this market hasn't been researched yet.
+                  </p>
+                )}
+              </>
+            )}
+
+            {(view === "plans" || view === "permits" || view === "infrastructure") && (
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
                 <div className="relative h-[640px]">
                   <ShiftMap

@@ -5,6 +5,7 @@ import MarketSwitcher from "@/components/MarketSwitcher";
 import { getShifts } from "@/lib/queries/shifts";
 import { getActiveProjects } from "@/lib/queries/activeProjects";
 import { getBuildabilityZones } from "@/lib/queries/buildability";
+import { getInvestments } from "@/lib/queries/investments";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -57,6 +58,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
   const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("all") });
   const projects = await getActiveProjects(supabase, market.id);
   const buildabilityZones = await getBuildabilityZones(supabase, market.id);
+  const investments = await getInvestments(supabase, market.id);
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
@@ -71,7 +73,14 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <ShiftDashboardView key={market.id} market={market} shifts={shifts} projects={projects} buildabilityZones={buildabilityZones} />
+        <ShiftDashboardView
+          key={market.id}
+          market={market}
+          shifts={shifts}
+          projects={projects}
+          buildabilityZones={buildabilityZones}
+          investments={investments}
+        />
       </main>
     </div>
   );

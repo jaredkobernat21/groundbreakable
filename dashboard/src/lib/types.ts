@@ -704,3 +704,97 @@ export type Shift = {
 };
 
 export type ShiftWithSource = Shift & { source: Source | null };
+
+// --- Investment ---
+// See supabase/migrations/20260905000000_investment_schema.sql -- tracks
+// capital that materially affects development/construction/land value/
+// infrastructure/buildability, NOT routine business/property activity
+// (that's what the old business/property shift categories were for).
+
+export type InvestmentType =
+  | "private_development"
+  | "public_capital"
+  | "infrastructure_enabling"
+  | "incentivized_development"
+  | "institutional_corporate";
+
+export type InvestmentProjectStatus =
+  | "early_signal"
+  | "proposed"
+  | "under_review"
+  | "approved"
+  | "funded"
+  | "permitted"
+  | "under_construction"
+  | "complete"
+  | "delayed"
+  | "cancelled";
+
+export type InvestmentConfidenceLevel = "high" | "medium" | "low";
+
+export type InvestmentDevelopmentImpact = "very_high" | "high" | "medium" | "low";
+
+export type InvestmentImpactTag =
+  | "unlocks_land"
+  | "adds_housing"
+  | "adds_commercial"
+  | "adds_employment"
+  | "improves_transportation"
+  | "expands_utilities"
+  | "raises_momentum"
+  | "supports_redevelopment"
+  | "improves_public_realm"
+  | "adds_institutional_demand";
+
+export type InvestmentGeographicScope =
+  | "parcel"
+  | "development_site"
+  | "corridor"
+  | "neighborhood"
+  | "growth_area"
+  | "citywide";
+
+export type Investment = {
+  id: string;
+  market_id: string;
+  project_name: string;
+  project_description: string | null;
+  investment_type: InvestmentType;
+  asset_type: string | null;
+  total_investment_amount: number | null;
+  public_investment_amount: number | null;
+  private_investment_amount: number | null;
+  incentive_amount: number | null;
+  funding_source: string | null;
+  developer_or_investor: string | null;
+  public_agency: string | null;
+  address: string | null;
+  parcel_id: string | null;
+  lat: number | null;
+  lng: number | null;
+  acreage: number | null;
+  square_feet: number | null;
+  residential_units: number | null;
+  jobs_created: number | null;
+  project_status: InvestmentProjectStatus;
+  previous_status: InvestmentProjectStatus | null;
+  announcement_date: string | null;
+  approval_date: string | null;
+  funding_date: string | null;
+  expected_start_date: string | null;
+  expected_completion_date: string | null;
+  source_id: string;
+  confidence_level: InvestmentConfidenceLevel;
+  last_verified_date: string;
+  development_impact: InvestmentDevelopmentImpact;
+  primary_impact: InvestmentImpactTag[];
+  geographic_scope: InvestmentGeographicScope | null;
+  geographic_note: string | null;
+  why_it_matters: string | null;
+  notes: string | null;
+  first_seen_date: string;
+  last_seen_date: string;
+  created_at: string;
+};
+
+export type InvestmentWithSource = Investment & { source: Source | null };
