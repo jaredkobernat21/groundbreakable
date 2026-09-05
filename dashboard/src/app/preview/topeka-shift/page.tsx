@@ -7,6 +7,7 @@ import { getActiveProjects } from "@/lib/queries/activeProjects";
 import { getBuildabilityZones } from "@/lib/queries/buildability";
 import { getInvestments } from "@/lib/queries/investments";
 import { getGrowthAreas } from "@/lib/queries/planIntelligence";
+import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -61,6 +62,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
   const buildabilityZones = await getBuildabilityZones(supabase, market.id);
   const investments = await getInvestments(supabase, market.id);
   const { data: momentumAreas } = await getGrowthAreas(supabase, market.id);
+  const projectPeople = await getProjectPeople(supabase, market.id);
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
@@ -83,6 +85,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
           buildabilityZones={buildabilityZones}
           investments={investments}
           momentumAreas={momentumAreas ?? []}
+          projectPeople={projectPeople}
         />
       </main>
     </div>

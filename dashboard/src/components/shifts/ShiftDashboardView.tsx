@@ -7,6 +7,7 @@ import type {
   InvestmentType,
   InvestmentWithSource,
   Market,
+  ProjectPersonWithSource,
   ProjectWithSource,
   ShiftCategory,
   ShiftWithSource,
@@ -14,7 +15,6 @@ import type {
 } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
-import { buildContractorDirectory } from "@/lib/contractors";
 import { pointInPolygon } from "@/lib/geo";
 import BriefingSummary from "./BriefingSummary";
 import ShiftFilters from "./ShiftFilters";
@@ -22,7 +22,7 @@ import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 import ProjectsList from "./ProjectsList";
-import ContractorsList from "./ContractorsList";
+import PeopleList from "./PeopleList";
 import MomentumAreaDetailPanel from "./MomentumAreaDetailPanel";
 import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
@@ -32,7 +32,16 @@ import InvestmentFeed from "./InvestmentFeed";
 import InvestmentDetailPanel from "./InvestmentDetailPanel";
 import InvestmentSummary from "./InvestmentSummary";
 
-type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability" | "contractors";
+type View =
+  | "plans"
+  | "projects"
+  | "permits"
+  | "infrastructure"
+  | "investment"
+  | "momentum"
+  | "buildability"
+  | "developers"
+  | "contractors";
 
 // Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
 // covers 7 views -- "what's coming" (Plans), "what's being built"
@@ -57,6 +66,7 @@ const RAIL_TABS: { value: View; label: string }[] = [
   { value: "permits", label: "Permits" },
   { value: "infrastructure", label: "Infrastructure" },
   { value: "investment", label: "Investment" },
+  { value: "developers", label: "Developers" },
   { value: "contractors", label: "Contractors" },
   { value: "buildability", label: "Buildability" },
 ];
@@ -90,6 +100,7 @@ export default function ShiftDashboardView({
   buildabilityZones,
   investments,
   momentumAreas,
+  projectPeople,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -97,6 +108,7 @@ export default function ShiftDashboardView({
   buildabilityZones: ZoningLandUseWithSource[];
   investments: InvestmentWithSource[];
   momentumAreas: GrowthArea[];
+  projectPeople: ProjectPersonWithSource[];
 }) {
   const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
@@ -142,7 +154,10 @@ export default function ShiftDashboardView({
     [investments, investmentTypeFilter]
   );
 
-  const contractorDirectory = useMemo(() => buildContractorDirectory(projects, shifts), [projects, shifts]);
+  const developerPeople = useMemo(() => projectPeople.filter((p) => p.role === "developer"), [projectPeople]);
+  const contractorPeople = useMemo(() => projectPeople.filter((p) => p.role === "contractor"), [projectPeople]);
+  const developerCount = useMemo(() => new Set(developerPeople.map((p) => p.person_name ?? p.company_name)).size, [developerPeople]);
+  const contractorCount = useMemo(() => new Set(contractorPeople.map((p) => p.person_name ?? p.company_name)).size, [contractorPeople]);
 
   // Every real shift/project whose lat/lng falls inside a Momentum Area's
   // polygon -- computed client-side (pointInPolygon), not a join table, so
@@ -193,14 +208,15 @@ export default function ShiftDashboardView({
     const counts: Partial<Record<View, number>> = {
       projects: projects.length,
       investment: investments.length,
-      contractors: contractorDirectory.length,
+      developers: developerCount,
+      contractors: contractorCount,
     };
     for (const tab of RAIL_TABS) {
       const wanted = CATEGORIES_BY_VIEW[tab.value];
       if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments, contractorDirectory]);
+  }, [shifts, projects, investments, developerCount, contractorCount]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -290,7 +306,7 @@ export default function ShiftDashboardView({
                       onSelectMomentumArea={setSelectedMomentumAreaId}
                     />
                     {selectedShift ? (
-                      <ShiftDetailPanel shift={selectedShift} onClose={() => setSelectedShiftId(null)} />
+                      <ShiftDetailPanel shift={selectedShift} people={projectPeople} onClose={() => setSelectedShiftId(null)} />
                     ) : (
                       selectedMomentumAreaBreakdown && (
                         <div className="absolute bottom-3 left-3 right-3 max-h-[320px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
@@ -298,6 +314,7 @@ export default function ShiftDashboardView({
                             area={selectedMomentumAreaBreakdown.area}
                             shiftsByCategory={selectedMomentumAreaBreakdown.shiftsByCategory}
                             projects={selectedMomentumAreaBreakdown.projects}
+                            projectPeople={projectPeople}
                             selectedShiftId={selectedShiftId}
                             onSelectShift={setSelectedShiftId}
                             onClose={() => setSelectedMomentumAreaId(null)}
@@ -322,13 +339,19 @@ export default function ShiftDashboardView({
 
             {view === "projects" && (
               <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <ProjectsList projects={projects} />
+                <ProjectsList projects={projects} projectPeople={projectPeople} />
+              </div>
+            )}
+
+            {view === "developers" && (
+              <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                <PeopleList people={developerPeople} />
               </div>
             )}
 
             {view === "contractors" && (
               <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <ContractorsList directory={contractorDirectory} />
+                <PeopleList people={contractorPeople} />
               </div>
             )}
 
@@ -390,7 +413,11 @@ export default function ShiftDashboardView({
                     onSelectShift={setSelectedCategoryShiftId}
                   />
                   {selectedCategoryShift && (
-                    <ShiftDetailPanel shift={selectedCategoryShift} onClose={() => setSelectedCategoryShiftId(null)} />
+                    <ShiftDetailPanel
+                      shift={selectedCategoryShift}
+                      people={projectPeople}
+                      onClose={() => setSelectedCategoryShiftId(null)}
+                    />
                   )}
                 </div>
                 <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">

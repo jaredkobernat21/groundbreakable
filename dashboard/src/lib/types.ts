@@ -705,6 +705,48 @@ export type Shift = {
 
 export type ShiftWithSource = Shift & { source: Source | null };
 
+// --- Project People (evidence-based developer/contractor directory) ---
+// Distinct from the old Phase 1 companies/project_parties tables -- see
+// the project_people_schema migration comment for why. related_record_id
+// points at either `projects.id` or `shifts.id` depending on
+// related_record_type; there's no polymorphic FK, so the app resolves it
+// (same idea as growth_areas' momentum breakdown resolving contained
+// shifts/projects by point-in-polygon rather than a join table).
+
+export type ProjectPersonRole = "developer" | "contractor";
+
+export const PROJECT_PERSON_ROLE_LABEL: Record<ProjectPersonRole, string> = {
+  developer: "Developer",
+  contractor: "Contractor",
+};
+
+export type ProjectPersonConfidence = "confirmed" | "likely";
+
+export const PROJECT_PERSON_CONFIDENCE_LABEL: Record<ProjectPersonConfidence, string> = {
+  confirmed: "Confirmed",
+  likely: "Likely",
+};
+
+export type ProjectPersonRecordType = "project" | "shift";
+
+export type ProjectPerson = {
+  id: string;
+  market_id: string;
+  person_name: string | null;
+  company_name: string | null;
+  role: ProjectPersonRole;
+  related_record_type: ProjectPersonRecordType;
+  related_record_id: string;
+  related_label: string;
+  source_id: string | null;
+  event_date: string | null;
+  confidence: ProjectPersonConfidence;
+  evidence_note: string | null;
+  created_at: string;
+};
+
+export type ProjectPersonWithSource = ProjectPerson & { source: Source | null };
+
 // --- Investment ---
 // See supabase/migrations/20260905000000_investment_schema.sql -- tracks
 // capital that materially affects development/construction/land value/

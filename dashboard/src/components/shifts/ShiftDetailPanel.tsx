@@ -1,4 +1,5 @@
-import type { ShiftWithSource } from "@/lib/types";
+import type { ProjectPersonWithSource, ShiftWithSource } from "@/lib/types";
+import { PROJECT_PERSON_ROLE_LABEL } from "@/lib/types";
 import {
   SHIFT_CATEGORY_COLOR,
   SHIFT_CATEGORY_LABEL,
@@ -8,11 +9,21 @@ import {
 } from "@/lib/shiftConstants";
 import { formatDate } from "@/lib/format";
 
-// Event, Date, Stage, Impact -- plus address/source. Same absolute-overlay
-// convention as ProjectDetailPanel/OpportunityDetailPanel etc:
-// right-anchored panel over the map.
-export default function ShiftDetailPanel({ shift, onClose }: { shift: ShiftWithSource; onClose: () => void }) {
+// Event, Date, Stage, Impact, linked Developers/Contractors -- plus
+// address/source. Same absolute-overlay convention as
+// ProjectDetailPanel/OpportunityDetailPanel etc: right-anchored panel
+// over the map.
+export default function ShiftDetailPanel({
+  shift,
+  people,
+  onClose,
+}: {
+  shift: ShiftWithSource;
+  people?: ProjectPersonWithSource[];
+  onClose: () => void;
+}) {
   const color = SHIFT_CATEGORY_COLOR[shift.category];
+  const linkedPeople = (people ?? []).filter((p) => p.related_record_type === "shift" && p.related_record_id === shift.id);
 
   return (
     <div className="absolute right-3 top-16 bottom-3 z-30 w-[340px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/75 p-5 shadow-2xl backdrop-blur-xl sm:top-3">
@@ -52,6 +63,19 @@ export default function ShiftDetailPanel({ shift, onClose }: { shift: ShiftWithS
           <dd style={{ color: SHIFT_IMPACT_COLOR[shift.impact] }}>{SHIFT_IMPACT_LABEL[shift.impact]}</dd>
         </div>
       </dl>
+
+      {linkedPeople.length > 0 && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-2 text-[11px] uppercase tracking-wide text-white/35">Developers &amp; Contractors</p>
+          <div className="flex flex-wrap gap-1.5">
+            {linkedPeople.map((person) => (
+              <span key={person.id} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">
+                {PROJECT_PERSON_ROLE_LABEL[person.role]}: {person.person_name ?? person.company_name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {shift.source && (
         <a

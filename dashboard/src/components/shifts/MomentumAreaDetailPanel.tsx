@@ -1,7 +1,12 @@
-import type { GrowthArea, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
-import { GROWTH_AREA_MOMENTUM_LABEL, PROJECT_STAGE_LABEL } from "@/lib/types";
+import type { GrowthArea, ProjectPersonWithSource, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
+import { GROWTH_AREA_MOMENTUM_LABEL, PROJECT_PERSON_ROLE_LABEL, PROJECT_STAGE_LABEL } from "@/lib/types";
 import { SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_LABEL } from "@/lib/shiftConstants";
 import { formatDate } from "@/lib/format";
+
+function linkedPeopleLabel(people: ProjectPersonWithSource[]): string | null {
+  if (people.length === 0) return null;
+  return people.map((p) => `${PROJECT_PERSON_ROLE_LABEL[p.role]}: ${p.person_name ?? p.company_name}`).join(", ");
+}
 
 // Shown when a Momentum Area (a polygon on the Momentum tab's map,
 // clustering shifts + projects that read as one growth story -- see
@@ -14,6 +19,7 @@ export default function MomentumAreaDetailPanel({
   area,
   shiftsByCategory,
   projects,
+  projectPeople,
   selectedShiftId,
   onSelectShift,
   onClose,
@@ -21,6 +27,7 @@ export default function MomentumAreaDetailPanel({
   area: GrowthArea;
   shiftsByCategory: Partial<Record<ShiftCategory, ShiftWithSource[]>>;
   projects: ProjectWithSource[];
+  projectPeople: ProjectPersonWithSource[];
   selectedShiftId: string | null;
   onSelectShift: (id: string | null) => void;
   onClose: () => void;
@@ -51,13 +58,17 @@ export default function MomentumAreaDetailPanel({
         <div className="space-y-1.5 border-t border-[#1c1c1c]/10 pt-2.5">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">Projects ({projects.length})</p>
           <ul className="space-y-1">
-            {projects.map((project) => (
-              <li key={project.id} className="text-xs leading-relaxed text-[#1c1c1c]/70">
-                <span className="font-medium text-[#1c1c1c]">{project.title}</span>
-                {project.stage && ` — ${PROJECT_STAGE_LABEL[project.stage]}`}
-                {project.developer && <span className="text-[#1c1c1c]/45"> · {project.developer}</span>}
-              </li>
-            ))}
+            {projects.map((project) => {
+              const people = projectPeople.filter((p) => p.related_record_type === "project" && p.related_record_id === project.id);
+              const peopleLabel = linkedPeopleLabel(people);
+              return (
+                <li key={project.id} className="text-xs leading-relaxed text-[#1c1c1c]/70">
+                  <span className="font-medium text-[#1c1c1c]">{project.title}</span>
+                  {project.stage && ` — ${PROJECT_STAGE_LABEL[project.stage]}`}
+                  <span className="text-[#1c1c1c]/45"> · {peopleLabel ?? project.developer ?? "—"}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -71,20 +82,25 @@ export default function MomentumAreaDetailPanel({
             {SHIFT_CATEGORY_LABEL[category]} ({items.length})
           </p>
           <ul className="space-y-1">
-            {items.map((shift) => (
-              <li key={shift.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelectShift(shift.id === selectedShiftId ? null : shift.id)}
-                  className={`text-left text-xs leading-relaxed hover:text-[#1c1c1c] ${
-                    shift.id === selectedShiftId ? "font-medium text-[#1c1c1c]" : "text-[#1c1c1c]/70"
-                  }`}
-                >
-                  {shift.event}
-                  {formatDate(shift.event_date) && <span className="text-[#1c1c1c]/45"> — {formatDate(shift.event_date)}</span>}
-                </button>
-              </li>
-            ))}
+            {items.map((shift) => {
+              const people = projectPeople.filter((p) => p.related_record_type === "shift" && p.related_record_id === shift.id);
+              const peopleLabel = linkedPeopleLabel(people);
+              return (
+                <li key={shift.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelectShift(shift.id === selectedShiftId ? null : shift.id)}
+                    className={`text-left text-xs leading-relaxed hover:text-[#1c1c1c] ${
+                      shift.id === selectedShiftId ? "font-medium text-[#1c1c1c]" : "text-[#1c1c1c]/70"
+                    }`}
+                  >
+                    {shift.event}
+                    {formatDate(shift.event_date) && <span className="text-[#1c1c1c]/45"> — {formatDate(shift.event_date)}</span>}
+                    {peopleLabel && <span className="text-[#1c1c1c]/45"> · {peopleLabel}</span>}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
