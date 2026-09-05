@@ -30,29 +30,28 @@ import InvestmentSummary from "./InvestmentSummary";
 type View = "plans" | "projects" | "permits" | "infrastructure" | "investment" | "momentum" | "buildability";
 
 // Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
-// widens from 4 views to 7 -- "what's coming" (Plans), "what's being
-// built" (Projects), "what's moving" (Permits), "what's enabling growth"
-// (Infrastructure), "where capital is flowing" (Investment), plus the
-// original map-first pair, Momentum ("what's happening right now" --
-// every active category on one map) and Buildability ("where could
-// development happen next," zoning/land-use). Land was considered as an
-// 8th tab but folded into Buildability -- both meant the same thing
-// (favorable-zoning parcels), so there's no separate Land destination.
+// covers 7 views -- "what's coming" (Plans), "what's being built"
+// (Projects), "what's moving" (Permits), "what's enabling growth"
+// (Infrastructure), "where capital is flowing" (Investment), "what's
+// happening right now" (Momentum -- every active category on one map),
+// and "where could development happen next" (Buildability -- zoning/
+// land-use). Land was considered as an 8th tab but folded into
+// Buildability -- both meant the same thing (favorable-zoning parcels),
+// so there's no separate Land destination.
 //
-// Rail tabs are real sidebar destinations (persistent nav, far-left,
-// full height, under the logo) since they're list-first surfaces;
-// Momentum/Buildability stay map-first, so they're a small layer toggle
-// sitting directly above the map instead -- both control groups just set
-// the same `view` state, they're only visually grouped differently.
+// Momentum/Buildability were originally a small map-layer-toggle pill
+// group sitting above the map instead of real rail entries (both just
+// set the same `view` state as everything else, only visually grouped
+// differently) -- moved into the rail proper per Jared's follow-up ask
+// (2026-09-05) once the rail itself existed. All 7 are now equal rail
+// destinations.
 const RAIL_TABS: { value: View; label: string }[] = [
+  { value: "momentum", label: "Momentum" },
   { value: "plans", label: "Plans" },
   { value: "projects", label: "Projects" },
   { value: "permits", label: "Permits" },
   { value: "infrastructure", label: "Infrastructure" },
   { value: "investment", label: "Investment" },
-];
-const MAP_LAYER_TABS: { value: View; label: string }[] = [
-  { value: "momentum", label: "Momentum" },
   { value: "buildability", label: "Buildability" },
 ];
 
@@ -188,18 +187,6 @@ export default function ShiftDashboardView({
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{railTabs()}</nav>
 
           <div className="min-w-0 flex-1 space-y-3">
-            {(view === "momentum" || view === "buildability") && (
-              <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                {MAP_LAYER_TABS.map((tab) => (
-                  <button key={tab.value} type="button" onClick={() => setView(tab.value)} className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    view === tab.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-                  }`}>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {view === "momentum" && (
               <>
                 <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
