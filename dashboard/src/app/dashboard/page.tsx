@@ -7,6 +7,7 @@ import { getBuildabilityZones } from "@/lib/queries/buildability";
 import { getInvestments } from "@/lib/queries/investments";
 import { getGrowthAreas } from "@/lib/queries/planIntelligence";
 import { getProjectPeople } from "@/lib/queries/projectPeople";
+import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -38,6 +39,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const investments = await getInvestments(supabase, market.id);
   const { data: momentumAreas } = await getGrowthAreas(supabase, market.id);
   const projectPeople = await getProjectPeople(supabase, market.id);
+  const opportunities = await getDevelopmentOpportunities(supabase, market.id);
 
   return (
     <ShiftDashboardView
@@ -49,6 +51,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       investments={investments}
       momentumAreas={momentumAreas ?? []}
       projectPeople={projectPeople}
+      opportunities={opportunities}
     />
   );
 }

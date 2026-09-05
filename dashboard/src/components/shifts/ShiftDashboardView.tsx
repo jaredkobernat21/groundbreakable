@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  DevelopmentOpportunityWithSources,
   GrowthArea,
   InvestmentType,
   InvestmentWithSource,
@@ -31,6 +32,9 @@ import InvestmentMap from "./InvestmentMap";
 import InvestmentFeed from "./InvestmentFeed";
 import InvestmentDetailPanel from "./InvestmentDetailPanel";
 import InvestmentSummary from "./InvestmentSummary";
+import OpportunityMap from "./OpportunityMap";
+import OpportunityFeed from "./OpportunityFeed";
+import OpportunityDetailPanel from "./OpportunityDetailPanel";
 
 type View =
   | "plans"
@@ -39,6 +43,7 @@ type View =
   | "infrastructure"
   | "investment"
   | "momentum"
+  | "opportunities"
   | "buildability"
   | "developers"
   | "contractors";
@@ -61,6 +66,7 @@ type View =
 // destinations.
 const RAIL_TABS: { value: View; label: string }[] = [
   { value: "momentum", label: "Momentum" },
+  { value: "opportunities", label: "Opportunities" },
   { value: "plans", label: "Plans" },
   { value: "projects", label: "Projects" },
   { value: "permits", label: "Permits" },
@@ -101,6 +107,7 @@ export default function ShiftDashboardView({
   investments,
   momentumAreas,
   projectPeople,
+  opportunities,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -109,6 +116,7 @@ export default function ShiftDashboardView({
   investments: InvestmentWithSource[];
   momentumAreas: GrowthArea[];
   projectPeople: ProjectPersonWithSource[];
+  opportunities: DevelopmentOpportunityWithSources[];
 }) {
   const [view, setView] = useState<View>("momentum");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
@@ -119,6 +127,7 @@ export default function ShiftDashboardView({
   const [investmentTypeFilter, setInvestmentTypeFilter] = useState<Set<InvestmentType>>(new Set(INVESTMENT_TYPE_FILTER_OPTIONS));
   const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
   const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
@@ -203,6 +212,29 @@ export default function ShiftDashboardView({
   const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
   const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
+  const selectedOpportunity = opportunities.find((o) => o.id === selectedOpportunityId) ?? null;
+
+  // Momentum/Buildability for the selected opportunity are computed here
+  // (pointInPolygon against growth_areas/zoning_land_use), not stored on
+  // development_opportunities -- same single-source-of-truth reasoning
+  // as the Momentum tab's own area breakdown.
+  const selectedOpportunityMomentumArea = useMemo(() => {
+    if (!selectedOpportunity) return null;
+    return (
+      momentumAreas.find((area) =>
+        pointInPolygon({ lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude }, area.geom)
+      ) ?? null
+    );
+  }, [selectedOpportunity, momentumAreas]);
+
+  const selectedOpportunityBuildabilityZone = useMemo(() => {
+    if (!selectedOpportunity) return null;
+    return (
+      buildabilityZones.find((zone) =>
+        pointInPolygon({ lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude }, zone.geom)
+      ) ?? null
+    );
+  }, [selectedOpportunity, buildabilityZones]);
 
   const railCounts = useMemo(() => {
     const counts: Partial<Record<View, number>> = {
@@ -210,13 +242,14 @@ export default function ShiftDashboardView({
       investment: investments.length,
       developers: developerCount,
       contractors: contractorCount,
+      opportunities: opportunities.length,
     };
     for (const tab of RAIL_TABS) {
       const wanted = CATEGORIES_BY_VIEW[tab.value];
       if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments, developerCount, contractorCount]);
+  }, [shifts, projects, investments, developerCount, contractorCount, opportunities]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -401,6 +434,34 @@ export default function ShiftDashboardView({
                   </p>
                 )}
               </>
+            )}
+
+            {view === "opportunities" && (
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                <div className="relative h-[640px]">
+                  <OpportunityMap
+                    market={market}
+                    opportunities={opportunities}
+                    selectedOpportunityId={selectedOpportunityId}
+                    onSelectOpportunity={setSelectedOpportunityId}
+                  />
+                  {selectedOpportunity && (
+                    <OpportunityDetailPanel
+                      opportunity={selectedOpportunity}
+                      momentumArea={selectedOpportunityMomentumArea}
+                      buildabilityZone={selectedOpportunityBuildabilityZone}
+                      onClose={() => setSelectedOpportunityId(null)}
+                    />
+                  )}
+                </div>
+                <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <OpportunityFeed
+                    opportunities={opportunities}
+                    selectedOpportunityId={selectedOpportunityId}
+                    onSelectOpportunity={setSelectedOpportunityId}
+                  />
+                </div>
+              </div>
             )}
 
             {(view === "plans" || view === "permits" || view === "infrastructure") && (

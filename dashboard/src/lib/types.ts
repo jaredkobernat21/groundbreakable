@@ -747,6 +747,41 @@ export type ProjectPerson = {
 
 export type ProjectPersonWithSource = ProjectPerson & { source: Source | null };
 
+// --- Development Opportunities ---
+// Properties with multiple overlapping development/redevelopment
+// signals -- distinct from the old Phase 1 `opportunities`/`signals`
+// pair, which is entangled with the internal leads CRM (lead_id -> leads)
+// and predates the momentum/buildability/permit concepts this feature
+// scores against. See development_opportunities_schema migration.
+// Momentum and Buildability are deliberately not columns -- they're
+// computed at read time from (latitude, longitude) against
+// growth_areas/zoning_land_use polygons (see opportunityConstants.ts).
+
+export type OpportunityStrength = "high" | "medium" | "low";
+
+export const OPPORTUNITY_STRENGTH_LABEL: Record<OpportunityStrength, string> = {
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+};
+
+export type DevelopmentOpportunity = {
+  id: string;
+  market_id: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  opportunity_type: string;
+  strength: OpportunityStrength;
+  signals: string[];
+  reasons: string[];
+  source_ids: string[];
+  date_identified: string;
+  created_at: string;
+};
+
+export type DevelopmentOpportunityWithSources = DevelopmentOpportunity & { sources: Source[] };
+
 // --- Investment ---
 // See supabase/migrations/20260905000000_investment_schema.sql -- tracks
 // capital that materially affects development/construction/land value/
