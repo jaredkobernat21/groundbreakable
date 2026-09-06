@@ -759,10 +759,13 @@ export type ProjectPersonWithSource = ProjectPerson & { source: Source | null };
 
 export type OpportunityStrength = "high" | "medium" | "low";
 
+// "Early" (not "Low") per the Development Intelligence spec's HIGH/
+// MEDIUM/EARLY strength vocabulary -- same underlying 'low' value, just a
+// display label, so no data/schema change.
 export const OPPORTUNITY_STRENGTH_LABEL: Record<OpportunityStrength, string> = {
   high: "High",
   medium: "Medium",
-  low: "Low",
+  low: "Early",
 };
 
 export type OpportunityCategory = "distress" | "zoning" | "early_project";
@@ -771,6 +774,19 @@ export const OPPORTUNITY_CATEGORY_LABEL: Record<OpportunityCategory, string> = {
   distress: "Distress",
   zoning: "Zoning",
   early_project: "Early Projects",
+};
+
+// "Who this is for" -- orthogonal to category ("why it's an opportunity").
+// See the opportunity_group_classification migration for how existing
+// rows map onto this, and lib/opportunityRules.ts for how Builder/
+// Contractor opportunities also get computed live from the projects
+// pipeline (not just these hand-authored rows).
+export type OpportunityGroup = "development" | "builder" | "contractor";
+
+export const OPPORTUNITY_GROUP_LABEL: Record<OpportunityGroup, string> = {
+  development: "Development Opportunities",
+  builder: "Builder Opportunities",
+  contractor: "Contractor Opportunities",
 };
 
 export type DevelopmentOpportunity = {
@@ -786,6 +802,7 @@ export type DevelopmentOpportunity = {
   opportunity_type: string;
   strength: OpportunityStrength;
   category: OpportunityCategory;
+  opportunity_group: OpportunityGroup;
   status: string | null;
   related_developer: string | null;
   related_contractor: string | null;

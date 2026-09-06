@@ -10,17 +10,18 @@ import type {
   Market,
   MarketIndicatorWithSource,
   MarketOverviewWithSources,
-  OpportunityCategory,
+  OpportunityGroup,
   ProjectPersonWithSource,
   ProjectWithSource,
   ShiftCategory,
   ShiftWithSource,
   ZoningLandUseWithSource,
 } from "@/lib/types";
-import { OPPORTUNITY_CATEGORY_LABEL } from "@/lib/types";
+import { OPPORTUNITY_GROUP_LABEL } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
-import { OPPORTUNITY_CATEGORY_COLOR } from "@/lib/opportunityConstants";
+import { OPPORTUNITY_GROUP_COLOR } from "@/lib/opportunityConstants";
+import { computeProjectOpportunities } from "@/lib/opportunityRules";
 import { pointInPolygon } from "@/lib/geo";
 import { formatCurrency } from "@/lib/format";
 import { ICON_PATHS } from "@/lib/icons";
@@ -111,7 +112,7 @@ const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
 };
 
 const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
-const OPPORTUNITY_CATEGORY_FILTER_OPTIONS = Object.keys(OPPORTUNITY_CATEGORY_LABEL) as OpportunityCategory[];
+const OPPORTUNITY_GROUP_FILTER_OPTIONS = Object.keys(OPPORTUNITY_GROUP_LABEL) as OpportunityGroup[];
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 // Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
@@ -156,8 +157,8 @@ export default function ShiftDashboardView({
   const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
   const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
-  const [opportunityCategoryFilter, setOpportunityCategoryFilter] = useState<Set<OpportunityCategory>>(
-    new Set(OPPORTUNITY_CATEGORY_FILTER_OPTIONS)
+  const [opportunityGroupFilter, setOpportunityGroupFilter] = useState<Set<OpportunityGroup>>(
+    new Set(OPPORTUNITY_GROUP_FILTER_OPTIONS)
   );
 
   function toggleInvestmentType(type: InvestmentType) {
@@ -169,11 +170,11 @@ export default function ShiftDashboardView({
     });
   }
 
-  function toggleOpportunityCategory(category: OpportunityCategory) {
-    setOpportunityCategoryFilter((prev) => {
+  function toggleOpportunityGroup(group: OpportunityGroup) {
+    setOpportunityGroupFilter((prev) => {
       const next = new Set(prev);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
       return next;
     });
   }
@@ -203,9 +204,19 @@ export default function ShiftDashboardView({
     [investments, investmentTypeFilter]
   );
 
+  // Hand-authored development_opportunities rows plus Builder/Contractor
+  // opportunities computed live off the projects pipeline (see
+  // lib/opportunityRules.ts) -- merged into one list so they filter/map/
+  // feed together as a single Opportunities section per the Development
+  // Intelligence spec.
+  const allOpportunities = useMemo(
+    () => [...opportunities, ...computeProjectOpportunities(projects, projectPeople)],
+    [opportunities, projects, projectPeople]
+  );
+
   const filteredOpportunities = useMemo(
-    () => opportunities.filter((o) => opportunityCategoryFilter.has(o.category)),
-    [opportunities, opportunityCategoryFilter]
+    () => allOpportunities.filter((o) => opportunityGroupFilter.has(o.opportunity_group)),
+    [allOpportunities, opportunityGroupFilter]
   );
 
   const developerPeople = useMemo(() => projectPeople.filter((p) => p.role === "developer"), [projectPeople]);
@@ -286,14 +297,14 @@ export default function ShiftDashboardView({
       investment: investments.length,
       developers: developerCount,
       contractors: contractorCount,
-      opportunities: opportunities.length,
+      opportunities: allOpportunities.length,
     };
     for (const v of ALL_VIEWS) {
       const wanted = CATEGORIES_BY_VIEW[v];
       if (wanted) counts[v] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments, developerCount, contractorCount, opportunities]);
+  }, [shifts, projects, investments, developerCount, contractorCount, allOpportunities]);
 
   // "vs. previous 7 days" on each metric card is a real count of items
   // dated in the last 7 days -- event_date for shifts, date_announced for
@@ -600,18 +611,18 @@ export default function ShiftDashboardView({
             {view === "opportunities" && (
               <>
                 <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                  {OPPORTUNITY_CATEGORY_FILTER_OPTIONS.map((category) => {
-                    const active = opportunityCategoryFilter.has(category);
-                    const color = OPPORTUNITY_CATEGORY_COLOR[category];
+                  {OPPORTUNITY_GROUP_FILTER_OPTIONS.map((group) => {
+                    const active = opportunityGroupFilter.has(group);
+                    const color = OPPORTUNITY_GROUP_COLOR[group];
                     return (
                       <button
-                        key={category}
+                        key={group}
                         type="button"
-                        onClick={() => toggleOpportunityCategory(category)}
+                        onClick={() => toggleOpportunityGroup(group)}
                         className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
                         style={active ? { backgroundColor: color, color: "#fff" } : { color: "#1c1c1c80" }}
                       >
-                        {OPPORTUNITY_CATEGORY_LABEL[category]}
+                        {OPPORTUNITY_GROUP_LABEL[group]}
                       </button>
                     );
                   })}

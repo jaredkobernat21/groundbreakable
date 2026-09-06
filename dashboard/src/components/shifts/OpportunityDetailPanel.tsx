@@ -49,7 +49,7 @@ export default function OpportunityDetailPanel({
       <p className="mb-1 text-sm text-white/50">{opportunity.opportunity_type}</p>
       {opportunity.status && <p className="mb-4 text-sm text-white/70">{opportunity.status}</p>}
 
-      {(opportunity.related_developer || opportunity.related_contractor) && (
+      {(opportunity.related_developer || opportunity.related_contractor || opportunity.opportunity_group !== "development") && (
         <dl className="mb-4 space-y-2 border-t border-white/10 pt-4 text-sm">
           {opportunity.related_developer && (
             <div>
@@ -57,11 +57,18 @@ export default function OpportunityDetailPanel({
               <dd className="text-white">{opportunity.related_developer}</dd>
             </div>
           )}
-          {opportunity.related_contractor && (
+          {opportunity.related_contractor ? (
             <div>
               <dt className="text-[11px] uppercase tracking-wide text-white/35">Contractor</dt>
               <dd className="text-white">{opportunity.related_contractor}</dd>
             </div>
+          ) : (
+            opportunity.opportunity_group !== "development" && (
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-white/35">Contractor</dt>
+                <dd className="text-white/50">No contractor identified in available records</dd>
+              </div>
+            )
           )}
         </dl>
       )}

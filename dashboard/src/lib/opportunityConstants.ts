@@ -1,4 +1,4 @@
-import type { OpportunityCategory, OpportunityStrength } from "./types";
+import type { OpportunityCategory, OpportunityGroup, OpportunityStrength } from "./types";
 
 // Gray -> amber -> red: same "severity gradient independent of category"
 // idea as SHIFT_IMPACT_COLOR -- strength is its own dimension, not tied
@@ -24,7 +24,19 @@ export const OPPORTUNITY_CATEGORY_COLOR: Record<OpportunityCategory, string> = {
 // this is a best-effort label map for the values seeded so far rather
 // than an exhaustive enum. Anything not listed here just falls back to a
 // humanized version of the raw tag.
+// "Who this is for" -- the primary Opportunities nav lens per the
+// Development Intelligence spec. Distinct hue family from
+// OPPORTUNITY_CATEGORY_COLOR so a card's group pill and category badge
+// never get confused for the same dimension.
+export const OPPORTUNITY_GROUP_COLOR: Record<OpportunityGroup, string> = {
+  development: "#22c55e", // green -- matches OPPORTUNITIES_COLOR elsewhere
+  builder: "#f97316", // orange -- same family as Permits/Pre-Construction
+  contractor: "#3b82f6", // blue -- same family as Projects/Build
+};
+
 export const OPPORTUNITY_SIGNAL_LABEL: Record<string, string> = {
+  builder_not_identified: "Builder Not Identified",
+  contractor_not_identified: "Contractor Not Identified",
   tax_delinquent: "Tax Delinquent",
   tax_foreclosure: "Tax Foreclosure",
   pre_foreclosure: "Pre-Foreclosure",

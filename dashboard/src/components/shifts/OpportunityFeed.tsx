@@ -53,11 +53,15 @@ export default function OpportunityFeed({
               <span className="text-xs text-[#1c1c1c]/50">{opp.opportunity_type}</span>
               {opp.status && <span className="text-xs text-[#1c1c1c]/45">{opp.status}</span>}
 
-              {(opp.related_developer || opp.related_contractor) && (
+              {(opp.related_developer || opp.related_contractor || opp.opportunity_group !== "development") && (
                 <span className="text-xs text-[#1c1c1c]/50">
                   {opp.related_developer && <>Developer: {opp.related_developer}</>}
-                  {opp.related_developer && opp.related_contractor && " · "}
-                  {opp.related_contractor && <>Contractor: {opp.related_contractor}</>}
+                  {opp.related_developer && (opp.related_contractor || opp.opportunity_group !== "development") && " · "}
+                  {opp.related_contractor ? (
+                    <>Contractor: {opp.related_contractor}</>
+                  ) : (
+                    opp.opportunity_group !== "development" && "No contractor identified in available records"
+                  )}
                 </span>
               )}
 
