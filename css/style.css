@@ -149,6 +149,12 @@ button{ font-family:inherit; }
 }
 .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; }
 .brand__mark{ color:var(--ink); display:flex; }
+/* The mark is a raster image (solid black on transparent), not an inline
+   stroke path, so it can't pick up `color` the way brand__text/nav links
+   do -- filter:invert(1) turns black into white for the overlay's
+   unscrolled state, undone back to the image's natural black once
+   scrolled or on non-overlay pages. See .nav--overlay rules below. */
+.brand__mark-img{ display:block; }
 .brand__text{
   font-family:var(--serif);
   font-weight:700;
@@ -224,6 +230,7 @@ button{ font-family:inherit; }
   color:#FFFFFF;
   transition:color .3s ease;
 }
+.nav--overlay .brand__mark-img{ filter:invert(1); transition:filter .3s ease; }
 .nav--overlay .brand__text em{ color:rgba(255,255,255,0.65); }
 .nav--overlay .nav__links a:hover{ color:#FFFFFF; opacity:0.75; }
 .nav--overlay .nav__cta .btn--line{ color:#FFFFFF; border-color:rgba(255,255,255,0.35); }
@@ -240,6 +247,7 @@ button{ font-family:inherit; }
 .nav--overlay.is-scrolled .brand__text,
 .nav--overlay.is-scrolled .nav__links a,
 .nav--overlay.is-scrolled .nav__toggle span{ color:var(--ink); }
+.nav--overlay.is-scrolled .brand__mark-img{ filter:none; }
 .nav--overlay.is-scrolled .brand__text em{ color:var(--ink-40); }
 .nav--overlay.is-scrolled .nav__links a:hover{ color:var(--ink); opacity:1; }
 .nav--overlay.is-scrolled .nav__cta .btn--line{ color:var(--ink); border-color:var(--ink-12); }

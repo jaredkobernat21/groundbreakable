@@ -36,7 +36,7 @@ export default function LoginPage() {
         className="w-full max-w-sm rounded-2xl border border-[#1c1c1c]/10 bg-white p-8 shadow-sm"
       >
         <div className="mb-6 flex items-center gap-2">
-          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+          <img src="/groundbreakable-icon.png" alt="" className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </div>
 

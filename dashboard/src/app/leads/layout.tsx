@@ -27,7 +27,7 @@ export default async function LeadsLayout({ children }: { children: React.ReactN
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#F7F6F2] px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-4 sm:gap-8">
           <Link href="/leads" className="flex items-center gap-2">
-            <img src="/groundbreakable-icon.svg" alt="" className="h-6 w-6" />
+            <img src="/groundbreakable-icon.png" alt="" className="h-6 w-6" />
             <span className="font-serif text-base font-semibold tracking-tight text-[#1c1c1c]">
               Groundbreakable <span className="text-[#B08D57]">Leads</span>
             </span>

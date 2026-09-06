@@ -541,7 +541,7 @@ export default function ShiftDashboardView({
           where this component sits in the header's centered content column. */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:flex lg:w-56 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-r lg:border-[#1c1c1c]/10 lg:bg-[#f4f2ee] lg:px-4 lg:py-6">
         <Link href="/dashboard" className="mb-6 flex items-center gap-2">
-          <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+          <img src="/groundbreakable-icon.png" alt="" className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </Link>
         <nav className="flex flex-col gap-0.5">{desktopNavTree()}</nav>
@@ -553,7 +553,7 @@ export default function ShiftDashboardView({
           {/* Below lg the fixed aside is hidden, so the logo needs a home
               here instead -- otherwise mobile loses all branding. */}
           <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-            <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+            <img src="/groundbreakable-icon.png" alt="" className="h-7 w-7" />
             <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
           </Link>
 

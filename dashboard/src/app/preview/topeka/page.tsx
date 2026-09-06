@@ -74,7 +74,7 @@ export default async function TopekaPreviewPage() {
       </div>
 
       <header className="flex items-center gap-2 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
-        <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
+        <img src="/groundbreakable-icon.png" alt="" className="h-7 w-7" />
         <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
       </header>
 
