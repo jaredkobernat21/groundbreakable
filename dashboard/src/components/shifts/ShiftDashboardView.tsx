@@ -22,6 +22,12 @@ import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } fr
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
 import { OPPORTUNITY_GROUP_COLOR } from "@/lib/opportunityConstants";
 import { computeProjectOpportunities } from "@/lib/opportunityRules";
+import {
+  INFRASTRUCTURE_TYPE_COLOR,
+  INFRASTRUCTURE_TYPE_LABEL,
+  inferInfrastructureType,
+  type InfrastructureType,
+} from "@/lib/infrastructureConstants";
 import { pointInPolygon } from "@/lib/geo";
 import { formatCurrency } from "@/lib/format";
 import { ICON_PATHS } from "@/lib/icons";
@@ -46,6 +52,8 @@ import InvestmentSummary from "./InvestmentSummary";
 import OpportunityMap from "./OpportunityMap";
 import OpportunityFeed from "./OpportunityFeed";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
+import InfrastructureFeed from "./InfrastructureFeed";
+import InfrastructureDetailPanel from "./InfrastructureDetailPanel";
 import MarketOverviewSection from "./MarketOverviewSection";
 
 type View =
@@ -113,6 +121,7 @@ const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
 
 const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
 const OPPORTUNITY_GROUP_FILTER_OPTIONS = Object.keys(OPPORTUNITY_GROUP_LABEL) as OpportunityGroup[];
+const INFRASTRUCTURE_TYPE_FILTER_OPTIONS = Object.keys(INFRASTRUCTURE_TYPE_LABEL) as InfrastructureType[];
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 // Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
@@ -160,6 +169,9 @@ export default function ShiftDashboardView({
   const [opportunityGroupFilter, setOpportunityGroupFilter] = useState<Set<OpportunityGroup>>(
     new Set(OPPORTUNITY_GROUP_FILTER_OPTIONS)
   );
+  const [infrastructureTypeFilter, setInfrastructureTypeFilter] = useState<Set<InfrastructureType>>(
+    new Set(INFRASTRUCTURE_TYPE_FILTER_OPTIONS)
+  );
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
@@ -175,6 +187,15 @@ export default function ShiftDashboardView({
       const next = new Set(prev);
       if (next.has(group)) next.delete(group);
       else next.add(group);
+      return next;
+    });
+  }
+
+  function toggleInfrastructureType(type: InfrastructureType) {
+    setInfrastructureTypeFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
       return next;
     });
   }
@@ -198,6 +219,14 @@ export default function ShiftDashboardView({
     if (!wantedCategories) return [];
     return shifts.filter((s) => wantedCategories.includes(s.category));
   }, [shifts, view]);
+
+  // Infrastructure's sub-type filter (Roads/Water/Sewer/...) only applies
+  // on the Infrastructure view -- Plans/Permits keep showing their full
+  // categoryShifts list unfiltered, same as before.
+  const visibleCategoryShifts = useMemo(() => {
+    if (view !== "infrastructure") return categoryShifts;
+    return categoryShifts.filter((s) => infrastructureTypeFilter.has(inferInfrastructureType(s.shift_type)));
+  }, [view, categoryShifts, infrastructureTypeFilter]);
 
   const filteredInvestments = useMemo(
     () => investments.filter((i) => investmentTypeFilter.has(i.investment_type)),
@@ -267,10 +296,22 @@ export default function ShiftDashboardView({
   }
 
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
-  const selectedCategoryShift = categoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
+  const selectedCategoryShift = visibleCategoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
   const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
   const selectedOpportunity = filteredOpportunities.find((o) => o.id === selectedOpportunityId) ?? null;
+
+  // Infrastructure's "Development Impact" -- which Momentum Area (if any)
+  // the selected shift's point falls inside, plus that area's already-
+  // computed project count -- same pointInPolygon reasoning as the
+  // Opportunities panel below, reusing momentumAreaBreakdowns rather than
+  // a second lookup.
+  const selectedInfrastructureMomentumBreakdown = useMemo(() => {
+    if (view !== "infrastructure" || !selectedCategoryShift) return null;
+    if (selectedCategoryShift.lat == null || selectedCategoryShift.lng == null) return null;
+    const point = { lat: selectedCategoryShift.lat, lng: selectedCategoryShift.lng };
+    return momentumAreaBreakdowns.find((b) => pointInPolygon(point, b.area.geom)) ?? null;
+  }, [view, selectedCategoryShift, momentumAreaBreakdowns]);
 
   // Momentum/Buildability for the selected opportunity are computed here
   // (pointInPolygon against growth_areas/zoning_land_use), not stored on
@@ -656,7 +697,7 @@ export default function ShiftDashboardView({
               </>
             )}
 
-            {(view === "plans" || view === "permits" || view === "infrastructure") && (
+            {(view === "plans" || view === "permits") && (
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
                 <div className="relative h-[640px]">
                   <ShiftMap
@@ -677,6 +718,53 @@ export default function ShiftDashboardView({
                   <ShiftFeed shifts={categoryShifts} selectedShiftId={selectedCategoryShiftId} onSelectShift={setSelectedCategoryShiftId} />
                 </div>
               </div>
+            )}
+
+            {view === "infrastructure" && (
+              <>
+                <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+                  {INFRASTRUCTURE_TYPE_FILTER_OPTIONS.map((type) => {
+                    const active = infrastructureTypeFilter.has(type);
+                    const color = INFRASTRUCTURE_TYPE_COLOR[type];
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => toggleInfrastructureType(type)}
+                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
+                        style={active ? { backgroundColor: color, color: "#fff" } : { color: "#1c1c1c80" }}
+                      >
+                        {INFRASTRUCTURE_TYPE_LABEL[type]}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                  <div className="relative h-[640px]">
+                    <ShiftMap
+                      market={market}
+                      shifts={visibleCategoryShifts}
+                      selectedShiftId={selectedCategoryShiftId}
+                      onSelectShift={setSelectedCategoryShiftId}
+                    />
+                    {selectedCategoryShift && (
+                      <InfrastructureDetailPanel
+                        shift={selectedCategoryShift}
+                        momentumBreakdown={selectedInfrastructureMomentumBreakdown}
+                        onClose={() => setSelectedCategoryShiftId(null)}
+                      />
+                    )}
+                  </div>
+                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                    <InfrastructureFeed
+                      shifts={visibleCategoryShifts}
+                      selectedShiftId={selectedCategoryShiftId}
+                      onSelectShift={setSelectedCategoryShiftId}
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {view === "buildability" && (
