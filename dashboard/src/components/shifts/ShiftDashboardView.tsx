@@ -159,6 +159,12 @@ export default function ShiftDashboardView({
   marketOverview: MarketOverviewWithSources | null;
 }) {
   const [view, setView] = useState<View>("momentum");
+  // Which group's sub-tab dropdown is open in the rail -- independent of
+  // `view` so clicking the already-active group's button can collapse the
+  // dropdown back without changing what content is showing. Starts open
+  // on the initial view's group ("market", since the initial view is
+  // "momentum").
+  const [expandedGroup, setExpandedGroup] = useState<Group | null>("market");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
@@ -423,12 +429,20 @@ export default function ShiftDashboardView({
   }
 
   function selectView(v: View) {
+    setExpandedGroup(VIEW_GROUP[v]);
     if (v === "momentum") selectMomentumTab();
     else setView(v);
   }
 
+  // Clicking the group you're already in toggles its dropdown open/closed
+  // without touching `view` (the content underneath doesn't change).
+  // Clicking a different group jumps to its first sub-view and opens its
+  // dropdown, same as before.
   function selectGroup(group: Group) {
-    if (VIEW_GROUP[view] === group) return;
+    if (VIEW_GROUP[view] === group) {
+      setExpandedGroup((prev) => (prev === group ? null : group));
+      return;
+    }
     const g = GROUPS.find((x) => x.value === group)!;
     selectView(g.views[0]);
   }
@@ -446,15 +460,13 @@ export default function ShiftDashboardView({
     ));
   }
 
-  // Second-level tabs for whichever group is active. Omitted entirely for
-  // single-view groups (Infrastructure today) -- a sub-nav row with one
-  // option is just noise. Reuses the same rounded-pill pattern already
-  // used for the Momentum-area/Investment-type/Opportunity-category
-  // toggles below, so it reads as "more navigation," not a new filter
-  // idiom.
+  // Second-level tabs for whichever group is active -- only rendered
+  // while that group's dropdown is expanded, and omitted entirely for
+  // single-view groups (Infrastructure today), where a dropdown with one
+  // option is just noise.
   function subNav() {
     const group = GROUPS.find((g) => g.value === VIEW_GROUP[view]);
-    if (!group || group.views.length < 2) return null;
+    if (!group || group.views.length < 2 || expandedGroup !== group.value) return null;
     return (
       <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
         {group.views.map((v) => (
@@ -474,6 +486,54 @@ export default function ShiftDashboardView({
     );
   }
 
+  // Desktop rail: unlike the mobile pill row (primaryNav + subNav stacked
+  // as two separate rows), the sub-tabs nest directly under their own
+  // group button here -- a proper expand/collapse accordion, with a
+  // chevron that flips per Jared's ask, rather than a second list
+  // detached at the bottom of the whole nav.
+  function desktopNavTree() {
+    return GROUPS.map((g) => {
+      const isActiveGroup = VIEW_GROUP[view] === g.value;
+      const isExpandable = g.views.length > 1;
+      const isExpanded = isExpandable && expandedGroup === g.value;
+      return (
+        <div key={g.value}>
+          <button
+            type="button"
+            onClick={() => selectGroup(g.value)}
+            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+              isActiveGroup ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/60 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
+            }`}
+          >
+            <span>{g.label}</span>
+            {isExpandable && (
+              <svg viewBox="0 0 20 20" fill="none" className={`h-3.5 w-3.5 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`}>
+                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+          {isExpanded && (
+            <div className="ml-2 mt-0.5 flex flex-col gap-0.5 border-l border-[#1c1c1c]/10 pl-2">
+              {g.views.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => selectView(v)}
+                  className={`rounded-lg px-3 py-1.5 text-left text-xs font-medium transition ${
+                    view === v ? "bg-[#1c1c1c]/10 text-[#1c1c1c]" : "text-[#1c1c1c]/50 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
+                  }`}
+                >
+                  {VIEW_LABEL[v]}
+                  {railCounts[v] != null && ` (${railCounts[v]})`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    });
+  }
+
   return (
     <div>
       {/* Persistent far-left rail (desktop): logo, then the six list-first
@@ -484,8 +544,7 @@ export default function ShiftDashboardView({
           <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </Link>
-        <nav className="flex flex-col gap-0.5">{primaryNav()}</nav>
-        {subNav() && <div className="mt-2 px-0.5">{subNav()}</div>}
+        <nav className="flex flex-col gap-0.5">{desktopNavTree()}</nav>
         <p className="mt-auto pt-6 text-xs leading-relaxed text-[#1c1c1c]/40">From insight to a more buildable tomorrow.</p>
       </aside>
 
