@@ -18,4 +18,7 @@ export const ICON_PATHS = {
     "M3 21l3.5-3.5",
     "M16 3l1.5 1.5a2.12 2.12 0 0 1 0 3L16 9",
   ],
+  trendingUp: ["M23 6l-9.5 9.5-5-5L1 18", "M17 6h6v6"],
+  mapPin: ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"],
+  barChart: ["M18 20V10", "M12 20V4", "M6 20v-6"],
 } as const;

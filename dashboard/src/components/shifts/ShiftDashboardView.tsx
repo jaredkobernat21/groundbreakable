@@ -297,7 +297,7 @@ export default function ShiftDashboardView({
     return sorted[0].area.id;
   }, [momentumAreaBreakdowns]);
 
-  const topMomentumArea = momentumAreas.find((a) => a.id === primaryMomentumAreaId) ?? null;
+  const topMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === primaryMomentumAreaId) ?? null;
 
   const selectedMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === selectedMomentumAreaId) ?? null;
 
@@ -569,8 +569,8 @@ export default function ShiftDashboardView({
           <BriefingSummary
             shifts={shifts}
             projects={projects}
-            buildabilityZones={buildabilityZones}
-            topMomentumArea={topMomentumArea}
+            allOpportunities={allOpportunities}
+            topMomentumAreaBreakdown={topMomentumAreaBreakdown}
           />
 
           <MetricCardRow cards={metricCards} />
