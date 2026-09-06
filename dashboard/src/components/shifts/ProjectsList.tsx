@@ -1,5 +1,7 @@
 import type { ProjectPersonWithSource, ProjectWithSource } from "@/lib/types";
 import { PLAN_CATEGORY_LABEL, PROJECT_PERSON_ROLE_LABEL, PROJECT_STAGE_LABEL, PROJECT_TYPE_LABEL } from "@/lib/types";
+import { deriveLifecycleStage } from "@/lib/lifecycleStage";
+import LifecycleStageTimeline from "./LifecycleStageTimeline";
 
 const STAGE_COLOR: Record<string, string> = {
   proposed: "#94a3b8",
@@ -57,6 +59,8 @@ export default function ProjectsList({
               {project.plan_category && project.project_type && <span>&middot;</span>}
               {project.project_type && <span>{PROJECT_TYPE_LABEL[project.project_type]}</span>}
             </div>
+
+            <LifecycleStageTimeline stage={deriveLifecycleStage(project.stage)} />
 
             {project.description && <p className="text-xs leading-relaxed text-[#1c1c1c]/70">{project.description}</p>}
 

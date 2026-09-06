@@ -60,35 +60,45 @@ type View =
   | "contractors"
   | "market";
 
-// Product decision (Jared, 2026-09-05): the dashboard's real-estate lens
-// covers 7 views -- "what's coming" (Plans), "what's being built"
-// (Projects), "what's moving" (Permits), "what's enabling growth"
-// (Infrastructure), "where capital is flowing" (Investment), "what's
-// happening right now" (Momentum -- every active category on one map),
-// and "where could development happen next" (Buildability -- zoning/
-// land-use). Land was considered as an 8th tab but folded into
-// Buildability -- both meant the same thing (favorable-zoning parcels),
-// so there's no separate Land destination.
-//
-// Momentum/Buildability were originally a small map-layer-toggle pill
-// group sitting above the map instead of real rail entries (both just
-// set the same `view` state as everything else, only visually grouped
-// differently) -- moved into the rail proper per Jared's follow-up ask
-// (2026-09-05) once the rail itself existed. All 7 are now equal rail
-// destinations.
-const RAIL_TABS: { value: View; label: string }[] = [
-  { value: "market", label: "Market" },
-  { value: "momentum", label: "Momentum" },
-  { value: "opportunities", label: "Opportunities" },
-  { value: "plans", label: "Plans" },
-  { value: "projects", label: "Projects" },
-  { value: "permits", label: "Permits" },
-  { value: "infrastructure", label: "Infrastructure" },
-  { value: "investment", label: "Investment" },
-  { value: "developers", label: "Developers" },
-  { value: "contractors", label: "Contractors" },
-  { value: "buildability", label: "Buildability" },
+// Product decision (Jared, 2026-09-06): the Development Intelligence
+// restructure groups the dashboard's 11 views under 5 primary nav
+// destinations -- Market, Projects, Opportunities, Infrastructure,
+// Companies -- each with its own sub-tabs, replacing the earlier flat
+// 11-button rail. Every underlying view/component/state below is
+// unchanged; this is purely a navigation regrouping.
+type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies";
+
+const GROUPS: { value: Group; label: string; views: View[] }[] = [
+  { value: "market", label: "Market", views: ["momentum", "market", "investment"] },
+  { value: "projects", label: "Projects", views: ["projects", "plans", "permits"] },
+  { value: "opportunities", label: "Opportunities", views: ["opportunities", "buildability"] },
+  { value: "infrastructure", label: "Infrastructure", views: ["infrastructure"] },
+  { value: "companies", label: "Companies", views: ["developers", "contractors"] },
 ];
+
+const VIEW_GROUP = GROUPS.reduce((acc, g) => {
+  for (const v of g.views) acc[v] = g.value;
+  return acc;
+}, {} as Record<View, Group>);
+
+// Sub-tab labels -- distinct from each group's own label so a sub-tab
+// never just repeats its parent (e.g. "Projects > Pipeline", not
+// "Projects > Projects").
+const ALL_VIEWS: View[] = GROUPS.flatMap((g) => g.views);
+
+const VIEW_LABEL: Record<View, string> = {
+  market: "Overview",
+  momentum: "Momentum",
+  investment: "Investment",
+  projects: "Pipeline",
+  plans: "Plans",
+  permits: "Permits",
+  opportunities: "Opportunities",
+  buildability: "Buildability",
+  infrastructure: "Infrastructure",
+  developers: "Developers",
+  contractors: "Contractors",
+};
 
 // Which shift categories feed each rail tab's map+feed view. Investment
 // is no longer part of this -- as of 2026-09-05 it's backed by its own
@@ -278,9 +288,9 @@ export default function ShiftDashboardView({
       contractors: contractorCount,
       opportunities: opportunities.length,
     };
-    for (const tab of RAIL_TABS) {
-      const wanted = CATEGORIES_BY_VIEW[tab.value];
-      if (wanted) counts[tab.value] = shifts.filter((s) => wanted.includes(s.category)).length;
+    for (const v of ALL_VIEWS) {
+      const wanted = CATEGORIES_BY_VIEW[v];
+      if (wanted) counts[v] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
   }, [shifts, projects, investments, developerCount, contractorCount, opportunities]);
@@ -355,18 +365,56 @@ export default function ShiftDashboardView({
     }`;
   }
 
-  function railTabs() {
-    return RAIL_TABS.map((tab) => (
+  function selectView(v: View) {
+    if (v === "momentum") selectMomentumTab();
+    else setView(v);
+  }
+
+  function selectGroup(group: Group) {
+    if (VIEW_GROUP[view] === group) return;
+    const g = GROUPS.find((x) => x.value === group)!;
+    selectView(g.views[0]);
+  }
+
+  function primaryNav() {
+    return GROUPS.map((g) => (
       <button
-        key={tab.value}
+        key={g.value}
         type="button"
-        onClick={() => (tab.value === "momentum" ? selectMomentumTab() : setView(tab.value))}
-        className={tabButtonClass(view === tab.value, true)}
+        onClick={() => selectGroup(g.value)}
+        className={tabButtonClass(VIEW_GROUP[view] === g.value, true)}
       >
-        {tab.label}
-        {railCounts[tab.value] != null && ` (${railCounts[tab.value]})`}
+        {g.label}
       </button>
     ));
+  }
+
+  // Second-level tabs for whichever group is active. Omitted entirely for
+  // single-view groups (Infrastructure today) -- a sub-nav row with one
+  // option is just noise. Reuses the same rounded-pill pattern already
+  // used for the Momentum-area/Investment-type/Opportunity-category
+  // toggles below, so it reads as "more navigation," not a new filter
+  // idiom.
+  function subNav() {
+    const group = GROUPS.find((g) => g.value === VIEW_GROUP[view]);
+    if (!group || group.views.length < 2) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
+        {group.views.map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => selectView(v)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              view === v ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
+            }`}
+          >
+            {VIEW_LABEL[v]}
+            {railCounts[v] != null && ` (${railCounts[v]})`}
+          </button>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -379,7 +427,8 @@ export default function ShiftDashboardView({
           <img src="/groundbreakable-icon.svg" alt="" className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </Link>
-        <nav className="flex flex-col gap-0.5">{railTabs()}</nav>
+        <nav className="flex flex-col gap-0.5">{primaryNav()}</nav>
+        {subNav() && <div className="mt-2 px-0.5">{subNav()}</div>}
         <p className="mt-auto pt-6 text-xs leading-relaxed text-[#1c1c1c]/40">From insight to a more buildable tomorrow.</p>
       </aside>
 
@@ -412,7 +461,8 @@ export default function ShiftDashboardView({
 
           <MetricCardRow cards={metricCards} />
 
-          <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{railTabs()}</nav>
+          <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{primaryNav()}</nav>
+          {subNav() && <div className="lg:hidden">{subNav()}</div>}
 
           <div className="min-w-0 flex-1 space-y-3">
             {view === "market" && <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />}
