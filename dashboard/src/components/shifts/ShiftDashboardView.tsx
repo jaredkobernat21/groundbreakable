@@ -545,7 +545,6 @@ export default function ShiftDashboardView({
           <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
         </Link>
         <nav className="flex flex-col gap-0.5">{desktopNavTree()}</nav>
-        <p className="mt-auto pt-6 text-xs leading-relaxed text-[#1c1c1c]/40">From insight to a more buildable tomorrow.</p>
       </aside>
 
       <div className="lg:pl-56">
@@ -565,7 +564,6 @@ export default function ShiftDashboardView({
             <h1 className="text-2xl font-semibold text-[#1c1c1c]">
               {market.name}, {market.state}
             </h1>
-            <p className="text-sm text-[#1c1c1c]/50">Smarter development starts here.</p>
           </div>
 
           <BriefingSummary
@@ -585,23 +583,6 @@ export default function ShiftDashboardView({
 
             {view === "momentum" && (
               <>
-                {momentumAreaBreakdowns.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                    {momentumAreaBreakdowns.map(({ area, count }) => (
-                      <button
-                        key={area.id}
-                        type="button"
-                        onClick={() => setSelectedMomentumAreaId(area.id === selectedMomentumAreaId ? null : area.id)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                          selectedMomentumAreaId === area.id ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-                        }`}
-                      >
-                        {area.name} ({count})
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
 
                 <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
