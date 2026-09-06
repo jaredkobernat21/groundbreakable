@@ -22,6 +22,7 @@ import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } fr
 import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
 import { OPPORTUNITY_GROUP_COLOR } from "@/lib/opportunityConstants";
 import { computeProjectOpportunities } from "@/lib/opportunityRules";
+import { buildCompanyProfiles } from "@/lib/companyProfiles";
 import {
   INFRASTRUCTURE_TYPE_COLOR,
   INFRASTRUCTURE_TYPE_LABEL,
@@ -40,7 +41,8 @@ import ShiftMap from "./ShiftMap";
 import ShiftFeed from "./ShiftFeed";
 import ShiftDetailPanel from "./ShiftDetailPanel";
 import ProjectsList from "./ProjectsList";
-import PeopleList from "./PeopleList";
+import CompanyList from "./CompanyList";
+import CompanyDetailPanel from "./CompanyDetailPanel";
 import MomentumAreaDetailPanel from "./MomentumAreaDetailPanel";
 import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
@@ -172,6 +174,7 @@ export default function ShiftDashboardView({
   const [infrastructureTypeFilter, setInfrastructureTypeFilter] = useState<Set<InfrastructureType>>(
     new Set(INFRASTRUCTURE_TYPE_FILTER_OPTIONS)
   );
+  const [selectedCompanyKey, setSelectedCompanyKey] = useState<string | null>(null);
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
@@ -248,10 +251,12 @@ export default function ShiftDashboardView({
     [allOpportunities, opportunityGroupFilter]
   );
 
-  const developerPeople = useMemo(() => projectPeople.filter((p) => p.role === "developer"), [projectPeople]);
-  const contractorPeople = useMemo(() => projectPeople.filter((p) => p.role === "contractor"), [projectPeople]);
-  const developerCount = useMemo(() => new Set(developerPeople.map((p) => p.person_name ?? p.company_name)).size, [developerPeople]);
-  const contractorCount = useMemo(() => new Set(contractorPeople.map((p) => p.person_name ?? p.company_name)).size, [contractorPeople]);
+  // Companies profiles -- one per uniquely-named developer/contractor,
+  // with every rollup (project counts, stage breakdown, estimated
+  // volume, frequent partners) computed live from project_people +
+  // projects. See lib/companyProfiles.ts.
+  const developerProfiles = useMemo(() => buildCompanyProfiles("developer", projectPeople, projects), [projectPeople, projects]);
+  const contractorProfiles = useMemo(() => buildCompanyProfiles("contractor", projectPeople, projects), [projectPeople, projects]);
 
   // Every real shift/project whose lat/lng falls inside a Momentum Area's
   // polygon -- computed client-side (pointInPolygon), not a join table, so
@@ -336,8 +341,8 @@ export default function ShiftDashboardView({
     const counts: Partial<Record<View, number>> = {
       projects: projects.length,
       investment: investments.length,
-      developers: developerCount,
-      contractors: contractorCount,
+      developers: developerProfiles.length,
+      contractors: contractorProfiles.length,
       opportunities: allOpportunities.length,
     };
     for (const v of ALL_VIEWS) {
@@ -345,7 +350,7 @@ export default function ShiftDashboardView({
       if (wanted) counts[v] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments, developerCount, contractorCount, allOpportunities]);
+  }, [shifts, projects, investments, developerProfiles, contractorProfiles, allOpportunities]);
 
   // "vs. previous 7 days" on each metric card is a real count of items
   // dated in the last 7 days -- event_date for shifts, date_announced for
@@ -590,14 +595,26 @@ export default function ShiftDashboardView({
             )}
 
             {view === "developers" && (
-              <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <PeopleList people={developerPeople} />
+              <div className="relative h-[640px]">
+                <div className="h-full overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <CompanyList profiles={developerProfiles} selectedKey={selectedCompanyKey} onSelect={setSelectedCompanyKey} />
+                </div>
+                {(() => {
+                  const selected = developerProfiles.find((p) => p.key === selectedCompanyKey) ?? null;
+                  return selected && <CompanyDetailPanel profile={selected} onClose={() => setSelectedCompanyKey(null)} />;
+                })()}
               </div>
             )}
 
             {view === "contractors" && (
-              <div className="max-h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                <PeopleList people={contractorPeople} />
+              <div className="relative h-[640px]">
+                <div className="h-full overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <CompanyList profiles={contractorProfiles} selectedKey={selectedCompanyKey} onSelect={setSelectedCompanyKey} />
+                </div>
+                {(() => {
+                  const selected = contractorProfiles.find((p) => p.key === selectedCompanyKey) ?? null;
+                  return selected && <CompanyDetailPanel profile={selected} onClose={() => setSelectedCompanyKey(null)} />;
+                })()}
               </div>
             )}
 
