@@ -55,7 +55,7 @@ export default async function DashboardLayout({
                 {SUBSCRIPTION_TIER_LABEL[tier]}
               </span>
             )}
-            <MarketSwitcher markets={markets ?? []} />
+            <MarketSwitcher markets={markets ?? []} allMarketsHref={tierAtLeast(tier, "intelligence") ? "/dashboard" : undefined} />
             <span className="hidden sm:inline">{user?.email}</span>
             <SignOutButton />
           </div>

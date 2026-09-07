@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ShiftDashboardView from "@/components/shifts/ShiftDashboardView";
+import PersonalizedOverview from "@/components/profile/PersonalizedOverview";
 import { selectMarket } from "@/lib/selectMarket";
 import { getShifts } from "@/lib/queries/shifts";
 import { getActiveProjects } from "@/lib/queries/activeProjects";
@@ -10,7 +11,9 @@ import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
-import { getCurrentInvestorProfile, ROLE_DEFAULT_VIEW } from "@/lib/tiers";
+import { getCurrentInvestorProfile, ROLE_DEFAULT_VIEW, tierAtLeast } from "@/lib/tiers";
+import { getOpportunityProfiles, getActiveOpportunityProfile } from "@/lib/queries/opportunityProfiles";
+import { buildPersonalizedBrief, gatherMarketBundles, resolveBriefMarkets } from "@/lib/generatePersonalizedBrief";
 import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +23,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   // RLS scopes this to markets the signed-in investor has access to.
   const { data: markets } = await supabase.from("markets").select("*").order("name").returns<Market[]>();
+
+  const account = await getCurrentInvestorProfile(supabase);
+
+  // Default landing for Intelligence/Partner accounts with a configured
+  // Opportunity Profile: an aggregated view across every market they
+  // have access to, not one market picked alphabetically (spec, Jared
+  // 2026-09-07: "his default market should be 'all' his markets").
+  // Explicitly picking a market from the header switcher (?market=) always
+  // wins and drills into that single market's full activity feed below --
+  // this only governs what shows with no market chosen.
+  if (account && tierAtLeast(account.subscription_tier, "intelligence") && !searchParams.market) {
+    const profiles = await getOpportunityProfiles(supabase, account.id);
+    const activeProfile = getActiveOpportunityProfile(profiles);
+    if (activeProfile) {
+      const briefMarkets = resolveBriefMarkets(activeProfile, markets ?? []);
+      const bundles = await gatherMarketBundles(supabase, briefMarkets);
+      const content = buildPersonalizedBrief(account, activeProfile, bundles);
+      return <PersonalizedOverview account={account} content={content} coverageMarkets={briefMarkets} />;
+    }
+  }
 
   const market = selectMarket(markets ?? [], searchParams.market);
 
@@ -45,7 +68,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const marketIndicators = await getMarketIndicators(supabase, market.id);
   const marketOverview = await getMarketOverview(supabase, market.id);
 
-  const account = await getCurrentInvestorProfile(supabase);
   const initialView = account?.professional_role ? ROLE_DEFAULT_VIEW[account.professional_role] : undefined;
 
   return (
