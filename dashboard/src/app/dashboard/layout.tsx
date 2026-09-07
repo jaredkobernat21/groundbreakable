@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
 import MarketSwitcher from "@/components/MarketSwitcher";
@@ -17,6 +18,13 @@ export default async function DashboardLayout({
   // (admins see every market).
   const { data: markets } = await supabase.from("markets").select("*").order("name").returns<Market[]>();
 
+  // Groundbreakable Private (section 12) is admin-gated for now -- see
+  // dashboard/private/layout.tsx for why -- so the entry point only
+  // shows up for admins until real private-client logins exist.
+  const { data: role } = user
+    ? await supabase.from("investor_profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
       {/* Logo + the Plans/Projects/Permits/Infrastructure/Investment nav now
@@ -28,6 +36,14 @@ export default async function DashboardLayout({
           anything there, hence justify-end. */}
       <header className="flex flex-wrap items-center justify-end gap-x-4 gap-y-3 border-b border-[#1c1c1c]/10 bg-[#f4f2ee] px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
+          {role?.role === "admin" && (
+            <Link
+              href="/dashboard/private"
+              className="rounded-full border border-[#B08D57]/40 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-[#B08D57] hover:bg-[#B08D57]/10"
+            >
+              Groundbreakable Private
+            </Link>
+          )}
           <MarketSwitcher markets={markets ?? []} />
           <span className="hidden sm:inline">{user?.email}</span>
           <SignOutButton />

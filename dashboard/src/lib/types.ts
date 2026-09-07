@@ -631,6 +631,11 @@ export type GrowthArea = {
   momentum_state: GrowthAreaMomentum;
   narrative: string | null; // the "why we're watching" bullets, editorial -- no source_id on this table on purpose, see the Phase 1 migration comment
   geom: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  // Corridor Intelligence fields (Groundbreakable Private, 2026-09-07) --
+  // growth_areas doubles as the "named corridor" object rather than a
+  // parallel table, see the private-client-intelligence migration header.
+  thesis: string | null;
+  catalyst_timeline: CatalystTimelineEntry[];
   created_at: string;
   updated_at: string;
 };
@@ -952,3 +957,227 @@ export type Investment = {
 };
 
 export type InvestmentWithSource = Investment & { source: Source | null };
+
+// --- Groundbreakable Private: private-client CRM + acquisition profiles ---
+// (product spec from Jared, 2026-09-07). See
+// supabase/migrations/20260907000000_private_client_intelligence_schema.sql.
+
+export type CatalystTimelineEntry = {
+  year: string;
+  label: string;
+  status: "occurred" | "planned";
+};
+
+export type PrivateClientStatus = "prospect" | "contacted" | "qualified" | "onboarded" | "active" | "inactive";
+
+export type PrivateClient = {
+  id: string;
+  full_name: string;
+  company: string | null;
+  title: string | null;
+  location: string | null;
+  email: string | null;
+  phone: string | null;
+  linkedin_url: string | null;
+  website: string | null;
+  source_links: string[];
+  company_size: string | null;
+  markets_active: string[];
+  estimated_project_scale: string | null;
+  development_type: string[];
+  land_heavy: boolean | null;
+  entitlement_heavy: boolean | null;
+  expansion_behavior: string | null;
+  likely_acquisition_criteria: string | null;
+  deployable_capital_estimate: string | null;
+  publicly_stated_preferences: string | null;
+  current_projects: string | null;
+  relevant_municipal_filings: string | null;
+  known_partners: string | null;
+  status: PrivateClientStatus;
+  investor_profile_id: string | null;
+  score_wealth: number | null;
+  score_activity: number | null;
+  score_intel_value: number | null;
+  score_accessibility: number | null;
+  score_reasoning: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const PRIVATE_CLIENT_STATUS_LABEL: Record<PrivateClientStatus, string> = {
+  prospect: "Prospect",
+  contacted: "Contacted",
+  qualified: "Qualified",
+  onboarded: "Onboarded",
+  active: "Active Client",
+  inactive: "Inactive",
+};
+
+export type AcquisitionPropertyType =
+  | "raw_land"
+  | "farmland"
+  | "residential_land"
+  | "multifamily"
+  | "industrial_land"
+  | "commercial_land"
+  | "mixed_use"
+  | "infill"
+  | "redevelopment"
+  | "mobile_home_park"
+  | "self_storage"
+  | "retail"
+  | "office"
+  | "hospitality";
+
+export type AcquisitionDevelopmentStage =
+  | "raw_land"
+  | "pre_entitlement"
+  | "early_entitlement"
+  | "rezoning_required"
+  | "entitled"
+  | "partially_developed"
+  | "shovel_ready";
+
+export type AcquisitionStrategicPreference =
+  | "buy_and_hold"
+  | "entitle_and_sell"
+  | "develop_infrastructure"
+  | "build_vertical"
+  | "sell_lots_to_builders"
+  | "joint_venture"
+  | "opportunity_zone"
+  | "tif_incentive";
+
+export const ACQUISITION_PROPERTY_TYPE_LABEL: Record<AcquisitionPropertyType, string> = {
+  raw_land: "Raw Land",
+  farmland: "Farmland",
+  residential_land: "Residential Development Land",
+  multifamily: "Multifamily Sites",
+  industrial_land: "Industrial Land",
+  commercial_land: "Commercial Land",
+  mixed_use: "Mixed Use",
+  infill: "Infill",
+  redevelopment: "Redevelopment",
+  mobile_home_park: "Mobile Home Parks",
+  self_storage: "Self Storage",
+  retail: "Retail",
+  office: "Office",
+  hospitality: "Hospitality",
+};
+
+export const ACQUISITION_DEVELOPMENT_STAGE_LABEL: Record<AcquisitionDevelopmentStage, string> = {
+  raw_land: "Raw Land",
+  pre_entitlement: "Pre-Entitlement",
+  early_entitlement: "Early Entitlement",
+  rezoning_required: "Rezoning Required",
+  entitled: "Already Entitled",
+  partially_developed: "Partially Developed",
+  shovel_ready: "Shovel Ready",
+};
+
+export const ACQUISITION_STRATEGIC_PREFERENCE_LABEL: Record<AcquisitionStrategicPreference, string> = {
+  buy_and_hold: "Buy and Hold",
+  entitle_and_sell: "Entitle and Sell",
+  develop_infrastructure: "Develop Infrastructure",
+  build_vertical: "Build Vertical Product",
+  sell_lots_to_builders: "Sell Lots to Builders",
+  joint_venture: "Joint Venture",
+  opportunity_zone: "Opportunity Zone",
+  tif_incentive: "TIF / Incentive Preference",
+};
+
+export type AcquisitionProfile = {
+  id: string;
+  private_client_id: string;
+  profile_name: string;
+  is_active: boolean;
+
+  target_states: string[];
+  target_metros: string[];
+  target_cities: string[];
+  target_counties: string[];
+  target_market_ids: string[];
+  target_corridor_ids: string[];
+  avoided_geographies: string | null;
+  max_distance_major_city_mi: number | null;
+  max_distance_interstate_mi: number | null;
+
+  property_types: AcquisitionPropertyType[];
+  min_acres: number | null;
+  max_acres: number | null;
+  min_units: number | null;
+  max_units: number | null;
+  min_buildable_sqft: number | null;
+
+  development_stages: AcquisitionDevelopmentStage[];
+  preferred_zoning: string[];
+  acceptable_zoning: string[];
+  rezoning_tolerance: string | null;
+  density_requirements: string | null;
+  future_land_use_preference: string | null;
+
+  requires_sewer: boolean | null;
+  requires_water: boolean | null;
+  requires_electric_capacity: boolean | null;
+  requires_road_access: boolean | null;
+  requires_highway_access: boolean | null;
+  max_interchange_distance_mi: number | null;
+  requires_rail_access: boolean | null;
+  requires_fiber_access: boolean | null;
+
+  population_growth_threshold_pct: number | null;
+  watches_job_growth: boolean;
+  watches_employer_announcements: boolean;
+  watches_housing_shortage: boolean;
+  watches_new_schools: boolean;
+  watches_road_investment: boolean;
+  watches_utility_expansion: boolean;
+  watches_annexation: boolean;
+  watches_capital_improvements: boolean;
+  watches_municipal_incentives: boolean;
+
+  max_land_price: number | null;
+  target_price_per_acre: number | null;
+  target_price_per_unit: number | null;
+  target_irr_pct: number | null;
+  hold_period_years: number | null;
+  entitlement_strategy: string | null;
+  development_strategy: string | null;
+  strategic_preferences: AcquisitionStrategicPreference[];
+
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PrivateClientWithProfiles = PrivateClient & { acquisition_profiles: AcquisitionProfile[] };
+
+export type WatchlistItemType = "market" | "corridor" | "opportunity" | "shift" | "investment";
+
+export type PrivateClientWatchlistItem = {
+  id: string;
+  private_client_id: string;
+  item_type: WatchlistItemType;
+  item_id: string;
+  label: string;
+  note: string | null;
+  added_at: string;
+};
+
+export type PrivateBrief = {
+  id: string;
+  private_client_id: string;
+  generated_at: string;
+  top_signal_summary: string | null;
+  emerging_markets_summary: string | null;
+  corridor_watch_summary: string | null;
+  acquisition_matches_summary: string | null;
+  city_decisions_summary: string | null;
+  changes_since_last_summary: string | null;
+  risks_summary: string | null;
+  groundbreakable_take: string | null;
+  match_snapshot: Record<string, unknown>;
+  created_at: string;
+};

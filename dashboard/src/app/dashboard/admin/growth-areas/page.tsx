@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { GrowthArea, Market } from "@/lib/types";
 import { GROWTH_AREA_MOMENTUM_LABEL } from "@/lib/types";
-import { createGrowthArea } from "./actions";
+import { createGrowthArea, updateGrowthAreaCorridor } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -110,15 +110,54 @@ export default async function AdminGrowthAreasPage() {
           All Growth Areas ({(areas ?? []).length})
         </h2>
         <div className="space-y-3">
-          {(areas ?? []).map((area) => (
-            <div key={area.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="text-xs uppercase tracking-wide text-white/40">
-                Momentum: {GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]}
+          {(areas ?? []).map((area) => {
+            const updateCorridorAction = updateGrowthAreaCorridor.bind(null, area.id);
+            return (
+              <div key={area.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <div className="text-xs uppercase tracking-wide text-white/40">
+                  Momentum: {GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]}
+                </div>
+                <div className="font-medium text-white">{area.name}</div>
+                {area.narrative && <div className="whitespace-pre-line text-sm text-white/50">{area.narrative}</div>}
+
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs uppercase tracking-wide text-white/40 hover:text-white/70">
+                    Corridor Intelligence (thesis + catalyst timeline)
+                  </summary>
+                  <form action={updateCorridorAction} className="mt-3 space-y-3">
+                    <div>
+                      <label className={labelClass} htmlFor={`thesis-${area.id}`}>Groundbreakable Thesis</label>
+                      <textarea
+                        id={`thesis-${area.id}`}
+                        name="thesis"
+                        rows={2}
+                        defaultValue={area.thesis ?? ""}
+                        className={inputClass}
+                        placeholder="A short, human-readable explanation of why this corridor may matter."
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass} htmlFor={`timeline-${area.id}`}>Catalyst Timeline (JSON array)</label>
+                      <textarea
+                        id={`timeline-${area.id}`}
+                        name="catalyst_timeline"
+                        rows={4}
+                        defaultValue={JSON.stringify(area.catalyst_timeline ?? [], null, 2)}
+                        className={`${inputClass} font-mono text-xs`}
+                        placeholder='[{"year":"2025","label":"comprehensive plan identifies southwest growth","status":"occurred"}]'
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="rounded bg-emerald-500 px-3 py-1.5 text-xs font-medium text-black transition hover:bg-emerald-400"
+                    >
+                      Save Corridor Intelligence
+                    </button>
+                  </form>
+                </details>
               </div>
-              <div className="font-medium text-white">{area.name}</div>
-              {area.narrative && <div className="whitespace-pre-line text-sm text-white/50">{area.narrative}</div>}
-            </div>
-          ))}
+            );
+          })}
           {(areas ?? []).length === 0 && <p className="text-sm text-white/40">No Growth Areas entered yet.</p>}
         </div>
       </section>

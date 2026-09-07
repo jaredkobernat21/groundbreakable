@@ -52,3 +52,34 @@ export async function createGrowthArea(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/admin/growth-areas");
 }
+
+// Corridor Intelligence (Groundbreakable Private, section 7) reuses
+// growth_areas rather than a parallel table -- this just fills in the
+// two columns it didn't already have (see the private-client-
+// intelligence migration header) on an existing area.
+export async function updateGrowthAreaCorridor(areaId: string, formData: FormData) {
+  const supabase = createClient();
+
+  const thesis = str(formData, "thesis");
+  const timelineRaw = str(formData, "catalyst_timeline");
+
+  let catalystTimeline: unknown = [];
+  if (timelineRaw) {
+    try {
+      catalystTimeline = JSON.parse(timelineRaw);
+    } catch {
+      throw new Error("Catalyst Timeline must be valid JSON (an array of {year, label, status}).");
+    }
+  }
+
+  const { error } = await supabase
+    .from("growth_areas")
+    .update({ thesis, catalyst_timeline: catalystTimeline, updated_at: new Date().toISOString() })
+    .eq("id", areaId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/admin/growth-areas");
+  revalidatePath("/dashboard/private/corridors");
+  revalidatePath(`/dashboard/private/corridors/${areaId}`);
+}
