@@ -117,7 +117,9 @@ export default async function OpportunitiesPage() {
               <div className="text-xs uppercase tracking-wide text-[#1c1c1c]/40">{card.market}</div>
               {matchBadge(card.score)}
             </div>
-            <div className="mt-1 text-sm font-medium text-[#1c1c1c]">{card.title}</div>
+            <Link href={`/dashboard/opportunities/${card.itemType}/${card.itemId}`} className="mt-1 block text-sm font-medium text-[#1c1c1c] hover:underline">
+              {card.title}
+            </Link>
             <ul className="mt-2 space-y-1 text-sm text-[#1c1c1c]/60">
               {card.reasons.slice(0, 2).map((r, i) => (
                 <li key={i}>{r}</li>

@@ -42,6 +42,7 @@ export default function PersonalizedOverview({
   const topCards = [
     ...content.topOpportunities.map((o) => ({
       key: `o-${o.opportunity.id}`,
+      href: `/dashboard/opportunities/opportunity/${o.opportunity.id}`,
       market: o.market.name,
       title: o.opportunity.address,
       score: o.match.score,
@@ -49,6 +50,7 @@ export default function PersonalizedOverview({
     })),
     ...content.topShifts.map((s) => ({
       key: `s-${s.shift.id}`,
+      href: `/dashboard/opportunities/shift/${s.shift.id}`,
       market: s.market.name,
       title: s.shift.event,
       score: s.match.score,
@@ -120,7 +122,9 @@ export default function PersonalizedOverview({
                 <div className="text-xs uppercase tracking-wide text-[#1c1c1c]/40">{card.market}</div>
                 {matchBadge(card.score)}
               </div>
-              <div className="mt-1 text-sm font-medium text-[#1c1c1c]">{card.title}</div>
+              <Link href={card.href} className="mt-1 block text-sm font-medium text-[#1c1c1c] hover:underline">
+                {card.title}
+              </Link>
               <p className="mt-2 text-sm text-[#1c1c1c]/60">{card.reason}</p>
             </div>
           ))}

@@ -36,7 +36,7 @@ function teardropPinSvg(color: string, size = 28): string {
 // one isn't scoped to a single market's center/zoom, since it's plotting
 // top matches across every market in the account's Opportunity Profile.
 // Fits bounds to whatever pins actually exist instead.
-export default function PersonalizedOverviewMap({ pins }: { pins: OverviewMapPin[] }) {
+export default function PersonalizedOverviewMap({ pins, singlePinZoom = 8 }: { pins: OverviewMapPin[]; singlePinZoom?: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
 
@@ -53,7 +53,7 @@ export default function PersonalizedOverviewMap({ pins }: { pins: OverviewMapPin
         container: containerRef.current,
         style: "mapbox://styles/mapbox/dark-v11",
         center: pins[0] ? [pins[0].lng, pins[0].lat] : [-95.2, 39.0],
-        zoom: 8,
+        zoom: pins.length === 1 ? singlePinZoom : 8,
       });
       mapRef.current = map;
       map.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), "top-right");
