@@ -1,22 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PrivateBrief } from "@/lib/types";
+import type { PersonalizedBrief } from "@/lib/types";
 
 // Most recent two briefs -- the newest is what renders, the one before
-// it is what "Changes Since Last Brief" (section 11.6) diffs against.
-export async function getRecentBriefs(supabase: SupabaseClient, privateClientId: string, limit = 2): Promise<PrivateBrief[]> {
+// it is what "Changes Since Last Brief" diffs against.
+export async function getRecentBriefs(supabase: SupabaseClient, investorProfileId: string, limit = 2): Promise<PersonalizedBrief[]> {
   const { data } = await supabase
-    .from("private_briefs")
+    .from("personalized_briefs")
     .select("*")
-    .eq("private_client_id", privateClientId)
+    .eq("investor_profile_id", investorProfileId)
     .order("generated_at", { ascending: false })
     .limit(limit)
-    .returns<PrivateBrief[]>();
+    .returns<PersonalizedBrief[]>();
   return data ?? [];
 }
 
 export async function createBrief(
   supabase: SupabaseClient,
-  brief: Omit<PrivateBrief, "id" | "created_at" | "generated_at"> & { generated_at?: string }
+  brief: Omit<PersonalizedBrief, "id" | "created_at" | "generated_at"> & { generated_at?: string }
 ) {
-  return supabase.from("private_briefs").insert(brief).select("*").single().returns<PrivateBrief>();
+  return supabase.from("personalized_briefs").insert(brief).select("*").single().returns<PersonalizedBrief>();
 }

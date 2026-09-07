@@ -10,6 +10,7 @@ import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
+import { getCurrentInvestorProfile, ROLE_DEFAULT_VIEW } from "@/lib/tiers";
 import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const marketIndicators = await getMarketIndicators(supabase, market.id);
   const marketOverview = await getMarketOverview(supabase, market.id);
 
+  const account = await getCurrentInvestorProfile(supabase);
+  const initialView = account?.professional_role ? ROLE_DEFAULT_VIEW[account.professional_role] : undefined;
+
   return (
     <ShiftDashboardView
       key={market.id}
@@ -57,6 +61,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       opportunities={opportunities}
       marketIndicators={marketIndicators}
       marketOverview={marketOverview}
+      initialView={initialView}
     />
   );
 }

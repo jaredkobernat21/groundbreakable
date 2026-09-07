@@ -958,9 +958,12 @@ export type Investment = {
 
 export type InvestmentWithSource = Investment & { source: Source | null };
 
-// --- Groundbreakable Private: private-client CRM + acquisition profiles ---
-// (product spec from Jared, 2026-09-07). See
-// supabase/migrations/20260907000000_private_client_intelligence_schema.sql.
+// --- Groundbreakable's 3-tier product model: Access / Intelligence /
+// Partner (product spec from Jared, 2026-09-07). See
+// supabase/migrations/20260907010000_three_tier_product_model.sql. This
+// supersedes the prior "Groundbreakable Private" CRM-prospecting model
+// (20260907000000_private_client_intelligence_schema.sql) -- every tier
+// is now a real self-service account, not an admin-curated prospect row.
 
 export type CatalystTimelineEntry = {
   year: string;
@@ -968,51 +971,63 @@ export type CatalystTimelineEntry = {
   status: "occurred" | "planned";
 };
 
-export type PrivateClientStatus = "prospect" | "contacted" | "qualified" | "onboarded" | "active" | "inactive";
+// --- Tier / role (investor_profiles) ---
 
-export type PrivateClient = {
-  id: string;
-  full_name: string;
-  company: string | null;
-  title: string | null;
-  location: string | null;
-  email: string | null;
-  phone: string | null;
-  linkedin_url: string | null;
-  website: string | null;
-  source_links: string[];
-  company_size: string | null;
-  markets_active: string[];
-  estimated_project_scale: string | null;
-  development_type: string[];
-  land_heavy: boolean | null;
-  entitlement_heavy: boolean | null;
-  expansion_behavior: string | null;
-  likely_acquisition_criteria: string | null;
-  deployable_capital_estimate: string | null;
-  publicly_stated_preferences: string | null;
-  current_projects: string | null;
-  relevant_municipal_filings: string | null;
-  known_partners: string | null;
-  status: PrivateClientStatus;
-  investor_profile_id: string | null;
-  score_wealth: number | null;
-  score_activity: number | null;
-  score_intel_value: number | null;
-  score_accessibility: number | null;
-  score_reasoning: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
+export type SubscriptionTier = "access" | "intelligence" | "partner";
+
+export const SUBSCRIPTION_TIER_LABEL: Record<SubscriptionTier, string> = {
+  access: "Access",
+  intelligence: "Intelligence",
+  partner: "Partner",
 };
 
-export const PRIVATE_CLIENT_STATUS_LABEL: Record<PrivateClientStatus, string> = {
-  prospect: "Prospect",
-  contacted: "Contacted",
-  qualified: "Qualified",
-  onboarded: "Onboarded",
-  active: "Active Client",
-  inactive: "Inactive",
+export const SUBSCRIPTION_TIER_TAGLINE: Record<SubscriptionTier, string> = {
+  access: "See what's happening.",
+  intelligence: "See what matters to you.",
+  partner: "Help me pursue it.",
+};
+
+export type ProfessionalRole =
+  | "investor"
+  | "developer"
+  | "builder"
+  | "general_contractor"
+  | "concrete_contractor"
+  | "electrician"
+  | "plumber"
+  | "landscaper"
+  | "realtor"
+  | "other";
+
+export const PROFESSIONAL_ROLE_LABEL: Record<ProfessionalRole, string> = {
+  investor: "Investor",
+  developer: "Developer",
+  builder: "Builder",
+  general_contractor: "General Contractor",
+  concrete_contractor: "Concrete Contractor",
+  electrician: "Electrician",
+  plumber: "Plumber",
+  landscaper: "Landscaper",
+  realtor: "Realtor",
+  other: "Other Development Professional",
+};
+
+// Roles whose Opportunity Profile should default to the contractor shape
+// rather than the investor/developer shape (spec section 2's two
+// profile forms).
+export const CONTRACTOR_ROLES: ProfessionalRole[] = [
+  "builder", "general_contractor", "concrete_contractor", "electrician", "plumber", "landscaper",
+];
+
+// investor_profiles.role is the existing admin/investor permission flag
+// (see is_admin()) -- unrelated to professional_role/subscription_tier.
+export type InvestorProfile = {
+  id: string;
+  full_name: string | null;
+  role: "investor" | "admin";
+  professional_role: ProfessionalRole | null;
+  subscription_tier: SubscriptionTier;
+  created_at: string;
 };
 
 export type AcquisitionPropertyType =
@@ -1088,12 +1103,50 @@ export const ACQUISITION_STRATEGIC_PREFERENCE_LABEL: Record<AcquisitionStrategic
   tif_incentive: "TIF / Incentive Preference",
 };
 
-export type AcquisitionProfile = {
+export type OpportunityProfileType = "investor_developer" | "contractor";
+
+export const OPPORTUNITY_PROFILE_TYPE_LABEL: Record<OpportunityProfileType, string> = {
+  investor_developer: "Investor / Developer",
+  contractor: "Contractor",
+};
+
+export type ContractorProjectType = "residential" | "multifamily" | "commercial" | "industrial" | "infrastructure" | "subdivision";
+
+export const CONTRACTOR_PROJECT_TYPE_LABEL: Record<ContractorProjectType, string> = {
+  residential: "Residential",
+  multifamily: "Multifamily",
+  commercial: "Commercial",
+  industrial: "Industrial",
+  infrastructure: "Infrastructure",
+  subdivision: "Subdivision",
+};
+
+export type ContractorDeveloperTypePreference = "public" | "private" | "either";
+
+export const CONTRACTOR_DEVELOPER_TYPE_LABEL: Record<ContractorDeveloperTypePreference, string> = {
+  public: "Public Projects",
+  private: "Private Projects",
+  either: "Either",
+};
+
+// Section 2's Detailed Opportunity Profile -- self-service, owned
+// directly by the signed-in account (investor_profile_id), one-to-many
+// so a user can keep more than one distinct strategy and mark which is
+// `is_active`. Dual-shaped: `profile_type` picks which half of the
+// columns below apply -- the investor/developer criteria (unchanged from
+// the prior Groundbreakable Private acquisition profile) or the
+// contractor criteria (new). Unused-for-this-type columns are simply
+// left at their empty/null default rather than split into two tables --
+// one profile row per account is easier to reason about than a union of
+// two tables everywhere a profile is read.
+export type OpportunityProfile = {
   id: string;
-  private_client_id: string;
+  investor_profile_id: string;
   profile_name: string;
   is_active: boolean;
+  profile_type: OpportunityProfileType;
 
+  // Geography (both profile types)
   target_states: string[];
   target_metros: string[];
   target_cities: string[];
@@ -1104,20 +1157,19 @@ export type AcquisitionProfile = {
   max_distance_major_city_mi: number | null;
   max_distance_interstate_mi: number | null;
 
+  // Investor / Developer criteria
   property_types: AcquisitionPropertyType[];
   min_acres: number | null;
   max_acres: number | null;
   min_units: number | null;
   max_units: number | null;
   min_buildable_sqft: number | null;
-
   development_stages: AcquisitionDevelopmentStage[];
   preferred_zoning: string[];
   acceptable_zoning: string[];
   rezoning_tolerance: string | null;
   density_requirements: string | null;
   future_land_use_preference: string | null;
-
   requires_sewer: boolean | null;
   requires_water: boolean | null;
   requires_electric_capacity: boolean | null;
@@ -1126,7 +1178,6 @@ export type AcquisitionProfile = {
   max_interchange_distance_mi: number | null;
   requires_rail_access: boolean | null;
   requires_fiber_access: boolean | null;
-
   population_growth_threshold_pct: number | null;
   watches_job_growth: boolean;
   watches_employer_announcements: boolean;
@@ -1137,7 +1188,6 @@ export type AcquisitionProfile = {
   watches_annexation: boolean;
   watches_capital_improvements: boolean;
   watches_municipal_incentives: boolean;
-
   max_land_price: number | null;
   target_price_per_acre: number | null;
   target_price_per_unit: number | null;
@@ -1147,18 +1197,27 @@ export type AcquisitionProfile = {
   development_strategy: string | null;
   strategic_preferences: AcquisitionStrategicPreference[];
 
+  // Contractor criteria
+  trade: string | null;
+  travel_radius_mi: number | null;
+  preferred_project_types: ContractorProjectType[];
+  min_contract_value: number | null;
+  preferred_lead_time: string | null;
+  developer_type_preference: ContractorDeveloperTypePreference[];
+  requires_gc_unidentified: boolean;
+  requires_subs_unassigned: boolean;
+  licensing_capabilities: string[];
+
   notes: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type PrivateClientWithProfiles = PrivateClient & { acquisition_profiles: AcquisitionProfile[] };
-
 export type WatchlistItemType = "market" | "corridor" | "opportunity" | "shift" | "investment";
 
-export type PrivateClientWatchlistItem = {
+export type WatchlistItem = {
   id: string;
-  private_client_id: string;
+  investor_profile_id: string;
   item_type: WatchlistItemType;
   item_id: string;
   label: string;
@@ -1166,9 +1225,9 @@ export type PrivateClientWatchlistItem = {
   added_at: string;
 };
 
-export type PrivateBrief = {
+export type PersonalizedBrief = {
   id: string;
-  private_client_id: string;
+  investor_profile_id: string;
   generated_at: string;
   top_signal_summary: string | null;
   emerging_markets_summary: string | null;
@@ -1180,4 +1239,76 @@ export type PrivateBrief = {
   groundbreakable_take: string | null;
   match_snapshot: Record<string, unknown>;
   created_at: string;
+};
+
+// --- Partner Desk ---
+
+export type PartnerRequestType = "research" | "outreach";
+
+export const PARTNER_REQUEST_TYPE_LABEL: Record<PartnerRequestType, string> = {
+  research: "Research Request",
+  outreach: "Outreach Assistance",
+};
+
+export type PartnerRequestSubjectType = "opportunity" | "shift" | "corridor" | "market" | "custom";
+
+export type PartnerRequestStatus =
+  | "submitted"
+  | "reviewing"
+  | "researching"
+  | "ready"
+  | "outreach_requested"
+  | "contacted"
+  | "interested"
+  | "not_interested"
+  | "introduction_made"
+  | "closed";
+
+export const PARTNER_REQUEST_STATUS_ORDER: PartnerRequestStatus[] = [
+  "submitted", "reviewing", "researching", "ready", "outreach_requested",
+  "contacted", "interested", "not_interested", "introduction_made", "closed",
+];
+
+export const PARTNER_REQUEST_STATUS_LABEL: Record<PartnerRequestStatus, string> = {
+  submitted: "Submitted",
+  reviewing: "Reviewing",
+  researching: "Researching",
+  ready: "Ready",
+  outreach_requested: "Outreach Requested",
+  contacted: "Contacted",
+  interested: "Interested",
+  not_interested: "Not Interested",
+  introduction_made: "Introduction Made",
+  closed: "Closed",
+};
+
+export type PartnerRequestPriority = "low" | "normal" | "high";
+
+export type PartnerRequest = {
+  id: string;
+  investor_profile_id: string;
+  request_type: PartnerRequestType;
+  subject_type: PartnerRequestSubjectType | null;
+  subject_id: string | null;
+  subject_label: string | null;
+  question: string;
+  status: PartnerRequestStatus;
+  priority: PartnerRequestPriority;
+  assigned_to: string | null;
+  findings_summary: string | null;
+  ownership_notes: string | null;
+  planning_history: string | null;
+  infrastructure_notes: string | null;
+  zoning_notes: string | null;
+  risks: string | null;
+  suggested_next_steps: string | null;
+  source_links: string[];
+  contact_name: string | null;
+  contact_method: string | null;
+  contact_notes: string | null;
+  outreach_message: string | null;
+  response_notes: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
 };

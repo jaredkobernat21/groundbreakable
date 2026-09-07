@@ -58,7 +58,7 @@ import InfrastructureFeed from "./InfrastructureFeed";
 import InfrastructureDetailPanel from "./InfrastructureDetailPanel";
 import MarketOverviewSection from "./MarketOverviewSection";
 
-type View =
+export type View =
   | "plans"
   | "projects"
   | "permits"
@@ -77,7 +77,7 @@ type View =
 // Companies -- each with its own sub-tabs, replacing the earlier flat
 // 11-button rail. Every underlying view/component/state below is
 // unchanged; this is purely a navigation regrouping.
-type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies";
+export type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies";
 
 const GROUPS: { value: Group; label: string; views: View[] }[] = [
   { value: "market", label: "Market", views: ["momentum", "market", "investment"] },
@@ -146,6 +146,7 @@ export default function ShiftDashboardView({
   opportunities,
   marketIndicators,
   marketOverview,
+  initialView,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -157,14 +158,20 @@ export default function ShiftDashboardView({
   opportunities: DevelopmentOpportunityWithSources[];
   marketIndicators: MarketIndicatorWithSource[];
   marketOverview: MarketOverviewWithSources | null;
+  // Role-based Access dashboard (3-tier product model, section "TIER 1"):
+  // which category the rail opens on is the one lever a role is allowed
+  // to pull -- it does NOT change what data is fetched or filter any
+  // list, just which tab a given role sees first (spec: "should NOT
+  // create individual opportunity matching"). See ROLE_DEFAULT_VIEW in
+  // dashboard/page.tsx for the role -> view mapping.
+  initialView?: View;
 }) {
-  const [view, setView] = useState<View>("momentum");
+  const [view, setView] = useState<View>(initialView ?? "momentum");
   // Which group's sub-tab dropdown is open in the rail -- independent of
   // `view` so clicking the already-active group's button can collapse the
   // dropdown back without changing what content is showing. Starts open
-  // on the initial view's group ("market", since the initial view is
-  // "momentum").
-  const [expandedGroup, setExpandedGroup] = useState<Group | null>("market");
+  // on the initial view's group.
+  const [expandedGroup, setExpandedGroup] = useState<Group | null>(VIEW_GROUP[initialView ?? "momentum"]);
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
