@@ -102,7 +102,22 @@ function scoreInvestorDeveloperOpportunityMatch(profile: OpportunityProfile, opp
   const strengthPoints = opportunity.strength === "high" ? 15 : opportunity.strength === "medium" ? 8 : 3;
   const reasons = [...geo.reasons, ...kw.reasons];
   if (opportunity.strength === "high") reasons.push("Flagged as a high-strength opportunity");
-  const score = Math.min(100, geo.points + kw.points + strengthPoints);
+
+  // Growth-corridor keywordBonus above has nothing for foreclosure/tax-
+  // lien/code-violation/vacancy signals -- every watches_* flag on this
+  // profile is about growth-corridor infrastructure, which is the wrong
+  // lens entirely for a distressed-property cash buyer (Fredo, KASA
+  // Acquisitions). `property_types` including "redevelopment" is the
+  // existing, real signal that a profile is distress-oriented -- reuse
+  // it here rather than adding a new dedicated flag for what's really
+  // the same underlying preference.
+  let distressPoints = 0;
+  if (opportunity.category === "distress" && profile.property_types.includes("redevelopment")) {
+    distressPoints = 15;
+    reasons.push("Distressed/as-is property — matches your redevelopment-focused strategy");
+  }
+
+  const score = Math.min(100, geo.points + kw.points + strengthPoints + distressPoints);
   return { score, reasons };
 }
 
@@ -180,6 +195,10 @@ export function scoreShiftMatch(profile: OpportunityProfile, shift: Shift, marke
     const kw = keywordBonus(profile, [shift.category, shift.shift_type, shift.event]);
     points += kw.points;
     reasons.push(...kw.reasons);
+    if (shift.category === "distress" && profile.property_types.includes("redevelopment")) {
+      points += 15;
+      reasons.push("Distress signal — matches your redevelopment-focused strategy");
+    }
     if (shift.audience.some((a) => a === "developer" || a === "investor")) {
       points += 10;
       reasons.push("Flagged as relevant to developers/investors specifically");
