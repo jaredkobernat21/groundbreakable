@@ -2,8 +2,17 @@ import Link from "next/link";
 import type { PersonalizedBriefContent } from "@/lib/generatePersonalizedBrief";
 import { EMERGING_MARKET_TIER_LABEL } from "@/lib/emergingMarketScoring";
 import type { InvestorProfile, Market } from "@/lib/types";
+import PersonalizedOverviewMap, { type OverviewMapPin } from "./PersonalizedOverviewMap";
 
 const cardClass = "rounded-2xl border border-[#1c1c1c]/10 bg-white p-5 shadow-sm";
+// A separate class string (not cardClass + overrides) on purpose --
+// Tailwind utility classes with the same property (bg-white vs.
+// bg-[#1c1c1c]) don't reliably resolve in the order they're written in
+// the className string, only in whatever order they land in the
+// generated stylesheet. Concatenating "bg-[#1c1c1c]" onto a string that
+// already contains "bg-white" previously let bg-white win, leaving
+// white-on-white text that looked like an empty box.
+const emphasizedCardClass = "rounded-2xl border border-[#1c1c1c]/20 bg-[#1c1c1c] p-5 shadow-sm text-white";
 
 function matchBadge(score: number) {
   const color = score >= 70 ? "bg-emerald-600" : score >= 40 ? "bg-amber-500" : "bg-[#1c1c1c]/30";
@@ -49,6 +58,34 @@ export default function PersonalizedOverview({
     .sort((a, b) => b.score - a.score)
     .slice(0, 6);
 
+  // Every geolocated top match, across every market -- the hero map
+  // fits its own bounds to whatever this produces rather than assuming
+  // one market's center/zoom, since matches here can span the full
+  // width of the account's footprint (Dan Lynch's spans Perry to Spring
+  // Hill, well over an hour apart).
+  const pins: OverviewMapPin[] = [
+    ...content.topOpportunities
+      .filter((o) => o.opportunity.latitude != null && o.opportunity.longitude != null)
+      .map((o) => ({
+        id: `o-${o.opportunity.id}`,
+        lat: o.opportunity.latitude as number,
+        lng: o.opportunity.longitude as number,
+        title: o.opportunity.address,
+        subtitle: o.market.name,
+        score: o.match.score,
+      })),
+    ...content.topShifts
+      .filter((s) => s.shift.lat != null && s.shift.lng != null)
+      .map((s) => ({
+        id: `s-${s.shift.id}`,
+        lat: s.shift.lat as number,
+        lng: s.shift.lng as number,
+        title: s.shift.event,
+        subtitle: s.market.name,
+        score: s.match.score,
+      })),
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -58,7 +95,13 @@ export default function PersonalizedOverview({
         </p>
       </div>
 
-      <div className={`${cardClass} border-[#1c1c1c]/20 bg-[#1c1c1c] text-white`}>
+      {pins.length > 0 && (
+        <div className="h-80 overflow-hidden rounded-2xl border border-[#1c1c1c]/10 shadow-sm sm:h-96">
+          <PersonalizedOverviewMap pins={pins} />
+        </div>
+      )}
+
+      <div className={emphasizedCardClass}>
         <div className="text-xs uppercase tracking-wide text-white/50">Groundbreakable Take</div>
         <p className="mt-1 text-sm text-white/90">{content.sections.groundbreakableTake}</p>
       </div>
