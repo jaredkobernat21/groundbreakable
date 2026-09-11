@@ -261,16 +261,16 @@ button{ font-family:inherit; }
 .nav--overlay .nav__mobile{ background:var(--paper); }
 
 /* ---------- Hero ----------
-   Full-bleed, full-height photo hero: a single centered white headline
-   over the render, nothing else — matches the roqhome.com /build.html
-   page-hero treatment (vertical scrim, one serif line, no sub/CTAs). */
+   Full-bleed, full-height photo hero: the copy sits offset to the left
+   over the render (eyebrow, headline, sub, two CTAs, a stat rule) rather
+   than centered — see HOMEPAGELAYOUT.PNG. */
 .hero{
   position:relative;
   min-height:100svh;
   display:flex;
   align-items:center;
-  justify-content:center;
-  text-align:center;
+  justify-content:flex-start;
+  text-align:left;
   overflow:hidden;
   isolation:isolate;
   color:var(--on-dark);
@@ -290,8 +290,22 @@ button{ font-family:inherit; }
 .hero__content{
   position:relative;
   z-index:1;
-  padding:120px 24px 96px;
+  margin:0;
+  padding:140px 24px 96px 64px;
+  max-width:640px;
 }
+.hero-eyebrow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12.5px;
+  font-weight:600;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--on-dark-70);
+  margin:0 0 22px;
+}
+.hero-eyebrow::before{ content:''; width:26px; height:1px; background:var(--gold); flex-shrink:0; }
 .hero__title{
   font-family:var(--serif);
   font-weight:400;
@@ -299,10 +313,51 @@ button{ font-family:inherit; }
   line-height:1.12;
   letter-spacing:-0.01em;
   color:#FFFFFF;
-  max-width:19ch;
-  margin:0 auto;
+  max-width:14ch;
+  margin:0 0 22px;
   text-wrap:balance;
   text-shadow:0 2px 30px rgba(0,0,0,0.55);
+}
+.hero__sub{
+  font-size:clamp(16px,1.6vw,19px);
+  line-height:1.5;
+  color:var(--on-dark-70);
+  max-width:44ch;
+  margin:0 0 34px;
+  text-shadow:0 1px 16px rgba(0,0,0,0.4);
+}
+.hero__actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-bottom:44px;
+}
+.hero__stats{
+  display:flex;
+  flex-wrap:wrap;
+  padding-top:26px;
+  border-top:1px solid var(--on-dark-line);
+}
+.hero__stat{
+  padding-right:28px;
+  margin-right:28px;
+  border-right:1px solid var(--on-dark-line);
+}
+.hero__stat:last-child{ border-right:none; margin-right:0; padding-right:0; }
+.hero__stat-value{
+  font-family:var(--serif);
+  font-size:15px;
+  font-weight:600;
+  color:#FFFFFF;
+  letter-spacing:0.01em;
+}
+.hero__stat-label{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--on-dark-45);
+  margin-top:3px;
 }
 
 /* ---------- Differentiator (light, centered statement) ---------- */
@@ -536,7 +591,7 @@ button{ font-family:inherit; }
 .footer__brand .brand__mark{ color:var(--ink); }
 .footer__name{ font-family:var(--serif); font-weight:700; font-size:13.5px; color:var(--ink); margin:0; letter-spacing:0.03em; }
 .footer__tag{ font-size:11.5px; color:var(--ink-40); margin:3px 0 0; }
-.footer__links{ display:flex; gap:24px; }
+.footer__links{ display:flex; flex-wrap:wrap; gap:12px 24px; }
 .footer__links a{ font-size:13px; color:var(--ink-55); }
 .footer__links a:hover{ color:var(--ink); }
 .footer__copy{ font-size:12px; color:var(--ink-40); margin:0; width:100%; text-align:left; }
@@ -674,8 +729,12 @@ button{ font-family:inherit; }
   .nav__toggle{ display:flex; }
   .nav__mobile.open{ display:flex; }
   .wrap{ padding:0 20px; }
-  .hero__content{ padding:104px 24px 84px; }
-  .hero__title{ font-size:31px; max-width:15ch; }
+  .hero__content{ padding:104px 24px 84px; max-width:none; }
+  .hero__title{ font-size:31px; max-width:14ch; }
+  .hero__actions{ width:100%; }
+  .hero__actions .btn{ flex:1 1 auto; }
+  .hero__stats{ gap:20px 0; }
+  .hero__stat{ flex:1 1 calc(50% - 14px); border-right:none; margin-right:0; padding-right:0; }
   .differentiator, .approach, .showcase, .markets, .about, .partner, .cta-band{ padding:72px 0; }
   .market-cards{ grid-template-columns:1fr; }
   .section__head{ flex-direction:column; align-items:flex-start; }
