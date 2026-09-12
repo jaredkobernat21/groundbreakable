@@ -27,6 +27,176 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  /* ---------- Framework page (adapted from roqhome.com/build.html) ----------
+     Namespaced fw- so nothing here collides with the shared stylesheet
+     (particularly .hero, which the homepage already owns). */
+
+  .fw-pricing{ padding:clamp(56px,8vw,96px) 0; }
+  .fw-pricing-wrap{
+    display:grid;
+    grid-template-columns:minmax(0,480px) 1fr;
+    align-items:center;
+    gap:clamp(36px,6vw,72px);
+  }
+  .fw-pricing-visual img{ border-radius:var(--radius); }
+  .fw-pricing-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(26px,3vw,32px);
+    line-height:1.25;
+    color:var(--ink);
+    margin:0 0 14px;
+  }
+  .fw-pricing-rule{ width:34px; height:2px; background:var(--gold); border-radius:2px; margin-bottom:22px; }
+  .fw-pricing-desc{ font-size:15px; line-height:1.7; color:var(--ink-55); max-width:44ch; margin-bottom:26px; }
+  .fw-pricing-checklist{ display:flex; flex-direction:column; gap:14px; }
+  .fw-pricing-checklist li{ display:flex; align-items:center; gap:12px; font-size:14.5px; color:var(--ink); }
+  .fw-pricing-checklist svg{ width:19px; height:19px; flex-shrink:0; stroke:var(--gold); fill:none; stroke-width:1.6; }
+
+  .fw-board{ background:var(--charcoal); padding:clamp(56px,7vw,96px) 0 clamp(48px,6vw,88px); }
+  .fw-board-inner{ max-width:1240px; margin:0 auto; padding:0 32px; text-align:center; }
+  .fw-board-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(26px,3.2vw,40px);
+    line-height:1.16;
+    letter-spacing:-0.01em;
+    color:#FFFFFF;
+    max-width:20ch;
+    margin:0 auto;
+  }
+  .fw-board-desc{ font-size:clamp(14px,1.3vw,16px); line-height:1.75; color:var(--on-dark-70); max-width:60ch; margin:16px auto 0; }
+  .fw-board-figure{ margin:clamp(32px,4vw,52px) 0 0; }
+  .fw-board-figure img{ border-radius:var(--radius-sm); width:100%; height:auto; }
+  .fw-board-caption{ font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--on-dark-45); margin-top:20px; }
+
+  .fw-hero{
+    display:grid;
+    grid-template-columns:minmax(0,460px) 1fr;
+    align-items:center;
+    gap:clamp(32px,5vw,64px);
+    padding:clamp(56px,8vw,96px) 32px;
+    max-width:1360px;
+    margin:0 auto;
+  }
+  .fw-hero-headline{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(30px,4vw,44px);
+    line-height:1.14;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    margin:0 0 20px;
+  }
+  .fw-hero-sub{ font-size:16px; color:var(--ink-70); margin:0 0 14px; }
+  .fw-hero-desc{ font-size:15px; line-height:1.7; color:var(--ink-55); max-width:46ch; margin:0 0 30px; }
+  .fw-hero-actions{ display:flex; flex-direction:column; align-items:flex-start; gap:16px; }
+  .fw-hero-visual img{ border-radius:var(--radius); width:100%; height:auto; }
+
+  .fw-features{ background:var(--paper-soft); padding:clamp(48px,7vw,80px) 32px; }
+  .fw-feature-grid{ max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); }
+  .fw-feature-item{ text-align:center; padding:8px clamp(16px,3vw,40px); border-left:1px solid var(--ink-06); }
+  .fw-feature-item:first-child{ border-left:none; }
+  .fw-feature-icon{ width:44px; height:44px; margin:0 auto 18px; }
+  .fw-feature-icon svg{ width:44px; height:44px; stroke:var(--gold); fill:none; stroke-width:1.4; }
+  .fw-feature-item h3{ font-family:var(--serif); font-weight:600; font-size:20px; margin:0 0 10px; }
+  .fw-feature-item p{ font-size:14px; line-height:1.7; color:var(--ink-55); margin:0; }
+
+  .fw-cta-dark{ position:relative; background:var(--charcoal); color:var(--on-dark); padding:clamp(72px,11vw,130px) 32px; overflow:hidden; }
+  .fw-cta-particles{ position:absolute; z-index:0; left:clamp(-140px,-8vw,-40px); bottom:clamp(-120px,-8vw,-40px); width:clamp(340px,34vw,560px); height:auto; opacity:0.9; pointer-events:none; }
+  .fw-cta-inner{ position:relative; max-width:1200px; margin:0 auto; }
+  .fw-cta-dark h2{ font-family:var(--serif); font-weight:600; font-size:clamp(30px,4vw,46px); line-height:1.2; max-width:14ch; margin:0 0 26px; color:#FFFFFF; }
+  .fw-cta-dark h2 .gold{ color:var(--gold); }
+  .fw-cta-rule{ width:34px; height:2px; background:var(--gold); border-radius:2px; margin-bottom:30px; }
+
+  @media (max-width:900px){
+    .fw-pricing-wrap{ grid-template-columns:1fr; }
+    .fw-hero{ grid-template-columns:1fr; }
+    .fw-hero-visual{ order:-1; }
+  }
+
+  @media (max-width:760px){
+    .fw-feature-grid{ grid-template-columns:1fr; gap:36px; }
+    .fw-feature-item{ border-left:none; border-top:1px solid var(--ink-06); padding-top:32px; }
+    .fw-feature-item:first-child{ border-top:none; padding-top:8px; }
+    .fw-hero-actions{ width:100%; align-items:stretch; }
+    .fw-hero-actions > .btn{ justify-content:center; }
+  }
+
+  /* ---------- Framework intake modal ---------- */
+  .fw-modal-overlay{
+    position:fixed; inset:0; z-index:500;
+    background:rgba(20,19,15,0.55);
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.3s ease;
+  }
+  .fw-modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .fw-modal-panel{
+    background:#fff; border-radius:22px; width:100%; max-width:540px;
+    max-height:88vh; overflow-y:auto; padding:clamp(28px,5vw,44px);
+    position:relative;
+    transform:translateY(14px);
+    transition:transform 0.3s ease;
+  }
+  .fw-modal-overlay.open .fw-modal-panel{ transform:translateY(0); }
+  .fw-modal-close{
+    position:absolute; top:18px; right:18px; width:32px; height:32px;
+    border-radius:50%; border:1px solid var(--ink-12); background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-55); font-size:15px; line-height:1;
+  }
+  .fw-modal-close:hover{ background:var(--paper-soft); color:var(--ink); }
+  .fw-modal-title{ font-family:var(--serif); font-weight:600; font-size:clamp(22px,3vw,26px); line-height:1.3; margin:0 0 6px; padding-right:30px; }
+  .fw-modal-sub{ font-size:13.5px; color:var(--ink-40); margin:0 0 28px; }
+  .fw-q-block{ margin-bottom:26px; }
+  .fw-q-label{ font-family:var(--serif); font-size:16px; font-weight:600; color:var(--ink); margin:0 0 4px; }
+  .fw-q-hint{ font-size:12.5px; color:var(--ink-40); margin:0 0 12px; }
+  .fw-q-input{
+    width:100%; background:var(--paper-soft); border:1px solid var(--ink-12); border-radius:14px;
+    padding:14px 16px; color:var(--ink); font-family:var(--sans); font-size:14.5px; outline:none;
+  }
+  .fw-q-input:focus{ border-color:var(--gold); }
+  .fw-chip-grid{ display:flex; flex-wrap:wrap; gap:9px; }
+  .fw-chip{
+    background:var(--paper-soft); border:1px solid var(--ink-12); border-radius:30px; padding:10px 16px;
+    font-family:var(--sans); font-size:13px; color:var(--ink-55); cursor:pointer;
+    transition:border-color .2s ease, background .2s ease, color .2s ease;
+  }
+  .fw-chip:hover{ border-color:rgba(194,135,63,0.4); }
+  .fw-chip.active{ border-color:var(--gold); background:rgba(194,135,63,0.12); color:var(--ink); }
+  .fw-other-input{
+    margin-top:10px; width:100%; background:var(--paper-soft); border:1px solid var(--ink-12); border-radius:14px;
+    padding:12px 16px; color:var(--ink); font-family:var(--sans); font-size:14px; outline:none; display:none;
+  }
+  .fw-other-input.visible{ display:block; }
+  .fw-other-input:focus{ border-color:var(--gold); }
+  .fw-field-row{ margin-bottom:14px; }
+  .fw-field-row label{ display:block; font-size:12px; color:var(--ink-40); margin-bottom:6px; }
+  .fw-field-row:last-of-type{ margin-bottom:0; }
+  .fw-q-error{ margin-top:4px; font-size:13px; color:#B5473A; display:none; }
+  .fw-q-error.visible{ display:block; }
+  .fw-modal-submit{
+    width:100%; border-radius:14px; padding:16px; border:none; background:var(--gold); color:#fff;
+    font-family:var(--sans); font-size:13px; font-weight:600; letter-spacing:0.02em; cursor:pointer;
+    margin-top:6px; transition:background .25s ease, transform .25s ease, opacity .25s ease;
+  }
+  .fw-modal-submit:hover{ background:var(--gold-deep); }
+  .fw-modal-submit:active{ transform:scale(0.99); }
+  .fw-modal-submit:disabled{ opacity:0.5; cursor:default; }
+  .fw-q-thanks{ display:none; text-align:center; padding:20px 0 4px; }
+  .fw-q-thanks.active{ display:block; }
+  .fw-q-thanks-icon{
+    width:52px; height:52px; border-radius:50%; background:rgba(194,135,63,0.12);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
+  }
+  .fw-q-thanks-icon svg{ width:22px; height:22px; stroke:var(--gold); fill:none; stroke-width:2; }
+  .fw-q-thanks h3{ font-family:var(--serif); font-size:21px; line-height:1.4; margin:0 0 10px; }
+  .fw-q-thanks p{ font-size:14px; color:var(--ink-55); line-height:1.6; margin:0; }
+</style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -60,8 +230,6 @@
 
     <nav class="nav__links" aria-label="Primary">
       <a href="framework.html">Framework</a>
-      <a href="markets.html">Opportunities</a>
-      <a href="how-it-works.html">Resources</a>
     </nav>
 
     <div class="nav__cta">
@@ -76,8 +244,6 @@
 
   <div class="nav__mobile" id="navMobile">
     <a href="framework.html">Framework</a>
-    <a href="markets.html">Opportunities</a>
-    <a href="how-it-works.html">Resources</a>
     <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
     <a href="get-started.html" class="btn btn--gold">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   </div>
@@ -96,246 +262,105 @@
     </div>
 
     <div class="wrap hero__content">
-      <p class="hero-eyebrow reveal">Development Intelligence by ROQ</p>
       <h1 class="hero__title reveal">See what you could build.</h1>
-      <p class="hero__sub reveal">See where growth is moving — and what can be built there.</p>
+      <p class="hero__sub reveal">Groundbreakable is the intelligence beneath development.</p>
 
       <div class="hero__actions reveal">
-        <a href="https://app.groundbreakable.com/login" class="btn btn--gold" target="_blank" rel="noopener">Explore Dashboard <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-        <a href="framework.html" class="btn btn--ghost-light">See Framework</a>
-      </div>
-
-      <div class="hero__stats reveal">
-        <div class="hero__stat">
-          <p class="hero__stat-value">4 Markets</p>
-          <p class="hero__stat-label">Kansas &amp; Missouri</p>
-        </div>
-        <div class="hero__stat">
-          <p class="hero__stat-value">Topeka, KS</p>
-          <p class="hero__stat-label">Active Coverage</p>
-        </div>
-        <div class="hero__stat">
-          <p class="hero__stat-value">Real-Time</p>
-          <p class="hero__stat-label">Market Intelligence</p>
-        </div>
-      </div>
-
-      <div class="hero__search reveal">
-        <div class="search-preview" role="presentation">
-          <svg class="search-preview__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <span class="search-preview__text"><span id="heroSearchText"></span><span class="search-preview__cursor" aria-hidden="true"></span></span>
-        </div>
-        <p class="hero__search-note">Ask Groundbreakable anything — coming soon</p>
+        <a href="get-started.html" class="btn btn--gold">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
       </div>
     </div>
   </section>
 
-  <!-- THE DIFFERENCE -->
-  <section class="differentiator" id="difference">
-    <div class="wrap differentiator__inner">
-      <p class="eyebrow">The Difference</p>
-      <h2 class="section__title differentiator__title reveal">
-        Most platforms help you find what you're already looking for.<br>
-        <em>Groundbreakable shows you where to look next.</em>
-      </h2>
-      <p class="section__sub differentiator__sub reveal">
-        Development intelligence begins before the property search. Traditional platforms leave you
-        to search, filter, research, and interpret on your own. Groundbreakable learns your strategy,
-        monitors early development signals, and connects them into the areas worth your attention.
-      </p>
-
-      <div class="compare reveal">
-        <div class="compare__row">
-          <p class="compare__label">Traditional workflow</p>
-          <div class="compare-flow">
-            <span class="compare-flow__step">Search</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step">Filter</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step">Research</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step">Interpret</span>
-          </div>
-        </div>
-        <div class="compare__row">
-          <p class="compare__label">Groundbreakable</p>
-          <div class="compare-flow">
-            <span class="compare-flow__step compare-flow__step--accent">Signals</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step compare-flow__step--accent">Momentum</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step compare-flow__step--accent">Buildability</span>
-            <span class="compare-flow__arrow" aria-hidden="true">&rarr;</span>
-            <span class="compare-flow__step compare-flow__step--accent">Intelligence</span>
-          </div>
-        </div>
+  <!-- PRICING -->
+  <section class="fw-pricing" id="pricing">
+    <div class="wrap fw-pricing-wrap">
+      <div class="fw-pricing-visual reveal">
+        <img src="images/framework/build-plan-tablet.jpg" alt="The Groundbreakable Framework property analysis shown on a tablet alongside a site summary and roadmap">
       </div>
-
-      <p class="pull-line reveal">No databases to dig through. No complicated searches. We find what matters.</p>
-    </div>
-  </section>
-
-  <!-- TWO CORE CAPABILITIES (dark) -->
-  <section class="approach" id="capabilities">
-    <div class="wrap">
-      <div class="approach__head">
-        <p class="eyebrow">Two Core Capabilities</p>
-        <h2 class="section__title">Two questions. Better development decisions.</h2>
-      </div>
-
-      <div class="pillars__grid">
-        <div class="pillar pillar--signals reveal">
-          <span class="pillar__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
-          <h3><span class="pillar__num">01</span> Where is development heading?</h3>
-          <p class="pillar__lead">See where growth is moving before it's obvious.</p>
-          <p>Groundbreakable connects early planning, infrastructure, utility, zoning, investment and
-            development activity to identify areas where momentum is building.</p>
-          <span class="pillar__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-        </div>
-        <div class="pillar pillar--buildability reveal">
-          <span class="pillar__chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16"/><path d="M12 4v16"/></svg></span>
-          <h3><span class="pillar__num">02</span> What can be built there?</h3>
-          <p class="pillar__lead">Understand the development potential behind the opportunity.</p>
-          <p>Analyze zoning, future land use, density, utilities, infrastructure, access, and
-            constraints to understand what a site or area can support.</p>
-          <span class="pillar__arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-        </div>
-      </div>
-
-      <div class="flow reveal">
-        <span class="flow__step">Signals</span>
-        <span class="flow__arrow" aria-hidden="true">&rarr;</span>
-        <span class="flow__step">Momentum</span>
-        <span class="flow__arrow" aria-hidden="true">&rarr;</span>
-        <span class="flow__step">Buildability</span>
-        <span class="flow__arrow" aria-hidden="true">&rarr;</span>
-        <span class="flow__step flow__step--last">Intelligence</span>
+      <div class="reveal">
+        <h2 class="fw-pricing-title">Groundbreakable Framework<br>&mdash; $499</h2>
+        <div class="fw-pricing-rule"></div>
+        <p class="fw-pricing-desc">Everything you need to move forward with clarity before you hire a build team.</p>
+        <ul class="fw-pricing-checklist">
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Property + zoning review</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Utility and site research</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Permit / process roadmap</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Major cost and risk flags</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Home requirements + concept direction</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Design, floor plan, and architectural concepts</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Prioritized next steps</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>30-minute walkthrough call</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- DEVELOPMENT INTELLIGENCE PARTNER (dark) -->
-  <section class="partner" id="partner">
-    <div class="wrap">
-      <div class="partner__head">
-        <p class="eyebrow">The Partnership Model</p>
-        <h2 class="section__title">Your Development Intelligence Partner.</h2>
-      </div>
-
-      <div class="partner__grid">
-        <div class="partner__item reveal">
-          <h3>Data</h3>
-          <p>Real estate, planning, infrastructure, property and development information.</p>
-        </div>
-        <div class="partner__item reveal">
-          <h3>Technology</h3>
-          <p>Software continuously organizes, connects and analyzes information as it changes.</p>
-        </div>
-        <div class="partner__item reveal">
-          <h3>Human Intelligence</h3>
-          <p>Research, verification, context and judgment where raw data isn't enough.</p>
-        </div>
-        <div class="partner__item reveal">
-          <h3>Your Strategy</h3>
-          <p>What you develop, where you operate, and how you evaluate an opportunity.</p>
-        </div>
-      </div>
-
-      <div class="partner__formula reveal">
-        <p class="pull-line pull-line--dark">Technology finds the signal. Human intelligence adds context. Your strategy determines what matters.</p>
-      </div>
+  <!-- CONCEPT BOARD -->
+  <section class="fw-board">
+    <div class="fw-board-inner">
+      <h2 class="fw-board-title reveal">See the home before you break ground.</h2>
+      <p class="fw-board-desc reveal">Every Groundbreakable Framework ends in a concept board &mdash; floor plans, elevation, materials, and features drawn from your goals, your budget, and the land you already own.</p>
+      <figure class="fw-board-figure reveal">
+        <img src="images/framework/concept-board.jpg"
+             width="1448" height="1086" loading="lazy" decoding="async"
+             alt="Concept board for a mountain modern retreat: main and upper floor plans, a rendered front elevation of a stone and wood home, and lists of home features and material palette">
+        <figcaption class="fw-board-caption">Sample concept board</figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- SHOWCASE (light, split) -->
-  <section class="showcase" id="showcase">
-    <div class="wrap showcase__grid">
-      <div class="showcase__copy reveal">
-        <p class="eyebrow">Intelligence In Action</p>
-        <h2 class="section__title">See what matters. <em>Understand why.</em></h2>
-        <p class="section__sub">
-          Every signal we track comes together in one view — not as raw data to dig through, but as
-          conclusions: which areas are gaining momentum, why they matter, and what could be built
-          there.
-        </p>
-        <a href="how-it-works.html" class="link-arrow">See how it works <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <!-- KNOW BEFORE YOU BUILD -->
+  <section class="fw-hero">
+    <div>
+      <h2 class="fw-hero-headline">Know before<br>you build.</h2>
+      <p class="fw-hero-sub">You bought the land. Now get ready to build.</p>
+      <p class="fw-hero-desc">The Groundbreakable Framework helps you understand your property, site requirements, permits, costs, design direction, and next steps before hiring the build team.</p>
+      <div class="fw-hero-actions">
+        <button type="button" class="btn btn--gold" id="fwHeroCtaBtn">Start My Framework</button>
+        <a class="link-arrow" href="#pricing">See What's Included
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
       </div>
-
-      <div class="showcase__frame reveal">
-        <img
-          src="images/dashboard-showcase.webp"
-          alt="The Groundbreakable dashboard for Topeka, Kansas: active projects, projects in planning, growth areas, public investment, potential sites, a live map with growth-area overlays, and a recent activity feed."
-          loading="lazy"
-        >
-        <div class="insight-card" aria-hidden="true">
-          <p class="insight-card__eyebrow">Area to Watch · Sample</p>
-          <h3 class="insight-card__title">Gardner&ndash;Spring Hill Corridor</h3>
-          <span class="insight-card__badge">Momentum: High &middot; Emerging</span>
-          <p class="insight-card__label">Why we're watching it</p>
-          <ul class="insight-card__list">
-            <li>Infrastructure investment</li>
-            <li>Utility expansion</li>
-            <li>Planning activity</li>
-            <li>Land-use changes</li>
-          </ul>
-        </div>
-        <p class="showcase__caption">Illustrative preview — figures and areas shown are samples, not real properties.</p>
-      </div>
+    </div>
+    <div class="fw-hero-visual">
+      <img src="images/framework/hero-house.jpg" alt="Modern home concept rendered over a property site plan showing buildable areas and driveway access" loading="eager">
     </div>
   </section>
 
-  <!-- MARKETS -->
-  <section class="markets" id="markets">
-    <div class="wrap markets__grid">
-      <div class="markets__copy reveal">
-        <p class="eyebrow">Coverage</p>
-        <h2 class="section__title">Where we're looking.</h2>
-        <p class="section__sub">
-          Groundbreakable is actively building development intelligence in select markets, and can
-          evaluate additional markets based on your strategy.
-        </p>
-        <a href="markets.html" class="link-arrow">See market coverage <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <!-- FEATURES -->
+  <section class="fw-features">
+    <div class="fw-feature-grid">
+      <div class="fw-feature-item reveal">
+        <div class="fw-feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z" stroke-linejoin="round"/><path d="M9 3v15M15 6v15" /><circle cx="10.5" cy="9.5" r="2.6"/><path d="M10.5 15.5v-3.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Know the Land</h3>
+        <p>Zoning, utilities, access, and potential site issues before they become expensive surprises.</p>
       </div>
-
-      <div class="market-cards reveal">
-        <div class="market-card market-card--live">
-          <span class="market-card__badge">Active Coverage</span>
-          <h4>Topeka, Kansas</h4>
-          <p class="market-card__state">Shawnee County</p>
-          <div class="market-card__illo" aria-hidden="true"></div>
-          <a href="markets.html" class="market-card__link">Explore Topeka <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <div class="fw-feature-item reveal">
+        <div class="fw-feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M4 12 12 5l8 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.5V20h12v-9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-5h4v5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <div class="market-card market-card--soon">
-          <span class="market-card__badge">By Request</span>
-          <h4>Lawrence</h4>
-          <p class="market-card__state">Kansas</p>
-          <div class="market-card__illo" aria-hidden="true"></div>
+        <h3>Define the Build</h3>
+        <p>Turn your goals, space needs, and budget into a clearer direction for your future home.</p>
+      </div>
+      <div class="fw-feature-item reveal">
+        <div class="fw-feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M5 21V4" stroke-linecap="round"/><path d="M5 4h13l-3 4 3 4H5" stroke-linejoin="round"/></svg>
         </div>
-        <div class="market-card market-card--soon">
-          <span class="market-card__badge">By Request</span>
-          <h4>Kansas City</h4>
-          <p class="market-card__state">Missouri</p>
-          <div class="market-card__illo" aria-hidden="true"></div>
-        </div>
-        <div class="market-card market-card--soon">
-          <span class="market-card__badge">By Request</span>
-          <h4>Wichita</h4>
-          <p class="market-card__state">Kansas</p>
-          <div class="market-card__illo" aria-hidden="true"></div>
-        </div>
+        <h3>Know the Path</h3>
+        <p>Get a personalized roadmap for permits, professionals, planning, and next steps.</p>
       </div>
     </div>
   </section>
 
   <!-- FINAL CTA (dark) -->
-  <section class="cta-band">
-    <div class="wrap cta-band__inner">
-      <h2 class="section__title reveal">Know where to look next.</h2>
-      <p class="cta-band__sub reveal">
-        Tell us how you develop. Groundbreakable will use your strategy to identify where development
-        may be heading and what could be built there.
-      </p>
-      <a href="get-started.html" class="btn btn--gold reveal">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <section class="fw-cta-dark">
+    <img class="fw-cta-particles" src="images/framework/cta-particles.jpg" alt="" role="presentation">
+    <div class="fw-cta-inner reveal">
+      <h2>Turn your land<br>into a <span class="gold">clear plan.</span></h2>
+      <div class="fw-cta-rule"></div>
+      <button type="button" class="btn btn--gold" id="fwCtaBtn">Get Started</button>
     </div>
   </section>
 
@@ -366,6 +391,205 @@
   </div>
 </footer>
 
+<!-- ---------- Framework intake modal ---------- -->
+<div class="fw-modal-overlay" id="fwModalOverlay">
+  <div class="fw-modal-panel">
+    <button type="button" class="fw-modal-close" id="fwModalClose" aria-label="Close">&times;</button>
+
+    <div id="fwFormWrap">
+      <h2 class="fw-modal-title">Let's start your Framework.</h2>
+      <p class="fw-modal-sub">A few quick questions &mdash; takes about a minute.</p>
+
+      <form id="fwIntakeForm">
+        <div class="fw-q-block">
+          <p class="fw-q-label">Where are you building?</p>
+          <p class="fw-q-hint">Property address or parcel location.</p>
+          <input type="text" class="fw-q-input" id="fwQLocation" placeholder="e.g. 1420 County Road 12, Topeka, KS" autocomplete="off">
+        </div>
+
+        <div class="fw-q-block">
+          <p class="fw-q-label">What are you planning to build?</p>
+          <div class="fw-chip-grid" data-field="build_type" data-mode="single">
+            <button type="button" class="fw-chip" data-value="Custom home">Custom Home</button>
+            <button type="button" class="fw-chip" data-value="Barndominium">Barndominium</button>
+            <button type="button" class="fw-chip" data-value="Cabin">Cabin</button>
+            <button type="button" class="fw-chip" data-value="Other">Other</button>
+          </div>
+          <input type="text" class="fw-other-input" id="fwBuildTypeOther" placeholder="Tell us more">
+        </div>
+
+        <div class="fw-q-block">
+          <p class="fw-q-label">Where are you in the process?</p>
+          <div class="fw-chip-grid" data-field="stage" data-mode="single">
+            <button type="button" class="fw-chip" data-value="Just bought the land">Just bought the land</button>
+            <button type="button" class="fw-chip" data-value="Planning now">Planning now</button>
+            <button type="button" class="fw-chip" data-value="Already talking to architects/builders">Already talking to architects/builders</button>
+            <button type="button" class="fw-chip" data-value="Hoping to build in 6-12 months">Hoping to build in 6&ndash;12 months</button>
+          </div>
+        </div>
+
+        <div class="fw-q-block">
+          <p class="fw-q-label">What are you most unsure about?</p>
+          <p class="fw-q-hint">Select all that apply.</p>
+          <div class="fw-chip-grid" data-field="unsure_about" data-mode="multi">
+            <button type="button" class="fw-chip" data-value="Zoning/buildability">Zoning/Buildability</button>
+            <button type="button" class="fw-chip" data-value="Utilities">Utilities</button>
+            <button type="button" class="fw-chip" data-value="Permits">Permits</button>
+            <button type="button" class="fw-chip" data-value="Site costs">Site costs</button>
+            <button type="button" class="fw-chip" data-value="Overall budget">Overall budget</button>
+            <button type="button" class="fw-chip" data-value="Home design/layout">Home design/layout</button>
+            <button type="button" class="fw-chip" data-value="What to do next">What to do next</button>
+          </div>
+        </div>
+
+        <div class="fw-q-block">
+          <p class="fw-q-label">Where should we send your Framework?</p>
+          <div class="fw-field-row">
+            <label for="fwQName">Name</label>
+            <input type="text" class="fw-q-input" id="fwQName" placeholder="Your name" autocomplete="name">
+          </div>
+          <div class="fw-field-row">
+            <label for="fwQEmail">Email</label>
+            <input type="email" class="fw-q-input" id="fwQEmail" placeholder="your@email.com" autocomplete="email">
+          </div>
+          <div class="fw-field-row">
+            <label for="fwQPhone">Phone <span style="opacity:.6;">(optional)</span></label>
+            <input type="tel" class="fw-q-input" id="fwQPhone" placeholder="(555) 555-5555" autocomplete="tel">
+          </div>
+        </div>
+
+        <p class="fw-q-error" id="fwQError">Please enter your build location, name, and a valid email address.</p>
+        <button type="submit" class="fw-modal-submit" id="fwSubmitBtn">Get My Framework</button>
+      </form>
+    </div>
+
+    <div class="fw-q-thanks" id="fwQThanks">
+      <div class="fw-q-thanks-icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h3>You're on your way.</h3>
+      <p>We're reviewing your answers now. Your personalized Framework will be ready within 24&ndash;48 hours.</p>
+    </div>
+  </div>
+</div>
+
 <script src="js/main.js"></script>
+<script>
+  (function () {
+    // ---------- Chips ----------
+    const state = {
+      location: '', build_type: '', build_type_other: '', stage: '',
+      unsure_about: [], name: '', email: '', phone: '',
+    };
+
+    document.querySelectorAll('.fw-chip-grid').forEach((grid) => {
+      const field = grid.dataset.field;
+      const mode = grid.dataset.mode;
+      grid.querySelectorAll('.fw-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const value = chip.dataset.value;
+          if (mode === 'single') {
+            grid.querySelectorAll('.fw-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            state[field] = value;
+          } else {
+            const idx = state[field].indexOf(value);
+            if (idx === -1) { state[field].push(value); chip.classList.add('active'); }
+            else { state[field].splice(idx, 1); chip.classList.remove('active'); }
+          }
+
+          if (field === 'build_type') {
+            const otherInput = document.getElementById('fwBuildTypeOther');
+            const isOther = value === 'Other' && chip.classList.contains('active');
+            otherInput.classList.toggle('visible', isOther);
+            if (!isOther) { otherInput.value = ''; state.build_type_other = ''; }
+          }
+        });
+      });
+    });
+
+    document.getElementById('fwBuildTypeOther').addEventListener('input', e => { state.build_type_other = e.target.value; });
+    document.getElementById('fwQLocation').addEventListener('input', e => { state.location = e.target.value; });
+    document.getElementById('fwQName').addEventListener('input', e => { state.name = e.target.value; });
+    document.getElementById('fwQEmail').addEventListener('input', e => { state.email = e.target.value; });
+    document.getElementById('fwQPhone').addEventListener('input', e => { state.phone = e.target.value; });
+
+    // ---------- Modal open/close ----------
+    const overlay = document.getElementById('fwModalOverlay');
+    const closeBtn = document.getElementById('fwModalClose');
+    const formWrap = document.getElementById('fwFormWrap');
+    const thanksPanel = document.getElementById('fwQThanks');
+
+    function openModal() {
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('fwHeroCtaBtn').addEventListener('click', openModal);
+    document.getElementById('fwCtaBtn').addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+    // ---------- Submit ----------
+    // Same Supabase project + Edge Function the roqhome.com/build.html
+    // "ROQ Framework" intake already uses — groundbreakable_requests lives
+    // in Groundbreakable's own "roq" project, so this reuses that working
+    // backend rather than standing up a second one.
+    const SUPABASE_URL = 'https://pgcospvlhorcvssafjoo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_E8B6OF7rTmNhlEVvS36fiA_wewl5tER';
+    const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/groundbreakable-intake`;
+
+    const form = document.getElementById('fwIntakeForm');
+    const submitBtn = document.getElementById('fwSubmitBtn');
+    const errorEl = document.getElementById('fwQError');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const location = state.location.trim();
+      const name = state.name.trim();
+      const email = state.email.trim();
+      if (!location || !name || !email || !email.includes('@')) {
+        errorEl.textContent = 'Please enter your build location, name, and a valid email address.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+      errorEl.classList.remove('visible');
+
+      try {
+        const res = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            ...state,
+            location,
+            name,
+            email,
+            phone: state.phone.trim(),
+          }),
+        });
+
+        if (!res.ok) throw new Error('Request failed');
+
+        formWrap.style.display = 'none';
+        thanksPanel.classList.add('active');
+      } catch (err) {
+        errorEl.textContent = 'Something went wrong. Please try again.';
+        errorEl.classList.add('visible');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Get My Framework';
+      }
+    });
+  })();
+</script>
 </body>
 </html>

@@ -54,49 +54,6 @@
     revealEls.forEach(function (el) { el.classList.add("in"); });
   }
 
-  /* ---- Hero search preview (display-only, typed/backspaced placeholder) ---- */
-  var heroSearchText = document.getElementById("heroSearchText");
-  if (heroSearchText) {
-    var searchPrompts = [
-      "Where should I build next?",
-      "What can I build here?",
-      "What could stop or delay this build?",
-      "How much will this project cost?",
-      "Who are the best contractors to hire for my specific home?",
-      "Show me a buildable concept design for my idea."
-    ];
-    var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      heroSearchText.textContent = searchPrompts[0];
-    } else {
-      var promptIndex = 0, charIndex = 0, deleting = false;
-      var TYPE_MS = 42, DELETE_MS = 26, HOLD_MS = 1700, PAUSE_MS = 450;
-      (function stepSearchText() {
-        var current = searchPrompts[promptIndex];
-        if (!deleting) {
-          charIndex++;
-          heroSearchText.textContent = current.slice(0, charIndex);
-          if (charIndex >= current.length) {
-            deleting = true;
-            setTimeout(stepSearchText, HOLD_MS);
-          } else {
-            setTimeout(stepSearchText, TYPE_MS);
-          }
-        } else {
-          charIndex--;
-          heroSearchText.textContent = current.slice(0, charIndex);
-          if (charIndex <= 0) {
-            deleting = false;
-            promptIndex = (promptIndex + 1) % searchPrompts.length;
-            setTimeout(stepSearchText, PAUSE_MS);
-          } else {
-            setTimeout(stepSearchText, DELETE_MS);
-          }
-        }
-      })();
-    }
-  }
-
   /* ---- Footer year ---- */
   var yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
