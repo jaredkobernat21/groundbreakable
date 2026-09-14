@@ -859,6 +859,33 @@ export type MarketOverview = {
 
 export type MarketOverviewWithSources = MarketOverview & { sources: Source[] };
 
+// --- Development Friction ---
+// See supabase/migrations/20260914000000_development_friction_schema.sql --
+// answers "how long is this taking" / "what's the risk" for a market, a
+// question neither market_overviews (macro narrative) nor shifts/projects
+// (individual parcel-level events) was built to hold.
+
+export type FrictionKind = "timeline" | "risk" | "context";
+
+export type DevelopmentFrictionSignal = {
+  id: string;
+  market_id: string;
+  kind: FrictionKind;
+  severity: ShiftImpact | null;
+  title: string;
+  summary: string;
+  metric_value: number | null;
+  metric_unit: string | null;
+  related_project_id: string | null;
+  related_shift_id: string | null;
+  observed_date: string;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type DevelopmentFrictionSignalWithSource = DevelopmentFrictionSignal & { source: Source | null };
+
 // --- Investment ---
 // See supabase/migrations/20260905000000_investment_schema.sql -- tracks
 // capital that materially affects development/construction/land value/
