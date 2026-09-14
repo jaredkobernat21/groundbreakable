@@ -292,7 +292,7 @@ button{ font-family:inherit; }
   z-index:1;
   margin:0;
   padding:140px 24px 96px 64px;
-  max-width:640px;
+  max-width:900px;
 }
 .hero-eyebrow{
   display:flex;
@@ -313,9 +313,8 @@ button{ font-family:inherit; }
   line-height:1.12;
   letter-spacing:-0.01em;
   color:#FFFFFF;
-  max-width:14ch;
+  white-space:nowrap;
   margin:0 0 22px;
-  text-wrap:balance;
   text-shadow:0 2px 30px rgba(0,0,0,0.55);
 }
 .hero__sub{
@@ -730,7 +729,7 @@ button{ font-family:inherit; }
   .nav__mobile.open{ display:flex; }
   .wrap{ padding:0 20px; }
   .hero__content{ padding:104px 24px 84px; max-width:none; }
-  .hero__title{ font-size:31px; max-width:14ch; }
+  .hero__title{ font-size:31px; max-width:14ch; white-space:normal; }
   .hero__actions{ width:100%; }
   .hero__actions .btn{ flex:1 1 auto; }
   .hero__stats{ gap:20px 0; }
