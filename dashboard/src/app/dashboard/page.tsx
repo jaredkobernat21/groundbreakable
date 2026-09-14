@@ -9,6 +9,7 @@ import { getGrowthAreas } from "@/lib/queries/planIntelligence";
 import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
+import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -43,6 +44,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const opportunities = await getDevelopmentOpportunities(supabase, market.id);
   const marketIndicators = await getMarketIndicators(supabase, market.id);
   const marketOverview = await getMarketOverview(supabase, market.id);
+  const developmentFrictionSignals = await getDevelopmentFrictionSignals(supabase, market.id);
 
   return (
     <ShiftDashboardView
@@ -57,6 +59,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       opportunities={opportunities}
       marketIndicators={marketIndicators}
       marketOverview={marketOverview}
+      developmentFrictionSignals={developmentFrictionSignals}
     />
   );
 }

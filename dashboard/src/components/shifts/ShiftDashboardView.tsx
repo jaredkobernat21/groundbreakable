@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  DevelopmentFrictionSignalWithSource,
   DevelopmentOpportunityWithSources,
   GrowthArea,
   InvestmentType,
@@ -57,6 +58,7 @@ import OpportunityDetailPanel from "./OpportunityDetailPanel";
 import InfrastructureFeed from "./InfrastructureFeed";
 import InfrastructureDetailPanel from "./InfrastructureDetailPanel";
 import MarketOverviewSection from "./MarketOverviewSection";
+import DevelopmentFrictionSection from "./DevelopmentFrictionSection";
 
 type View =
   | "plans"
@@ -146,6 +148,7 @@ export default function ShiftDashboardView({
   opportunities,
   marketIndicators,
   marketOverview,
+  developmentFrictionSignals,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -157,6 +160,7 @@ export default function ShiftDashboardView({
   opportunities: DevelopmentOpportunityWithSources[];
   marketIndicators: MarketIndicatorWithSource[];
   marketOverview: MarketOverviewWithSources | null;
+  developmentFrictionSignals: DevelopmentFrictionSignalWithSource[];
 }) {
   const [view, setView] = useState<View>("momentum");
   // Which group's sub-tab dropdown is open in the rail -- independent of
@@ -579,7 +583,12 @@ export default function ShiftDashboardView({
           {subNav() && <div className="lg:hidden">{subNav()}</div>}
 
           <div className="min-w-0 flex-1 space-y-3">
-            {view === "market" && <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />}
+            {view === "market" && (
+              <>
+                <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />
+                <DevelopmentFrictionSection signals={developmentFrictionSignals} />
+              </>
+            )}
 
             {view === "momentum" && (
               <>
