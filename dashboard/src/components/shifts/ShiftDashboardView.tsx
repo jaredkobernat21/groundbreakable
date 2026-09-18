@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  DevelopmentFrictionCaseWithSource,
   DevelopmentFrictionSignalWithSource,
   DevelopmentOpportunityWithSources,
+  EntitlementCaseWithSource,
+  FrictionCaseOutcome,
   GrowthArea,
   InvestmentType,
   InvestmentWithSource,
@@ -59,6 +62,13 @@ import InfrastructureFeed from "./InfrastructureFeed";
 import InfrastructureDetailPanel from "./InfrastructureDetailPanel";
 import MarketOverviewSection from "./MarketOverviewSection";
 import DevelopmentFrictionSection from "./DevelopmentFrictionSection";
+import EntitlementCasesSection from "../entitlement/EntitlementCasesSection";
+import DevelopmentFrictionCaseCard from "../friction/DevelopmentFrictionCaseCard";
+import DevelopmentFrictionFilters, {
+  emptyDevelopmentFrictionFilterState,
+  type DevelopmentFrictionFilterState,
+} from "../friction/DevelopmentFrictionFilters";
+import DevelopmentFrictionOverview from "../friction/DevelopmentFrictionOverview";
 
 type View =
   | "plans"
@@ -71,7 +81,10 @@ type View =
   | "buildability"
   | "developers"
   | "contractors"
-  | "market";
+  | "market"
+  | "frictionOpposed"
+  | "frictionDelayed"
+  | "frictionFailed";
 
 // Product decision (Jared, 2026-09-06): the Development Intelligence
 // restructure groups the dashboard's 11 views under 5 primary nav
@@ -79,7 +92,7 @@ type View =
 // Companies -- each with its own sub-tabs, replacing the earlier flat
 // 11-button rail. Every underlying view/component/state below is
 // unchanged; this is purely a navigation regrouping.
-type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies";
+type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies" | "friction";
 
 const GROUPS: { value: Group; label: string; views: View[] }[] = [
   { value: "market", label: "Market", views: ["momentum", "market", "investment"] },
@@ -87,6 +100,13 @@ const GROUPS: { value: Group; label: string; views: View[] }[] = [
   { value: "opportunities", label: "Opportunities", views: ["opportunities", "buildability"] },
   { value: "infrastructure", label: "Infrastructure", views: ["infrastructure"] },
   { value: "companies", label: "Companies", views: ["developers", "contractors"] },
+  // Cross-market by design, unlike every group above -- see
+  // getDevelopmentFrictionCases and the friction render block. Three
+  // sub-views bucket by outcome instead of the free-form outcome filter
+  // pills every other list uses (see outcomesForFrictionView) -- Opposed
+  // is the full record (every case here faced friction by definition),
+  // Delayed/Failed are the two outcomes worth surfacing on their own.
+  { value: "friction", label: "Friction", views: ["frictionOpposed", "frictionDelayed", "frictionFailed"] },
 ];
 
 const VIEW_GROUP = GROUPS.reduce((acc, g) => {
@@ -111,6 +131,9 @@ const VIEW_LABEL: Record<View, string> = {
   infrastructure: "Infrastructure",
   developers: "Developers",
   contractors: "Contractors",
+  frictionOpposed: "Opposed",
+  frictionDelayed: "Delayed",
+  frictionFailed: "Failed",
 };
 
 // Which shift categories feed each rail tab's map+feed view. Investment
@@ -126,6 +149,17 @@ const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
 const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
 const OPPORTUNITY_GROUP_FILTER_OPTIONS = Object.keys(OPPORTUNITY_GROUP_LABEL) as OpportunityGroup[];
 const INFRASTRUCTURE_TYPE_FILTER_OPTIONS = Object.keys(INFRASTRUCTURE_TYPE_LABEL) as InfrastructureType[];
+
+// Which outcomes populate each Friction sub-tab. Opposed has no
+// restriction (null) -- it's the full record, since every row in
+// development_friction_cases faced friction by definition; 'resolved'
+// and 'modified' cases (friction that got worked out) only ever show up
+// there, not in either of the two "it didn't go well" buckets below.
+function outcomesForFrictionView(view: View): FrictionCaseOutcome[] | null {
+  if (view === "frictionDelayed") return ["delayed", "pending"];
+  if (view === "frictionFailed") return ["denied", "withdrawn", "abandoned"];
+  return null;
+}
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 // Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
@@ -149,6 +183,9 @@ export default function ShiftDashboardView({
   marketIndicators,
   marketOverview,
   developmentFrictionSignals,
+  entitlementCases,
+  developmentFrictionCases,
+  markets,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -161,6 +198,9 @@ export default function ShiftDashboardView({
   marketIndicators: MarketIndicatorWithSource[];
   marketOverview: MarketOverviewWithSources | null;
   developmentFrictionSignals: DevelopmentFrictionSignalWithSource[];
+  entitlementCases: EntitlementCaseWithSource[];
+  developmentFrictionCases: DevelopmentFrictionCaseWithSource[];
+  markets: Market[];
 }) {
   const [view, setView] = useState<View>("momentum");
   // Which group's sub-tab dropdown is open in the rail -- independent of
@@ -185,6 +225,7 @@ export default function ShiftDashboardView({
     new Set(INFRASTRUCTURE_TYPE_FILTER_OPTIONS)
   );
   const [selectedCompanyKey, setSelectedCompanyKey] = useState<string | null>(null);
+  const [frictionFilters, setFrictionFilters] = useState<DevelopmentFrictionFilterState>(emptyDevelopmentFrictionFilterState(market.id));
 
   function toggleInvestmentType(type: InvestmentType) {
     setInvestmentTypeFilter((prev) => {
@@ -261,6 +302,40 @@ export default function ShiftDashboardView({
     [allOpportunities, opportunityGroupFilter]
   );
 
+  // Every pill/search facet empty means "no restriction" (see
+  // emptyDevelopmentFrictionFilterState); the outcome bucket instead
+  // comes from which Friction sub-tab is active (outcomesForFrictionView).
+  function matchesFrictionFilters(c: DevelopmentFrictionCaseWithSource): boolean {
+    const search = frictionFilters.developerSearch.trim().toLowerCase();
+    if (frictionFilters.markets.size > 0 && !frictionFilters.markets.has(c.market_id)) return false;
+    if (frictionFilters.frictionTypes.size > 0 && !frictionFilters.frictionTypes.has(c.friction_type)) return false;
+    if (frictionFilters.severities.size > 0 && (!c.severity || !frictionFilters.severities.has(c.severity))) return false;
+    if (frictionFilters.projectTypes.size > 0 && (!c.project_type || !frictionFilters.projectTypes.has(c.project_type))) return false;
+    if (search && !(c.developer_name ?? "").toLowerCase().includes(search)) return false;
+    return true;
+  }
+
+  const filteredFrictionCases = useMemo(() => {
+    const outcomeBucket = outcomesForFrictionView(view);
+    return developmentFrictionCases.filter((c) => {
+      if (outcomeBucket && !outcomeBucket.includes(c.outcome)) return false;
+      return matchesFrictionFilters(c);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [developmentFrictionCases, frictionFilters, view]);
+
+  const frictionCountsByView = useMemo(() => {
+    const counts: Partial<Record<View, number>> = {};
+    for (const v of ["frictionOpposed", "frictionDelayed", "frictionFailed"] as const) {
+      const outcomeBucket = outcomesForFrictionView(v);
+      counts[v] = developmentFrictionCases.filter(
+        (c) => (!outcomeBucket || outcomeBucket.includes(c.outcome)) && matchesFrictionFilters(c)
+      ).length;
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [developmentFrictionCases, frictionFilters]);
+
   // Companies profiles -- one per uniquely-named developer/contractor,
   // with every rollup (project counts, stage breakdown, estimated
   // volume, frequent partners) computed live from project_people +
@@ -310,6 +385,8 @@ export default function ShiftDashboardView({
     setSelectedMomentumAreaId(primaryMomentumAreaId);
   }
 
+  const isFrictionGroup = VIEW_GROUP[view] === "friction";
+
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
   const selectedCategoryShift = visibleCategoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
@@ -354,13 +431,14 @@ export default function ShiftDashboardView({
       developers: developerProfiles.length,
       contractors: contractorProfiles.length,
       opportunities: allOpportunities.length,
+      ...frictionCountsByView,
     };
     for (const v of ALL_VIEWS) {
       const wanted = CATEGORIES_BY_VIEW[v];
       if (wanted) counts[v] = shifts.filter((s) => wanted.includes(s.category)).length;
     }
     return counts;
-  }, [shifts, projects, investments, developerProfiles, contractorProfiles, allOpportunities]);
+  }, [shifts, projects, investments, developerProfiles, contractorProfiles, allOpportunities, frictionCountsByView]);
 
   // "vs. previous 7 days" on each metric card is a real count of items
   // dated in the last 7 days -- event_date for shifts, date_announced for
@@ -570,14 +648,20 @@ export default function ShiftDashboardView({
             </h1>
           </div>
 
-          <BriefingSummary
-            shifts={shifts}
-            projects={projects}
-            allOpportunities={allOpportunities}
-            topMomentumAreaBreakdown={topMomentumAreaBreakdown}
-          />
+          {isFrictionGroup ? (
+            <DevelopmentFrictionOverview market={market} cases={developmentFrictionCases} onSelectView={selectView} />
+          ) : (
+            <>
+              <BriefingSummary
+                shifts={shifts}
+                projects={projects}
+                allOpportunities={allOpportunities}
+                topMomentumAreaBreakdown={topMomentumAreaBreakdown}
+              />
 
-          <MetricCardRow cards={metricCards} />
+              <MetricCardRow cards={metricCards} />
+            </>
+          )}
 
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{primaryNav()}</nav>
           {subNav() && <div className="lg:hidden">{subNav()}</div>}
@@ -587,6 +671,24 @@ export default function ShiftDashboardView({
               <>
                 <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />
                 <DevelopmentFrictionSection signals={developmentFrictionSignals} />
+                <EntitlementCasesSection cases={entitlementCases} marketSlug={market.slug} />
+              </>
+            )}
+
+            {isFrictionGroup && (
+              <>
+                <DevelopmentFrictionFilters markets={markets} filters={frictionFilters} onChange={setFrictionFilters} />
+                {filteredFrictionCases.length === 0 ? (
+                  <p className="rounded-xl border border-[#1c1c1c]/10 bg-white p-4 text-sm text-[#1c1c1c]/40">
+                    No development friction cases match these filters yet.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    {filteredFrictionCases.map((frictionCase) => (
+                      <DevelopmentFrictionCaseCard key={frictionCase.id} frictionCase={frictionCase} />
+                    ))}
+                  </div>
+                )}
               </>
             )}
 

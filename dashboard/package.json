@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "collect:topeka-planning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectTopekaPlanningCommission.ts"
+    "collect:topeka-planning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectTopekaPlanningCommission.ts",
+    "collect:lawrence-planning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectLawrencePlanningCommission.ts",
+    "collect:lawrence-city-commission": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectLawrenceCityCommission.ts",
+    "generate:friction-insights": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/generateFrictionInsights.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",
@@ -17,6 +20,7 @@
     "mapbox-gl": "^3.7.0",
     "next": "^14.2.15",
     "papaparse": "^5.4.1",
+    "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

@@ -11,6 +11,8 @@ import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
 import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
+import { getEntitlementCasesWithSource } from "@/lib/queries/entitlementCases";
+import { getDevelopmentFrictionCases } from "@/lib/queries/developmentFrictionCases";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
 
@@ -70,6 +72,8 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
   const marketIndicators = await getMarketIndicators(supabase, market.id);
   const marketOverview = await getMarketOverview(supabase, market.id);
   const developmentFrictionSignals = await getDevelopmentFrictionSignals(supabase, market.id);
+  const entitlementCases = await getEntitlementCasesWithSource(supabase, market.id);
+  const developmentFrictionCases = await getDevelopmentFrictionCases(supabase);
 
   return (
     <div className="min-h-screen bg-[#f4f2ee] text-[#1c1c1c]">
@@ -97,6 +101,9 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
           marketIndicators={marketIndicators}
           marketOverview={marketOverview}
           developmentFrictionSignals={developmentFrictionSignals}
+          entitlementCases={entitlementCases}
+          developmentFrictionCases={developmentFrictionCases}
+          markets={markets ?? []}
         />
       </main>
     </div>

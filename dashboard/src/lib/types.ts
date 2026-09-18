@@ -978,4 +978,369 @@ export type Investment = {
   created_at: string;
 };
 
+// --- Entitlement Intelligence ---
+// See supabase/migrations/20260916170000_entitlement_intelligence_schema.sql
+// -- case-level tracking of the entitlement process (rezonings, plats,
+// SUPs, annexations, ...): what was requested, what staff/Planning
+// Commission/City Commission did with it, what changed between request
+// and approval, and how long it took. Distinct from development_friction_
+// signals (hand-authored, market-wide, not case-level) and from shifts/
+// projects (individual events with no case-number/vote/outcome-delta
+// structure).
+
+export type EntitlementApprovalPath = "by_right" | "administrative" | "discretionary" | "rezoning" | "other";
+export type EntitlementDecisionBody = "staff" | "planning_commission" | "city_commission" | "board_of_zoning_appeals" | "county_commission";
+export type EntitlementCaseStatus = "pending" | "approved" | "approved_with_conditions" | "denied" | "withdrawn" | "deferred" | "remanded";
+export type EntitlementVoteChoice = "yes" | "no" | "abstain" | "recuse" | "absent";
+
+export const ENTITLEMENT_APPROVAL_PATH_LABEL: Record<EntitlementApprovalPath, string> = {
+  by_right: "By Right",
+  administrative: "Administrative",
+  discretionary: "Discretionary",
+  rezoning: "Rezoning",
+  other: "Other",
+};
+
+export const ENTITLEMENT_DECISION_BODY_LABEL: Record<EntitlementDecisionBody, string> = {
+  staff: "Staff",
+  planning_commission: "Planning Commission",
+  city_commission: "City Commission",
+  board_of_zoning_appeals: "Board of Zoning Appeals",
+  county_commission: "County Commission",
+};
+
+export const ENTITLEMENT_CASE_STATUS_LABEL: Record<EntitlementCaseStatus, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  approved_with_conditions: "Approved with Conditions",
+  denied: "Denied",
+  withdrawn: "Withdrawn",
+  deferred: "Deferred",
+  remanded: "Remanded",
+};
+
+export const ENTITLEMENT_CASE_STATUS_COLOR: Record<EntitlementCaseStatus, string> = {
+  pending: "#94a3b8", // slate
+  approved: "#22c55e", // green
+  approved_with_conditions: "#22c55e", // green
+  denied: "#ef4444", // red
+  withdrawn: "#94a3b8", // slate
+  deferred: "#f59e0b", // amber
+  remanded: "#f59e0b", // amber
+};
+
+export type EntitlementApprovalType = {
+  id: string;
+  market_id: string;
+  key: string;
+  label: string;
+  approval_path: EntitlementApprovalPath;
+  approving_authority: EntitlementDecisionBody;
+  recommending_authority: EntitlementDecisionBody | null;
+  requires_public_hearing: boolean;
+  requires_neighborhood_meeting: boolean;
+  notice_requirements: string | null;
+  required_documents: string[];
+  typical_sequence: string | null;
+  published_timeline_days: number | null;
+  appeal_path: string | null;
+  description: string | null;
+  source_id: string | null;
+  confidence: Confidence;
+  last_verified_at: string | null;
+  created_at: string;
+};
+
+export type EntitlementApprovalTypeWithSource = EntitlementApprovalType & { source: Source | null };
+
+export type EntitlementCase = {
+  id: string;
+  market_id: string;
+  project_id: string | null;
+
+  case_number: string | null;
+  summary: string | null;
+  address: string | null;
+  parcel_id: string | null;
+  acreage: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  planning_area: string | null;
+  council_district: string | null;
+  surrounding_land_uses: string | null;
+
+  approval_type_id: string | null;
+  existing_zoning: string | null;
+  requested_zoning: string | null;
+  land_use_designation: string | null;
+  proposed_use: string | null;
+  proposed_units: number | null;
+  proposed_density: number | null;
+  proposed_height: number | null;
+  proposed_commercial_sqft: number | null;
+  subdivision_layout_summary: string | null;
+
+  staff_recommendation: string | null;
+  staff_concerns: string[];
+  required_revisions: string | null;
+
+  application_date: string | null;
+  first_staff_review_date: string | null;
+  planning_commission_hearing_date: string | null;
+  city_commission_hearing_date: string | null;
+  final_decision_date: string | null;
+  ordinance_number: string | null;
+  ordinance_adopted_date: string | null;
+
+  status: EntitlementCaseStatus;
+  final_units: number | null;
+  final_density: number | null;
+  final_height: number | null;
+  final_commercial_sqft: number | null;
+  days_to_decision: number | null;
+
+  source_id: string | null;
+  confidence: Confidence;
+  last_verified_at: string | null;
+  created_at: string;
+};
+
+export type EntitlementCaseWithSource = EntitlementCase & { source: Source | null };
+
+export type EntitlementCaseEvent = {
+  id: string;
+  case_id: string;
+  event_type: string;
+  decision_body: EntitlementDecisionBody | null;
+  event_date: string;
+  motion_text: string | null;
+  outcome: string | null;
+  vote_yes: number | null;
+  vote_no: number | null;
+  vote_abstain: number | null;
+  conditions_summary: string | null;
+  note: string | null;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type EntitlementCommissioner = {
+  id: string;
+  market_id: string;
+  full_name: string;
+  decision_body: EntitlementDecisionBody;
+  appointing_jurisdiction: string | null;
+  term_start: string | null;
+  term_end: string | null;
+  role: string | null;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type EntitlementCaseVote = {
+  id: string;
+  case_event_id: string;
+  commissioner_id: string;
+  vote: EntitlementVoteChoice;
+  comments: string | null;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type EntitlementChangeDimension =
+  | "units" | "density" | "height" | "setbacks" | "buffers" | "road_connections" | "access"
+  | "open_space" | "parking" | "architecture" | "land_use_mix" | "infrastructure_obligation" | "other";
+
+export type EntitlementCaseChange = {
+  id: string;
+  case_id: string;
+  dimension: EntitlementChangeDimension;
+  requested_value: string | null;
+  approved_value: string | null;
+  change_summary: string | null;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type EntitlementCaseCondition = {
+  id: string;
+  case_id: string;
+  imposed_by: EntitlementDecisionBody | null;
+  condition_text: string;
+  category: "infrastructure" | "design" | "traffic" | "buffer" | "stormwater" | "other" | null;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type EntitlementPublicCommentCategory =
+  | "traffic" | "density" | "height" | "compatibility" | "parking" | "drainage"
+  | "schools" | "environmental" | "property_values" | "access" | "infrastructure" | "other";
+
+export type EntitlementPublicComment = {
+  id: string;
+  case_id: string;
+  meeting_event_id: string | null;
+  category: EntitlementPublicCommentCategory;
+  commenter_description: string | null;
+  statement_summary: string;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type EntitlementCaseParty = {
+  id: string;
+  case_id: string;
+  role: "applicant" | "developer" | "landowner" | "engineer" | "planner" | "attorney" | "other";
+  person_name: string | null;
+  company_name: string | null;
+  source_id: string | null;
+  created_at: string;
+};
+
+export type EntitlementRealityScoreSnapshot = {
+  id: string;
+  market_id: string;
+  subject_type: "parcel" | "project" | "scenario";
+  subject_ref: string;
+  score: number;
+  confidence: "low" | "medium" | "high";
+  component_breakdown: Record<string, unknown>;
+  missing_information: string[];
+  generated_at: string;
+};
+
+// A fully assembled case for display: the case row plus everything that
+// hangs off it, matching the spec's "request -> staff -> public response
+// -> PC -> CC -> changes -> result -> timeline" shape end to end.
+// votes nest under their event (entitlement_case_votes.case_event_id ->
+// entitlement_case_events -- there is no direct FK from entitlement_cases
+// to entitlement_case_votes for PostgREST to embed at the top level).
+export type EntitlementCaseEventWithVotes = EntitlementCaseEvent & {
+  votes: (EntitlementCaseVote & { commissioner: EntitlementCommissioner | null })[];
+};
+
+export type EntitlementCaseDetail = EntitlementCase & {
+  source: Source | null;
+  approval_type: EntitlementApprovalType | null;
+  events: EntitlementCaseEventWithVotes[];
+  changes: EntitlementCaseChange[];
+  conditions: EntitlementCaseCondition[];
+  public_comments: EntitlementPublicComment[];
+  parties: EntitlementCaseParty[];
+};
+
 export type InvestmentWithSource = Investment & { source: Source | null };
+
+// --- Development Friction (case-level) --------------------------------------
+// A different, complementary concept to DevelopmentFrictionSignal above:
+// that's a handful of hand-researched MARKET-WIDE qualitative patterns
+// ("PC-to-CC votes run ~29 days"); this is one row per real project that
+// hit meaningful opposition, delay, denial, withdrawal, or abandonment,
+// following an Original Plan -> Friction -> Response -> Outcome -> Insight
+// framework. Queried across every market at once (see
+// src/lib/queries/developmentFrictionCases.ts), unlike everything else in
+// this file which is fetched one market at a time.
+export type FrictionType =
+  | "community_opposition"
+  | "planning_commission"
+  | "city_council"
+  | "county_council"
+  | "moratorium"
+  | "regulatory_change"
+  | "lawsuit_appeal"
+  | "infrastructure_concern"
+  | "other";
+
+export type FrictionCaseOutcome = "resolved" | "modified" | "delayed" | "withdrawn" | "denied" | "abandoned" | "pending";
+
+export const FRICTION_TYPE_LABEL: Record<FrictionType, string> = {
+  community_opposition: "Community Opposition",
+  planning_commission: "Planning Commission",
+  city_council: "City Council",
+  county_council: "County Council",
+  moratorium: "Moratorium",
+  regulatory_change: "Regulatory Change",
+  lawsuit_appeal: "Lawsuit / Appeal",
+  infrastructure_concern: "Infrastructure Concern",
+  other: "Other",
+};
+
+export const FRICTION_CASE_OUTCOME_LABEL: Record<FrictionCaseOutcome, string> = {
+  resolved: "Resolved",
+  modified: "Modified",
+  delayed: "Delayed",
+  withdrawn: "Withdrawn",
+  denied: "Denied",
+  abandoned: "Abandoned",
+  pending: "Pending",
+};
+
+export const FRICTION_CASE_OUTCOME_COLOR: Record<FrictionCaseOutcome, string> = {
+  resolved: "#22c55e", // green
+  modified: "#f59e0b", // amber
+  delayed: "#f59e0b", // amber
+  withdrawn: "#94a3b8", // slate
+  denied: "#ef4444", // red
+  abandoned: "#ef4444", // red
+  pending: "#94a3b8", // slate
+};
+
+export type DevelopmentFrictionCase = {
+  id: string;
+  market_id: string;
+
+  project_name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  developer_name: string | null;
+  project_type: ProjectType | null;
+
+  original_plan_summary: string;
+
+  friction_type: FrictionType;
+  concerns: string[];
+  decision_makers: string[];
+
+  response_summary: string | null;
+
+  outcome: FrictionCaseOutcome;
+  final_plan_summary: string | null;
+
+  impact_units_lost: number | null;
+  impact_density_reduction: string | null;
+  impact_added_conditions: string[];
+  impact_time_delay: string | null;
+  impact_added_cost_usd: number | null;
+  impact_project_failed: boolean;
+
+  severity: ShiftImpact | null;
+
+  ai_insight: string | null;
+  ai_insight_generated_at: string | null;
+
+  related_project_id: string | null;
+  related_entitlement_case_id: string | null;
+
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type DevelopmentFrictionTimelineEvent = {
+  id: string;
+  friction_case_id: string;
+  event_date: string;
+  description: string;
+  source_id: string | null;
+  confidence: Confidence;
+  created_at: string;
+};
+
+export type DevelopmentFrictionCaseWithSource = DevelopmentFrictionCase & {
+  source: Source | null;
+  market: Pick<Market, "id" | "name" | "slug" | "state">;
+  timeline_events: DevelopmentFrictionTimelineEvent[];
+};
