@@ -7,9 +7,7 @@ import type {
   DevelopmentFrictionSignalWithSource,
   DevelopmentOpportunityWithSources,
   EntitlementCaseWithSource,
-  FrictionCaseOutcome,
   GrowthArea,
-  InvestmentType,
   InvestmentWithSource,
   Market,
   MarketIndicatorWithSource,
@@ -21,23 +19,19 @@ import type {
   ShiftWithSource,
   ZoningLandUseWithSource,
 } from "@/lib/types";
-import { OPPORTUNITY_GROUP_LABEL } from "@/lib/types";
+import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR, OPPORTUNITY_GROUP_LABEL } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
-import { INVESTMENT_TYPE_LABEL } from "@/lib/investmentConstants";
 import { OPPORTUNITY_GROUP_COLOR } from "@/lib/opportunityConstants";
 import { computeProjectOpportunities } from "@/lib/opportunityRules";
 import { buildCompanyProfiles } from "@/lib/companyProfiles";
-import {
-  INFRASTRUCTURE_TYPE_COLOR,
-  INFRASTRUCTURE_TYPE_LABEL,
-  inferInfrastructureType,
-  type InfrastructureType,
-} from "@/lib/infrastructureConstants";
 import { pointInPolygon } from "@/lib/geo";
-import { formatCurrency } from "@/lib/format";
 import { ICON_PATHS } from "@/lib/icons";
 import { PROJECT_ICON_PATHS } from "@/lib/markerIcons";
-import { SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_ICON_PATHS } from "@/lib/shiftConstants";
+import {
+  FRICTION_STATUS_TAB_ORDER,
+  outcomesForFrictionStatusTab,
+  type FrictionStatusTab,
+} from "@/lib/frictionStatus";
 import BriefingSummary from "./BriefingSummary";
 import MetricCardRow, { type MetricCard } from "./MetricCardRow";
 import ShiftFilters from "./ShiftFilters";
@@ -51,15 +45,10 @@ import MomentumAreaDetailPanel from "./MomentumAreaDetailPanel";
 import BuildabilityMap from "./BuildabilityMap";
 import BuildabilityList from "./BuildabilityList";
 import BuildabilityDetailPanel from "./BuildabilityDetailPanel";
-import InvestmentMap from "./InvestmentMap";
-import InvestmentFeed from "./InvestmentFeed";
-import InvestmentDetailPanel from "./InvestmentDetailPanel";
 import InvestmentSummary from "./InvestmentSummary";
 import OpportunityMap from "./OpportunityMap";
 import OpportunityFeed from "./OpportunityFeed";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
-import InfrastructureFeed from "./InfrastructureFeed";
-import InfrastructureDetailPanel from "./InfrastructureDetailPanel";
 import MarketOverviewSection from "./MarketOverviewSection";
 import DevelopmentFrictionSection from "./DevelopmentFrictionSection";
 import EntitlementCasesSection from "../entitlement/EntitlementCasesSection";
@@ -70,43 +59,26 @@ import DevelopmentFrictionFilters, {
 } from "../friction/DevelopmentFrictionFilters";
 import DevelopmentFrictionOverview from "../friction/DevelopmentFrictionOverview";
 
-type View =
-  | "plans"
-  | "projects"
-  | "permits"
-  | "infrastructure"
-  | "investment"
-  | "momentum"
-  | "opportunities"
-  | "buildability"
-  | "developers"
-  | "contractors"
-  | "market"
-  | "frictionOpposed"
-  | "frictionDelayed"
-  | "frictionFailed";
+type View = "market" | "momentum" | "opportunities" | "buildability" | "projects" | "friction" | "developers" | "contractors";
 
-// Product decision (Jared, 2026-09-06): the Development Intelligence
-// restructure groups the dashboard's 11 views under 5 primary nav
-// destinations -- Market, Projects, Opportunities, Infrastructure,
-// Companies -- each with its own sub-tabs, replacing the earlier flat
-// 11-button rail. Every underlying view/component/state below is
-// unchanged; this is purely a navigation regrouping.
-type Group = "market" | "projects" | "opportunities" | "infrastructure" | "companies" | "friction";
+// Product decision (Jared, 2026-09-18): the dashboard nav collapses to 5
+// primary destinations -- Market, Opportunities, Projects, Friction,
+// Companies. Plans/Permits/Infrastructure/Investment/Opposed/Delayed/
+// Failed are no longer their own primary-nav entries; the data behind
+// them is unchanged and still reachable -- Plans/Permits/Infrastructure
+// as category filter chips on the Momentum map (see ShiftFilters /
+// ACTIVE_SHIFT_CATEGORIES), Investment as a summary card on the Market
+// Overview page, and every friction outcome as a status tab on the one
+// Friction page (see frictionStatus.ts). Every underlying view/component/
+// query below is unchanged; this is purely a navigation regrouping.
+type Group = "market" | "opportunities" | "projects" | "friction" | "companies";
 
 const GROUPS: { value: Group; label: string; views: View[] }[] = [
-  { value: "market", label: "Market", views: ["momentum", "market", "investment"] },
-  { value: "projects", label: "Projects", views: ["projects", "plans", "permits"] },
+  { value: "market", label: "Market", views: ["market", "momentum"] },
   { value: "opportunities", label: "Opportunities", views: ["opportunities", "buildability"] },
-  { value: "infrastructure", label: "Infrastructure", views: ["infrastructure"] },
+  { value: "projects", label: "Projects", views: ["projects"] },
+  { value: "friction", label: "Friction", views: ["friction"] },
   { value: "companies", label: "Companies", views: ["developers", "contractors"] },
-  // Cross-market by design, unlike every group above -- see
-  // getDevelopmentFrictionCases and the friction render block. Three
-  // sub-views bucket by outcome instead of the free-form outcome filter
-  // pills every other list uses (see outcomesForFrictionView) -- Opposed
-  // is the full record (every case here faced friction by definition),
-  // Delayed/Failed are the two outcomes worth surfacing on their own.
-  { value: "friction", label: "Friction", views: ["frictionOpposed", "frictionDelayed", "frictionFailed"] },
 ];
 
 const VIEW_GROUP = GROUPS.reduce((acc, g) => {
@@ -114,52 +86,25 @@ const VIEW_GROUP = GROUPS.reduce((acc, g) => {
   return acc;
 }, {} as Record<View, Group>);
 
-// Sub-tab labels -- distinct from each group's own label so a sub-tab
-// never just repeats its parent (e.g. "Projects > Pipeline", not
-// "Projects > Projects").
-const ALL_VIEWS: View[] = GROUPS.flatMap((g) => g.views);
-
+// Sub-tab labels -- only rendered for groups with more than one view (see
+// desktopNavTree), so Projects/Friction (single-view groups) never show
+// theirs.
 const VIEW_LABEL: Record<View, string> = {
   market: "Overview",
   momentum: "Momentum",
-  investment: "Investment",
-  projects: "Pipeline",
-  plans: "Plans",
-  permits: "Permits",
   opportunities: "Opportunities",
   buildability: "Buildability",
-  infrastructure: "Infrastructure",
+  projects: "Projects",
+  friction: "Friction",
   developers: "Developers",
   contractors: "Contractors",
-  frictionOpposed: "Opposed",
-  frictionDelayed: "Delayed",
-  frictionFailed: "Failed",
 };
 
-// Which shift categories feed each rail tab's map+feed view. Investment
-// is no longer part of this -- as of 2026-09-05 it's backed by its own
-// `investments` table (see supabase/migrations/20260905000000_investment_
-// schema.sql), not a filter over the business/property shift categories.
-const CATEGORIES_BY_VIEW: Partial<Record<View, ShiftCategory[]>> = {
-  plans: ["plans"],
-  permits: ["building"],
-  infrastructure: ["infrastructure"],
-};
-
-const INVESTMENT_TYPE_FILTER_OPTIONS = Object.keys(INVESTMENT_TYPE_LABEL) as InvestmentType[];
 const OPPORTUNITY_GROUP_FILTER_OPTIONS = Object.keys(OPPORTUNITY_GROUP_LABEL) as OpportunityGroup[];
-const INFRASTRUCTURE_TYPE_FILTER_OPTIONS = Object.keys(INFRASTRUCTURE_TYPE_LABEL) as InfrastructureType[];
 
-// Which outcomes populate each Friction sub-tab. Opposed has no
-// restriction (null) -- it's the full record, since every row in
-// development_friction_cases faced friction by definition; 'resolved'
-// and 'modified' cases (friction that got worked out) only ever show up
-// there, not in either of the two "it didn't go well" buckets below.
-function outcomesForFrictionView(view: View): FrictionCaseOutcome[] | null {
-  if (view === "frictionDelayed") return ["delayed", "pending"];
-  if (view === "frictionFailed") return ["denied", "withdrawn", "abandoned"];
-  return null;
-}
+// alert-circle -- matches the triangle/circle-alert convention used
+// elsewhere for friction/risk chrome.
+const FRICTION_ICON_PATHS = ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 8v5", "M12 16h.01"];
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 // Ranked ahead of raw signal count (see momentumAreaBreakdowns) since two
@@ -202,54 +147,31 @@ export default function ShiftDashboardView({
   developmentFrictionCases: DevelopmentFrictionCaseWithSource[];
   markets: Market[];
 }) {
-  const [view, setView] = useState<View>("momentum");
+  const [view, setView] = useState<View>("market");
   // Which group's sub-tab dropdown is open in the rail -- independent of
   // `view` so clicking the already-active group's button can collapse the
   // dropdown back without changing what content is showing. Starts open
   // on the initial view's group ("market", since the initial view is
-  // "momentum").
+  // "market").
   const [expandedGroup, setExpandedGroup] = useState<Group | null>("market");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("7d");
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
-  const [selectedCategoryShiftId, setSelectedCategoryShiftId] = useState<string | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-  const [investmentTypeFilter, setInvestmentTypeFilter] = useState<Set<InvestmentType>>(new Set(INVESTMENT_TYPE_FILTER_OPTIONS));
-  const [selectedInvestmentId, setSelectedInvestmentId] = useState<string | null>(null);
   const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [opportunityGroupFilter, setOpportunityGroupFilter] = useState<Set<OpportunityGroup>>(
     new Set(OPPORTUNITY_GROUP_FILTER_OPTIONS)
   );
-  const [infrastructureTypeFilter, setInfrastructureTypeFilter] = useState<Set<InfrastructureType>>(
-    new Set(INFRASTRUCTURE_TYPE_FILTER_OPTIONS)
-  );
   const [selectedCompanyKey, setSelectedCompanyKey] = useState<string | null>(null);
   const [frictionFilters, setFrictionFilters] = useState<DevelopmentFrictionFilterState>(emptyDevelopmentFrictionFilterState(market.id));
-
-  function toggleInvestmentType(type: InvestmentType) {
-    setInvestmentTypeFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      return next;
-    });
-  }
+  const [frictionStatusTab, setFrictionStatusTab] = useState<FrictionStatusTab>("all");
 
   function toggleOpportunityGroup(group: OpportunityGroup) {
     setOpportunityGroupFilter((prev) => {
       const next = new Set(prev);
       if (next.has(group)) next.delete(group);
       else next.add(group);
-      return next;
-    });
-  }
-
-  function toggleInfrastructureType(type: InfrastructureType) {
-    setInfrastructureTypeFilter((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
       return next;
     });
   }
@@ -268,25 +190,6 @@ export default function ShiftDashboardView({
     return shifts.filter((s) => categories.has(s.category) && s.event_date >= since);
   }, [shifts, categories, range]);
 
-  const categoryShifts = useMemo(() => {
-    const wantedCategories = CATEGORIES_BY_VIEW[view];
-    if (!wantedCategories) return [];
-    return shifts.filter((s) => wantedCategories.includes(s.category));
-  }, [shifts, view]);
-
-  // Infrastructure's sub-type filter (Roads/Water/Sewer/...) only applies
-  // on the Infrastructure view -- Plans/Permits keep showing their full
-  // categoryShifts list unfiltered, same as before.
-  const visibleCategoryShifts = useMemo(() => {
-    if (view !== "infrastructure") return categoryShifts;
-    return categoryShifts.filter((s) => infrastructureTypeFilter.has(inferInfrastructureType(s.shift_type)));
-  }, [view, categoryShifts, infrastructureTypeFilter]);
-
-  const filteredInvestments = useMemo(
-    () => investments.filter((i) => investmentTypeFilter.has(i.investment_type)),
-    [investments, investmentTypeFilter]
-  );
-
   // Hand-authored development_opportunities rows plus Builder/Contractor
   // opportunities computed live off the projects pipeline (see
   // lib/opportunityRules.ts) -- merged into one list so they filter/map/
@@ -304,7 +207,7 @@ export default function ShiftDashboardView({
 
   // Every pill/search facet empty means "no restriction" (see
   // emptyDevelopmentFrictionFilterState); the outcome bucket instead
-  // comes from which Friction sub-tab is active (outcomesForFrictionView).
+  // comes from which status tab is active (outcomesForFrictionStatusTab).
   function matchesFrictionFilters(c: DevelopmentFrictionCaseWithSource): boolean {
     const search = frictionFilters.developerSearch.trim().toLowerCase();
     if (frictionFilters.markets.size > 0 && !frictionFilters.markets.has(c.market_id)) return false;
@@ -316,19 +219,19 @@ export default function ShiftDashboardView({
   }
 
   const filteredFrictionCases = useMemo(() => {
-    const outcomeBucket = outcomesForFrictionView(view);
+    const outcomeBucket = outcomesForFrictionStatusTab(frictionStatusTab);
     return developmentFrictionCases.filter((c) => {
       if (outcomeBucket && !outcomeBucket.includes(c.outcome)) return false;
       return matchesFrictionFilters(c);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [developmentFrictionCases, frictionFilters, view]);
+  }, [developmentFrictionCases, frictionFilters, frictionStatusTab]);
 
-  const frictionCountsByView = useMemo(() => {
-    const counts: Partial<Record<View, number>> = {};
-    for (const v of ["frictionOpposed", "frictionDelayed", "frictionFailed"] as const) {
-      const outcomeBucket = outcomesForFrictionView(v);
-      counts[v] = developmentFrictionCases.filter(
+  const frictionStatusCounts = useMemo(() => {
+    const counts = {} as Record<FrictionStatusTab, number>;
+    for (const tab of FRICTION_STATUS_TAB_ORDER) {
+      const outcomeBucket = outcomesForFrictionStatusTab(tab);
+      counts[tab] = developmentFrictionCases.filter(
         (c) => (!outcomeBucket || outcomeBucket.includes(c.outcome)) && matchesFrictionFilters(c)
       ).length;
     }
@@ -385,25 +288,9 @@ export default function ShiftDashboardView({
     setSelectedMomentumAreaId(primaryMomentumAreaId);
   }
 
-  const isFrictionGroup = VIEW_GROUP[view] === "friction";
-
   const selectedShift = filteredShifts.find((s) => s.id === selectedShiftId) ?? null;
-  const selectedCategoryShift = visibleCategoryShifts.find((s) => s.id === selectedCategoryShiftId) ?? null;
   const selectedZone = buildabilityZones.find((z) => z.id === selectedZoneId) ?? null;
-  const selectedInvestment = filteredInvestments.find((i) => i.id === selectedInvestmentId) ?? null;
   const selectedOpportunity = filteredOpportunities.find((o) => o.id === selectedOpportunityId) ?? null;
-
-  // Infrastructure's "Development Impact" -- which Momentum Area (if any)
-  // the selected shift's point falls inside, plus that area's already-
-  // computed project count -- same pointInPolygon reasoning as the
-  // Opportunities panel below, reusing momentumAreaBreakdowns rather than
-  // a second lookup.
-  const selectedInfrastructureMomentumBreakdown = useMemo(() => {
-    if (view !== "infrastructure" || !selectedCategoryShift) return null;
-    if (selectedCategoryShift.lat == null || selectedCategoryShift.lng == null) return null;
-    const point = { lat: selectedCategoryShift.lat, lng: selectedCategoryShift.lng };
-    return momentumAreaBreakdowns.find((b) => pointInPolygon(point, b.area.geom)) ?? null;
-  }, [view, selectedCategoryShift, momentumAreaBreakdowns]);
 
   // Momentum/Buildability for the selected opportunity are computed here
   // (pointInPolygon against growth_areas/zoning_land_use), not stored on
@@ -424,85 +311,73 @@ export default function ShiftDashboardView({
     return buildabilityZones.find((zone) => pointInPolygon(point, zone.geom)) ?? null;
   }, [selectedOpportunity, buildabilityZones]);
 
-  const railCounts = useMemo(() => {
-    const counts: Partial<Record<View, number>> = {
-      projects: projects.length,
-      investment: investments.length,
+  const railCounts = useMemo<Partial<Record<View, number>>>(
+    () => ({
+      opportunities: allOpportunities.length,
       developers: developerProfiles.length,
       contractors: contractorProfiles.length,
-      opportunities: allOpportunities.length,
-      ...frictionCountsByView,
-    };
-    for (const v of ALL_VIEWS) {
-      const wanted = CATEGORIES_BY_VIEW[v];
-      if (wanted) counts[v] = shifts.filter((s) => wanted.includes(s.category)).length;
-    }
-    return counts;
-  }, [shifts, projects, investments, developerProfiles, contractorProfiles, allOpportunities, frictionCountsByView]);
+    }),
+    [allOpportunities, developerProfiles, contractorProfiles]
+  );
 
-  // "vs. previous 7 days" on each metric card is a real count of items
-  // dated in the last 7 days -- event_date for shifts, date_announced for
-  // projects, announcement_date for investments -- not a fabricated
-  // trend. Deliberately NOT date_updated for projects: that column gets
-  // bumped by this app's own migrations/admin edits, which would read as
-  // "market activity" when it's really just data curation.
+  // The Overview page's 4 summary cards -- Active Projects, Development
+  // Signals (every plans/permits/infrastructure/business/property/
+  // distress shift on file, not just one category), Opportunities,
+  // Friction Cases -- each a real count off data already loaded, plus a
+  // real "vs. previous 7 days" delta where a trustworthy date field
+  // exists (date_announced/event_date/date_identified). Friction Cases
+  // has no delta: development_friction_cases has no "case opened" date
+  // field, only created_at (data-curation timestamp, not a real-world
+  // event -- see the same reasoning ShiftDashboardView used to avoid
+  // date_updated for Projects).
   const metricCards: MetricCard[] = useMemo(() => {
     const since7d = shiftDateRangeToDate("7d");
-    const plansDelta = shifts.filter((s) => s.category === "plans" && s.event_date >= since7d).length;
-    const permitsDelta = shifts.filter((s) => s.category === "building" && s.event_date >= since7d).length;
-    const infraDelta = shifts.filter((s) => s.category === "infrastructure" && s.event_date >= since7d).length;
-    const projectsDelta = projects.filter((p) => p.date_announced != null && p.date_announced >= since7d).length;
-    const investmentDelta = investments.filter((i) => i.announcement_date != null && i.announcement_date >= since7d).length;
-    const totalInvestmentAmount = investments.reduce((sum, i) => sum + (i.total_investment_amount ?? 0), 0);
+    const activeProjects = projects.filter((p) => p.status !== "completed" && p.status !== "cancelled");
+    const activeProjectsDelta = activeProjects.filter((p) => p.date_announced != null && p.date_announced >= since7d).length;
+    const signalsDelta = shifts.filter((s) => s.event_date >= since7d).length;
+    const opportunitiesDelta = allOpportunities.filter((o) => o.date_identified >= since7d).length;
+    const marketFrictionCaseCount = developmentFrictionCases.filter((c) => c.market_id === market.id).length;
 
     return [
       {
-        key: "projects",
-        label: "Projects",
-        value: String(projects.length),
-        weeklyDelta: projectsDelta,
+        key: "activeProjects",
+        label: "Active Projects",
+        value: String(activeProjects.length),
+        weeklyDelta: activeProjectsDelta,
         iconPaths: PROJECT_ICON_PATHS.building,
         color: "#3b82f6",
-        onClick: () => setView("projects"),
+        onClick: () => selectView("projects"),
       },
       {
-        key: "plans",
-        label: "Plans",
-        value: String(railCounts.plans ?? 0),
-        weeklyDelta: plansDelta,
-        iconPaths: SHIFT_CATEGORY_ICON_PATHS.plans,
-        color: SHIFT_CATEGORY_COLOR.plans,
-        onClick: () => setView("plans"),
+        key: "signals",
+        label: "Development Signals",
+        value: String(shifts.length),
+        weeklyDelta: signalsDelta,
+        iconPaths: ICON_PATHS.pulse,
+        color: ACTIVITY_COLOR,
+        onClick: () => selectView("momentum"),
       },
       {
-        key: "permits",
-        label: "Permits",
-        value: String(railCounts.permits ?? 0),
-        weeklyDelta: permitsDelta,
-        iconPaths: SHIFT_CATEGORY_ICON_PATHS.building,
-        color: SHIFT_CATEGORY_COLOR.building,
-        onClick: () => setView("permits"),
+        key: "opportunities",
+        label: "Opportunities",
+        value: String(allOpportunities.length),
+        weeklyDelta: opportunitiesDelta,
+        iconPaths: ICON_PATHS.barChart,
+        color: OPPORTUNITIES_COLOR,
+        onClick: () => selectView("opportunities"),
       },
       {
-        key: "infrastructure",
-        label: "Infrastructure",
-        value: String(railCounts.infrastructure ?? 0),
-        weeklyDelta: infraDelta,
-        iconPaths: SHIFT_CATEGORY_ICON_PATHS.infrastructure,
-        color: SHIFT_CATEGORY_COLOR.infrastructure,
-        onClick: () => setView("infrastructure"),
-      },
-      {
-        key: "investment",
-        label: "Investment",
-        value: formatCurrency(totalInvestmentAmount) ?? "$0",
-        weeklyDelta: investmentDelta,
-        iconPaths: ICON_PATHS.dollar,
-        color: "#818cf8",
-        onClick: () => setView("investment"),
+        key: "friction",
+        label: "Friction Cases",
+        value: String(marketFrictionCaseCount),
+        weeklyDelta: 0,
+        iconPaths: FRICTION_ICON_PATHS,
+        color: "#ef4444",
+        onClick: () => selectView("friction"),
       },
     ];
-  }, [shifts, projects, investments, railCounts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shifts, projects, allOpportunities, developmentFrictionCases, market.id]);
 
   function tabButtonClass(active: boolean, block: boolean) {
     return `rounded-lg px-3 py-2 text-left text-sm font-medium transition ${block ? "lg:w-full" : ""} ${
@@ -544,8 +419,8 @@ export default function ShiftDashboardView({
 
   // Second-level tabs for whichever group is active -- only rendered
   // while that group's dropdown is expanded, and omitted entirely for
-  // single-view groups (Infrastructure today), where a dropdown with one
-  // option is just noise.
+  // single-view groups (Projects, Friction today), where a dropdown with
+  // one option is just noise.
   function subNav() {
     const group = GROUPS.find((g) => g.value === VIEW_GROUP[view]);
     if (!group || group.views.length < 2 || expandedGroup !== group.value) return null;
@@ -618,7 +493,7 @@ export default function ShiftDashboardView({
 
   return (
     <div>
-      {/* Persistent far-left rail (desktop): logo, then the six list-first
+      {/* Persistent far-left rail (desktop): logo, then the five list-first
           destinations. Fixed so it spans the full page height regardless of
           where this component sits in the header's centered content column. */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:flex lg:w-56 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:border-r lg:border-[#1c1c1c]/10 lg:bg-[#f4f2ee] lg:px-4 lg:py-6">
@@ -648,9 +523,10 @@ export default function ShiftDashboardView({
             </h1>
           </div>
 
-          {isFrictionGroup ? (
-            <DevelopmentFrictionOverview market={market} cases={developmentFrictionCases} onSelectView={selectView} />
-          ) : (
+          {/* What Matters Now + the 4 summary cards are Overview-only --
+              every other tab (Momentum especially) stays decluttered so
+              its map/feed/list can be the whole page. */}
+          {view === "market" && (
             <>
               <BriefingSummary
                 shifts={shifts}
@@ -663,6 +539,10 @@ export default function ShiftDashboardView({
             </>
           )}
 
+          {view === "friction" && (
+            <DevelopmentFrictionOverview counts={frictionStatusCounts} activeTab={frictionStatusTab} onSelectTab={setFrictionStatusTab} />
+          )}
+
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">{primaryNav()}</nav>
           {subNav() && <div className="lg:hidden">{subNav()}</div>}
 
@@ -670,12 +550,13 @@ export default function ShiftDashboardView({
             {view === "market" && (
               <>
                 <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />
+                <InvestmentSummary investments={investments} />
                 <DevelopmentFrictionSection signals={developmentFrictionSignals} />
                 <EntitlementCasesSection cases={entitlementCases} marketSlug={market.slug} />
               </>
             )}
 
-            {isFrictionGroup && (
+            {view === "friction" && (
               <>
                 <DevelopmentFrictionFilters markets={markets} filters={frictionFilters} onChange={setFrictionFilters} />
                 {filteredFrictionCases.length === 0 ? (
@@ -696,8 +577,8 @@ export default function ShiftDashboardView({
               <>
                 <ShiftFilters categories={categories} onToggleCategory={toggleCategory} range={range} onSelectRange={setRange} />
 
-                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-                  <div className="relative h-[640px]">
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_320px]">
+                  <div className="relative h-[calc(100vh-220px)] min-h-[520px]">
                     <ShiftMap
                       market={market}
                       shifts={filteredShifts}
@@ -711,22 +592,20 @@ export default function ShiftDashboardView({
                       <ShiftDetailPanel shift={selectedShift} people={projectPeople} onClose={() => setSelectedShiftId(null)} />
                     ) : (
                       selectedMomentumAreaBreakdown && (
-                        <div className="absolute bottom-3 left-3 right-3 max-h-[320px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white shadow-lg">
-                          <MomentumAreaDetailPanel
-                            area={selectedMomentumAreaBreakdown.area}
-                            shiftsByCategory={selectedMomentumAreaBreakdown.shiftsByCategory}
-                            projects={selectedMomentumAreaBreakdown.projects}
-                            projectPeople={projectPeople}
-                            selectedShiftId={selectedShiftId}
-                            onSelectShift={setSelectedShiftId}
-                            onClose={() => setSelectedMomentumAreaId(null)}
-                          />
-                        </div>
+                        <MomentumAreaDetailPanel
+                          area={selectedMomentumAreaBreakdown.area}
+                          shiftsByCategory={selectedMomentumAreaBreakdown.shiftsByCategory}
+                          projects={selectedMomentumAreaBreakdown.projects}
+                          projectPeople={projectPeople}
+                          selectedShiftId={selectedShiftId}
+                          onSelectShift={setSelectedShiftId}
+                          onClose={() => setSelectedMomentumAreaId(null)}
+                        />
                       )
                     )}
                   </div>
 
-                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <div className="h-[calc(100vh-220px)] min-h-[520px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
                     <ShiftFeed shifts={filteredShifts} selectedShiftId={selectedShiftId} onSelectShift={setSelectedShiftId} />
                   </div>
                 </div>
@@ -767,54 +646,6 @@ export default function ShiftDashboardView({
                   return selected && <CompanyDetailPanel profile={selected} onClose={() => setSelectedCompanyKey(null)} />;
                 })()}
               </div>
-            )}
-
-            {view === "investment" && (
-              <>
-                <InvestmentSummary investments={investments} />
-
-                <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                  {INVESTMENT_TYPE_FILTER_OPTIONS.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleInvestmentType(type)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                        investmentTypeFilter.has(type) ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-                      }`}
-                    >
-                      {INVESTMENT_TYPE_LABEL[type]}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-                  <div className="relative h-[640px]">
-                    <InvestmentMap
-                      market={market}
-                      investments={filteredInvestments}
-                      selectedInvestmentId={selectedInvestmentId}
-                      onSelectInvestment={setSelectedInvestmentId}
-                    />
-                    {selectedInvestment && (
-                      <InvestmentDetailPanel investment={selectedInvestment} onClose={() => setSelectedInvestmentId(null)} />
-                    )}
-                  </div>
-                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                    <InvestmentFeed
-                      investments={filteredInvestments}
-                      selectedInvestmentId={selectedInvestmentId}
-                      onSelectInvestment={setSelectedInvestmentId}
-                    />
-                  </div>
-                </div>
-
-                {investments.length === 0 && (
-                  <p className="text-sm text-[#1c1c1c]/40">
-                    No investments recorded yet for {market.name} — this market hasn't been researched yet.
-                  </p>
-                )}
-              </>
             )}
 
             {view === "opportunities" && (
@@ -859,76 +690,6 @@ export default function ShiftDashboardView({
                       opportunities={filteredOpportunities}
                       selectedOpportunityId={selectedOpportunityId}
                       onSelectOpportunity={setSelectedOpportunityId}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {(view === "plans" || view === "permits") && (
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-                <div className="relative h-[640px]">
-                  <ShiftMap
-                    market={market}
-                    shifts={categoryShifts}
-                    selectedShiftId={selectedCategoryShiftId}
-                    onSelectShift={setSelectedCategoryShiftId}
-                  />
-                  {selectedCategoryShift && (
-                    <ShiftDetailPanel
-                      shift={selectedCategoryShift}
-                      people={projectPeople}
-                      onClose={() => setSelectedCategoryShiftId(null)}
-                    />
-                  )}
-                </div>
-                <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                  <ShiftFeed shifts={categoryShifts} selectedShiftId={selectedCategoryShiftId} onSelectShift={setSelectedCategoryShiftId} />
-                </div>
-              </div>
-            )}
-
-            {view === "infrastructure" && (
-              <>
-                <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                  {INFRASTRUCTURE_TYPE_FILTER_OPTIONS.map((type) => {
-                    const active = infrastructureTypeFilter.has(type);
-                    const color = INFRASTRUCTURE_TYPE_COLOR[type];
-                    return (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => toggleInfrastructureType(type)}
-                        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
-                        style={active ? { backgroundColor: color, color: "#fff" } : { color: "#1c1c1c80" }}
-                      >
-                        {INFRASTRUCTURE_TYPE_LABEL[type]}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
-                  <div className="relative h-[640px]">
-                    <ShiftMap
-                      market={market}
-                      shifts={visibleCategoryShifts}
-                      selectedShiftId={selectedCategoryShiftId}
-                      onSelectShift={setSelectedCategoryShiftId}
-                    />
-                    {selectedCategoryShift && (
-                      <InfrastructureDetailPanel
-                        shift={selectedCategoryShift}
-                        momentumBreakdown={selectedInfrastructureMomentumBreakdown}
-                        onClose={() => setSelectedCategoryShiftId(null)}
-                      />
-                    )}
-                  </div>
-                  <div className="h-[640px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                    <InfrastructureFeed
-                      shifts={visibleCategoryShifts}
-                      selectedShiftId={selectedCategoryShiftId}
-                      onSelectShift={setSelectedCategoryShiftId}
                     />
                   </div>
                 </div>

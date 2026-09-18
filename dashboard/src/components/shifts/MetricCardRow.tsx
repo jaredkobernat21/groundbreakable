@@ -16,7 +16,7 @@ export type MetricCard = {
 // gray "steady" state rather than a fake up/down arrow.
 export default function MetricCardRow({ cards }: { cards: MetricCard[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {cards.map((card) => (
         <button
           key={card.key}

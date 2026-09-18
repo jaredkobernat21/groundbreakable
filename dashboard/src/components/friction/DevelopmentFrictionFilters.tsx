@@ -56,9 +56,9 @@ export type DevelopmentFrictionFilterState = {
   developerSearch: string;
 };
 
-// Outcome is no longer one of these facets -- it's now which Friction
-// sub-tab (Opposed/Delayed/Failed) is active, see outcomesForFrictionView
-// in ShiftDashboardView.tsx. defaultMarketId preselects "this market" (the
+// Outcome is no longer one of these facets -- it's now which status tab
+// (All/Active/Delayed/Modified/Stopped-Failed) is active, see
+// lib/frictionStatus.ts. defaultMarketId preselects "this market" (the
 // one currently chosen in the header switcher), matching "that market's"
 // framing everywhere else on the dashboard -- broadening to other markets
 // is still one click away via the Market pill row below.
