@@ -4,7 +4,9 @@ Human-readable current-state summary. **Not the database** — this is a snapsho
 update periodically based on what's actually in Supabase (`slade_*` tables), not the other way
 around. If this file and the database disagree, the database is right.
 
-_Last updated: 2026-09-21 — Phase 1 (foundation) just built. No `slade_*` data exists yet._
+_Last updated: 2026-09-21 — Phase 1 schema applied to the live Supabase project (verified: all
+12 tables live, RLS active, verification-gate constraint tested and working). No `slade_*` data
+exists yet — nothing has been entered._
 
 ## Active opportunities
 
@@ -30,8 +32,7 @@ _(none tracked in SLADE yet)_
 
 ## Important blockers
 
-- Phase 1 migrations exist as files only — **not yet applied** to the live Supabase project.
-  Nothing in `slade_*` tables works until `supabase db push` is run.
 - No data has been migrated from the existing `research/` folder or from Jared's own memory of
   current relationships/buy boxes into `slade_contacts`/`slade_organizations`/`slade_buy_boxes`.
-  Phase 1 was explicitly foundation-only — see `PHASE_1_COMPLETION_REPORT.md`.
+  Phase 1 was explicitly foundation-only — see `PHASE_1_COMPLETION_REPORT.md`. Now unblocked:
+  schema is live, ready for real data.
