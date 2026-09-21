@@ -1,11 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { SladeBuyBox } from "./types";
+import type { SladeBuyBox, SladeContact } from "./types";
 import { logChange } from "./changeLog";
 
 export async function getBuyBox(supabase: SupabaseClient, id: string): Promise<SladeBuyBox | null> {
   const { data, error } = await supabase.from("slade_buy_boxes").select("*").eq("id", id).limit(1).returns<SladeBuyBox[]>();
   if (error) throw new Error(error.message);
   return data?.[0] ?? null;
+}
+
+export type SladeBuyBoxWithContact = SladeBuyBox & { contact: SladeContact | null };
+
+export async function listBuyBoxes(supabase: SupabaseClient): Promise<SladeBuyBoxWithContact[]> {
+  const { data, error } = await supabase
+    .from("slade_buy_boxes")
+    .select("*, contact:slade_contacts(*)")
+    .order("updated_at", { ascending: false })
+    .returns<SladeBuyBoxWithContact[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }
 
 export async function getActiveBuyBoxesForContact(supabase: SupabaseClient, contactId: string): Promise<SladeBuyBox[]> {
