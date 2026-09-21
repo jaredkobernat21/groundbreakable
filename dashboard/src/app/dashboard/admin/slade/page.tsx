@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SladeChat from "@/components/slade/SladeChat";
+import { getTodayWorklist } from "@/lib/slade/tasks";
 
 const LINKS = [
   { href: "/dashboard/admin/slade/contacts", label: "Contacts" },
@@ -11,10 +12,10 @@ const LINKS = [
 
 export const dynamic = "force-dynamic";
 
-// Direct-URL only, unlinked from nav -- same convention as every other
-// /dashboard/admin/* page (see src/app/dashboard/admin/layout.tsx). RLS
-// (is_admin()) is the real gate on every slade_* table; this check just
-// avoids a confusing blank/broken page for a non-admin.
+// Reachable via the header "SLADE" link (admin-only, dashboard/layout.tsx)
+// and the AdminNav rail (admin/layout.tsx). RLS (is_admin()) is the real
+// gate on every slade_* table; this check just avoids a confusing
+// blank/broken page for a non-admin who lands here directly.
 export default async function SladeAdminPage() {
   const supabase = createClient();
   const {
@@ -26,6 +27,8 @@ export default async function SladeAdminPage() {
   if (profile?.role !== "admin") {
     redirect("/dashboard");
   }
+
+  const { tasks, followUps } = await getTodayWorklist(supabase);
 
   return (
     <div>
@@ -45,6 +48,38 @@ export default async function SladeAdminPage() {
           </Link>
         ))}
       </div>
+
+      {(tasks.length > 0 || followUps.length > 0) && (
+        <div className="mb-6 rounded-lg border border-white/10 bg-white/[0.02] p-4">
+          <h2 className="mb-2 text-sm font-semibold text-white">Today</h2>
+          {tasks.length > 0 && (
+            <ul className="mb-3 space-y-1">
+              {tasks.map((task) => (
+                <li key={task.id} className="flex items-center justify-between gap-3 text-sm text-white/70">
+                  <span>{task.title}</span>
+                  <span className="shrink-0 text-xs text-white/30">
+                    {task.priority}
+                    {task.due_at ? ` · due ${new Date(task.due_at).toLocaleDateString()}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {followUps.length > 0 && (
+            <div>
+              <div className="mb-1 text-xs font-medium uppercase tracking-wide text-white/30">Follow-ups due</div>
+              <ul className="space-y-1">
+                {followUps.map((contact) => (
+                  <li key={contact.id} className="text-sm text-white/70">
+                    {contact.first_name} {contact.last_name ?? ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       <SladeChat />
     </div>
   );
