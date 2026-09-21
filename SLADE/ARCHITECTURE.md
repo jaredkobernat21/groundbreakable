@@ -56,6 +56,15 @@ Before adding anything, here's what SLADE reuses directly:
   nullable `investor_profile_id` so a prospect who eventually signs up stays linked to their CRM
   history, but SLADE's contacts are not investor_profiles rows — most of SLADE's contacts never
   will be (brokers, planners, city contacts, friends/network).
+- **`companies`** — entities observed in market intelligence (entitlement cases, project people,
+  planning records), populated in part by collection scripts. `slade_organizations` has an
+  optional, nullable `company_id` for the same reason `slade_contacts` links to
+  `investor_profiles` rather than merging with it: `companies` rows can be semi-automatically
+  created from scraped planning/entitlement sources, and letting a scraper-populated row silently
+  pick up CRM fields (`relationship_status`, `notes`, admin-only RLS) would blur a distinction
+  worth keeping — an organization SLADE tracks is a deliberate, manually-curated relationship
+  record, not an artifact of parsing a planning commission agenda. Most `slade_organizations` rows
+  will have no `company_id`; it's set only when the two clearly refer to the same real entity.
 - **`is_admin()`** (existing Postgres function) — every `slade_*` table's RLS policy is
   `using (public.is_admin())`. No new roles, no new auth system.
 

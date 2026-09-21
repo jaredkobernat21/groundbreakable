@@ -23,6 +23,16 @@ create table slade_organizations (
   ),
   website text,
   primary_market_id uuid references markets (id) on delete set null,
+  -- Set only if/when this organization is also an entity observed in
+  -- market intelligence (entitlement cases, project people, planning
+  -- records) -- see `companies` in phase1_new_intelligence_tables.sql.
+  -- Nullable and expected to stay null for most rows: `companies` rows are
+  -- semi-automatically created from scraped planning/entitlement sources,
+  -- while slade_organizations is Jared's manually-curated, admin-only
+  -- relationship record. Linking them (rather than merging into one table)
+  -- keeps a scraper-populated `companies` row from ever silently picking up
+  -- CRM fields like relationship_status. See SLADE/ARCHITECTURE.md.
+  company_id uuid references companies (id) on delete set null,
   relationship_status text not null default 'unknown' check (
     relationship_status in (
       'unknown', 'prospect', 'warm_lead', 'active_prospect', 'customer', 'partner',
@@ -40,6 +50,7 @@ create policy "slade_organizations_admin_all" on slade_organizations
 
 create index slade_organizations_name_idx on slade_organizations (lower(name));
 create index slade_organizations_market_idx on slade_organizations (primary_market_id);
+create index slade_organizations_company_idx on slade_organizations (company_id) where company_id is not null;
 
 -- Contacts: relationship_type (the person's role) and relationship_status
 -- (lifecycle warmth) and lead_status (outreach progress) are deliberately

@@ -21,6 +21,7 @@ municipalities, and other businesses in Groundbreakable's network.
 | type | text | check: `developer, investor, brokerage, contractor, planning_firm, partner, municipality, other` |
 | website | text | |
 | primary_market_id | uuid → markets.id | nullable |
+| company_id | uuid → companies.id | nullable — set only if this org is also an entity observed in market intelligence; see `SLADE/ARCHITECTURE.md` for why it's a link, not a merge |
 | relationship_status | text | same vocabulary as contacts, see below |
 | notes | text | |
 | created_at / updated_at | timestamptz | |

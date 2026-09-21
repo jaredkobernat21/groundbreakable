@@ -51,6 +51,11 @@ export interface SladeOrganization {
   type: OrganizationType | null;
   website: string | null;
   primary_market_id: string | null;
+  // Set only if/when this organization is also an entity observed in
+  // market intelligence (entitlement cases, project people, planning
+  // records) -- see `companies` in the existing schema. Nullable; most
+  // rows will never have one. See SLADE/ARCHITECTURE.md.
+  company_id: string | null;
   relationship_status: RelationshipStatus;
   notes: string | null;
   created_at: string;
