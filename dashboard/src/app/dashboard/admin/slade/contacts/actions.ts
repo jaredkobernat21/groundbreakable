@@ -9,6 +9,11 @@ function str(formData: FormData, key: string): string | null {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }
 
+function arr(formData: FormData, key: string): string[] {
+  const raw = str(formData, key);
+  return raw ? raw.split(",").map((s) => s.trim()).filter(Boolean) : [];
+}
+
 export async function createContactAction(formData: FormData) {
   const supabase = createClient();
 
@@ -23,6 +28,8 @@ export async function createContactAction(formData: FormData) {
     phone: str(formData, "phone"),
     email: str(formData, "email"),
     linkedin_url: str(formData, "linkedin_url"),
+    website: str(formData, "website"),
+    markets: arr(formData, "markets"),
     relationship_type: str(formData, "relationship_type") as never,
     relationship_status: (str(formData, "relationship_status") ?? "unknown") as never,
     lead_status: (str(formData, "lead_status") ?? "never_contacted") as never,
@@ -53,6 +60,8 @@ export async function updateContactAction(formData: FormData) {
       phone: str(formData, "phone"),
       email: str(formData, "email"),
       linkedin_url: str(formData, "linkedin_url"),
+      website: str(formData, "website"),
+      markets: arr(formData, "markets"),
       relationship_type: str(formData, "relationship_type") as never,
       relationship_status: (str(formData, "relationship_status") ?? "unknown") as never,
       lead_status: (str(formData, "lead_status") ?? "never_contacted") as never,

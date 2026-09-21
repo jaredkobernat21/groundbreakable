@@ -5,9 +5,10 @@ import SladeChat from "@/components/slade/SladeChat";
 import { getTodayWorklist } from "@/lib/slade/tasks";
 
 const LINKS = [
-  { href: "/dashboard/admin/slade/contacts", label: "Contacts" },
+  { href: "/dashboard/admin/slade/contacts", label: "Network" },
   { href: "/dashboard/admin/slade/organizations", label: "Organizations" },
   { href: "/dashboard/admin/slade/buy-boxes", label: "Buy Boxes" },
+  { href: "/dashboard/admin/slade/lode", label: "LODE" },
 ];
 
 export const dynamic = "force-dynamic";

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { OpportunityStatus, SladeOpportunity } from "./types";
+import type { OpportunityStatus, SladeOpportunity, SladeOpportunityWithRelations } from "./types";
 
 export async function getOpportunity(supabase: SupabaseClient, id: string): Promise<SladeOpportunity | null> {
   const { data, error } = await supabase.from("slade_opportunities").select("*").eq("id", id).limit(1).returns<SladeOpportunity[]>();
@@ -14,6 +14,48 @@ export async function getOpportunitiesForSite(supabase: SupabaseClient, siteId: 
     .eq("site_id", siteId)
     .order("created_at", { ascending: false })
     .returns<SladeOpportunity[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function getOpportunitiesForContact(supabase: SupabaseClient, contactId: string): Promise<SladeOpportunity[]> {
+  const { data, error } = await supabase
+    .from("slade_opportunities")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("updated_at", { ascending: false })
+    .returns<SladeOpportunity[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export interface OpportunityQueryOptions {
+  marketIds?: string[];
+  statuses?: OpportunityStatus[];
+  contactId?: string;
+  buyBoxId?: string;
+}
+
+// LODE's filter/browse query -- the only multi-criterion opportunity
+// lookup in this file, modeled on contacts.ts's queryContacts. Embeds
+// site/contact/market so a list render never N+1s; Network's per-contact
+// panel also calls this (with only contactId set) rather than the lighter
+// getOpportunitiesForContact, since it wants the site address for free.
+export async function queryOpportunities(
+  supabase: SupabaseClient,
+  options: OpportunityQueryOptions = {}
+): Promise<SladeOpportunityWithRelations[]> {
+  let query = supabase
+    .from("slade_opportunities")
+    .select("*, site:slade_sites(*), contact:slade_contacts(id, first_name, last_name), market:markets(id, name, state)")
+    .order("updated_at", { ascending: false });
+
+  if (options.marketIds?.length) query = query.in("market_id", options.marketIds);
+  if (options.statuses?.length) query = query.in("opportunity_status", options.statuses);
+  if (options.contactId) query = query.eq("contact_id", options.contactId);
+  if (options.buyBoxId) query = query.eq("buy_box_id", options.buyBoxId);
+
+  const { data, error } = await query.returns<SladeOpportunityWithRelations[]>();
   if (error) throw new Error(error.message);
   return data ?? [];
 }

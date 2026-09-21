@@ -4,6 +4,8 @@
 // already established between those two. See SLADE/DATA_MODEL.md at the
 // repo root for the full schema this mirrors.
 
+import type { Market } from "@/lib/types";
+
 export type RelationshipType =
   | "developer"
   | "investor"
@@ -72,6 +74,8 @@ export interface SladeContact {
   phone: string | null;
   email: string | null;
   linkedin_url: string | null;
+  website: string | null;
+  markets: string[];
   relationship_type: RelationshipType | null;
   relationship_status: RelationshipStatus;
   lead_status: LeadStatus;
@@ -272,6 +276,15 @@ export interface SladeOpportunity {
   created_at: string;
   updated_at: string;
 }
+
+// LODE's filter/browse view -- embeds the site and market for free so a
+// list render doesn't N+1. Contact is deliberately a narrow Pick, not the
+// full SladeContact, since the list view only ever needs a display name.
+export type SladeOpportunityWithRelations = SladeOpportunity & {
+  site: SladeSite | null;
+  contact: Pick<SladeContact, "id" | "first_name" | "last_name"> | null;
+  market: Pick<Market, "id" | "name" | "state"> | null;
+};
 
 export type OpportunityFeedbackType =
   | "interested"

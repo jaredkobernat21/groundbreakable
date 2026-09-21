@@ -15,9 +15,10 @@ const GROUPS: NavGroup[] = [
     label: "SLADE",
     items: [
       { href: "/dashboard/admin/slade", label: "Chat" },
-      { href: "/dashboard/admin/slade/contacts", label: "Contacts" },
+      { href: "/dashboard/admin/slade/contacts", label: "Network" },
       { href: "/dashboard/admin/slade/organizations", label: "Organizations" },
       { href: "/dashboard/admin/slade/buy-boxes", label: "Buy Boxes" },
+      { href: "/dashboard/admin/slade/lode", label: "LODE" },
     ],
   },
   {

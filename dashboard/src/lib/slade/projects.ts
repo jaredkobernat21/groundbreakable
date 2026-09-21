@@ -15,6 +15,31 @@ export async function listProjects(supabase: SupabaseClient, statuses?: ProjectS
   return data ?? [];
 }
 
+// Contact/org-scoped lookups for a single detail row (e.g. Network's
+// per-contact panel) -- single-criterion, matching the listSitesByMarket
+// precedent rather than turning listProjects into an options object.
+export async function listProjectsForContact(supabase: SupabaseClient, contactId: string): Promise<SladeProject[]> {
+  const { data, error } = await supabase
+    .from("slade_projects")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("updated_at", { ascending: false })
+    .returns<SladeProject[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function listProjectsForOrganization(supabase: SupabaseClient, organizationId: string): Promise<SladeProject[]> {
+  const { data, error } = await supabase
+    .from("slade_projects")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false })
+    .returns<SladeProject[]>();
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function createProject(
   supabase: SupabaseClient,
   input: Pick<SladeProject, "name"> & Partial<Omit<SladeProject, "id" | "created_at" | "updated_at">>

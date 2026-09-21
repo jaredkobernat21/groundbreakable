@@ -1,7 +1,16 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { queryContacts, listOrganizations, RELATIONSHIP_STATUS_LABEL, LEAD_STATUS_LABEL } from "@/lib/slade";
+import {
+  queryContacts,
+  listOrganizations,
+  getActiveBuyBoxesForContact,
+  listProjectsForContact,
+  queryOpportunities,
+  RELATIONSHIP_STATUS_LABEL,
+  LEAD_STATUS_LABEL,
+  OPPORTUNITY_STATUS_LABEL,
+} from "@/lib/slade";
 import { createContactAction, updateContactAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -23,16 +32,32 @@ export default async function SladeContactsPage() {
 
   const [contacts, organizations] = await Promise.all([queryContacts(supabase), listOrganizations(supabase)]);
 
+  // What's live with each contact right now -- one parallel fetch across
+  // the whole list rather than N+1 per row; small dataset (solo-operator
+  // CRM), no lazy-loading infra exists in this codebase and none is needed.
+  const networkData = await Promise.all(
+    contacts.map(async (c) => {
+      const [buyBoxes, projects, opportunities] = await Promise.all([
+        getActiveBuyBoxesForContact(supabase, c.id),
+        listProjectsForContact(supabase, c.id),
+        queryOpportunities(supabase, { contactId: c.id }),
+      ]);
+      return { contactId: c.id, buyBoxes, projects, opportunities };
+    })
+  );
+  const networkById = new Map(networkData.map((n) => [n.contactId, n]));
+
   return (
     <div className="space-y-8">
       <div>
         <Link href="/dashboard/admin/slade" className="text-xs text-white/40 hover:text-white">
           ← SLADE
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-white">Contacts</h1>
+        <h1 className="mt-1 text-lg font-semibold text-white">Network</h1>
         <p className="text-sm text-white/50">
-          Developers, investors, brokers, planners, city contacts, friends/network. Written through the same service
-          functions SLADE chat uses — no separate copy of the data.
+          Developers, investors, brokers, planners, city contacts, friends/network — and what's live with each of
+          them: buy boxes, projects, and opportunities. Written through the same service functions SLADE chat uses —
+          no separate copy of the data.
         </p>
       </div>
 
@@ -71,6 +96,14 @@ export default async function SladeContactsPage() {
           <div className="col-span-2">
             <label className={labelClass} htmlFor="linkedin_url">LinkedIn URL</label>
             <input id="linkedin_url" name="linkedin_url" type="url" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="website">Website</label>
+            <input id="website" name="website" type="url" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="markets">Markets</label>
+            <input id="markets" name="markets" className={inputClass} placeholder="Lawrence, KC metro" />
           </div>
           <div>
             <label className={labelClass} htmlFor="relationship_type">Relationship Type</label>
@@ -136,7 +169,8 @@ export default async function SladeContactsPage() {
                   </div>
                   {contact.notes && <div className="mt-1 text-sm text-white/60">{contact.notes}</div>}
                 </div>
-                <details className="shrink-0">
+                <div className="flex shrink-0 flex-col gap-2">
+                <details>
                   <summary className="cursor-pointer rounded border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white">
                     Edit
                   </summary>
@@ -174,6 +208,19 @@ export default async function SladeContactsPage() {
                     <div>
                       <label className={labelClass}>LinkedIn URL</label>
                       <input name="linkedin_url" type="url" defaultValue={contact.linkedin_url ?? ""} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Website</label>
+                      <input name="website" type="url" defaultValue={contact.website ?? ""} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Markets</label>
+                      <input
+                        name="markets"
+                        defaultValue={contact.markets.join(", ")}
+                        className={inputClass}
+                        placeholder="Lawrence, KC metro"
+                      />
                     </div>
                     <div>
                       <label className={labelClass}>Relationship Type</label>
@@ -218,6 +265,63 @@ export default async function SladeContactsPage() {
                     </button>
                   </form>
                 </details>
+
+                <details>
+                  <summary className="cursor-pointer rounded border border-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white">
+                    Network
+                  </summary>
+                  <div className="mt-3 w-72 space-y-3 rounded border border-white/10 bg-black/30 p-3 text-sm">
+                    <div>
+                      <div className={labelClass}>Organization</div>
+                      <div className="text-white/70">{contact.organization?.name ?? "—"}</div>
+                    </div>
+                    <div>
+                      <div className={labelClass}>
+                        Active Buy Boxes ({networkById.get(contact.id)?.buyBoxes.length ?? 0})
+                      </div>
+                      {(networkById.get(contact.id)?.buyBoxes.length ?? 0) === 0 ? (
+                        <div className="text-white/40">none</div>
+                      ) : (
+                        <ul className="space-y-1 text-white/70">
+                          {networkById.get(contact.id)!.buyBoxes.map((bb) => (
+                            <li key={bb.id}>{bb.name}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <div className={labelClass}>
+                        Projects ({networkById.get(contact.id)?.projects.length ?? 0})
+                      </div>
+                      {(networkById.get(contact.id)?.projects.length ?? 0) === 0 ? (
+                        <div className="text-white/40">none</div>
+                      ) : (
+                        <ul className="space-y-1 text-white/70">
+                          {networkById.get(contact.id)!.projects.map((p) => (
+                            <li key={p.id}>{p.name} · {p.status}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <div className={labelClass}>
+                        Opportunities ({networkById.get(contact.id)?.opportunities.length ?? 0})
+                      </div>
+                      {(networkById.get(contact.id)?.opportunities.length ?? 0) === 0 ? (
+                        <div className="text-white/40">none</div>
+                      ) : (
+                        <ul className="space-y-1 text-white/70">
+                          {networkById.get(contact.id)!.opportunities.map((o) => (
+                            <li key={o.id}>
+                              {o.site?.address ?? "unknown site"} · {OPPORTUNITY_STATUS_LABEL[o.opportunity_status]}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </details>
+                </div>
               </div>
             </div>
           ))}
