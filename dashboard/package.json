@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/lib/slade/__tests__/*.test.ts",
     "collect:topeka-planning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectTopekaPlanningCommission.ts",
     "collect:lawrence-planning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectLawrencePlanningCommission.ts",
     "collect:lawrence-city-commission": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectLawrenceCityCommission.ts",
