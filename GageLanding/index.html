@@ -118,6 +118,41 @@
     .gage-map{ min-height:320px; }
   }
 
+  /* ---------- The Potential (darkened photo section) ---------- */
+  .gage-potential{
+    position:relative;
+    min-height:60vh;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    overflow:hidden;
+    isolation:isolate;
+    padding:80px 32px;
+  }
+  .gage-potential-bg{
+    position:absolute; inset:0; z-index:0;
+    background-image:url(images/potential.jpg);
+    background-size:cover;
+    background-position:center;
+  }
+  .gage-potential-scrim{ position:absolute; inset:0; background:rgba(8,8,7,0.62); }
+  .gage-potential-content{ position:relative; z-index:1; max-width:720px; }
+  .gage-potential-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(32px,5vw,56px);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    color:#FFFFFF;
+    margin:0 0 20px;
+    text-shadow:0 2px 30px rgba(0,0,0,0.4);
+  }
+  .gage-potential-sub{
+    font-size:clamp(15px,1.7vw,19px);
+    line-height:1.65;
+    color:rgba(255,255,255,0.85);
+    margin:0;
+  }
+
   /* ---------- Contact CTA ---------- */
   .gage-contact{ background:#0A0A0A; padding:clamp(72px,10vw,120px) 32px; }
   .gage-contact-inner{ max-width:920px; margin:0 auto; display:flex; gap:52px; align-items:center; }
@@ -167,9 +202,9 @@
   <!-- SHOVEL-READY CTA -->
   <section class="gage-cta">
     <div class="gage-cta-inner">
-      <h2 class="gage-cta-title reveal">This site is shovel ready!</h2>
+      <h2 class="gage-cta-title reveal">36 Acres of Commercial Opportunity at 37th &amp; Gage</h2>
       <div class="gage-cta-rule"></div>
-      <p class="gage-cta-sub reveal">This is 36.51 Acres for $1.2 Million or willing to sell lots one at a time with CID incentives to offset development costs.</p>
+      <p class="gage-cta-sub reveal">Graded. Entitled. Utilities in motion. National retail already under construction.</p>
     </div>
   </section>
 
@@ -266,6 +301,16 @@
         </div>
       </div>
 
+    </div>
+  </section>
+
+  <!-- THE POTENTIAL -->
+  <section class="gage-potential">
+    <div class="gage-potential-bg" aria-hidden="true"></div>
+    <div class="gage-potential-scrim" aria-hidden="true"></div>
+    <div class="gage-potential-content">
+      <h2 class="gage-potential-title reveal">The Potential</h2>
+      <p class="gage-potential-sub reveal">A conceptual mixed-use destination with retail, restaurants, community space, and recreation.</p>
     </div>
   </section>
 
