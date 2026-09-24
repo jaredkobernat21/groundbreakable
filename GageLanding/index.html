@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gage Landing — Groundbreakable</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://groundbreakable.com/GageLanding">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* ---------- Gage Landing video hero ----------
+     Namespaced gage- so nothing here collides with the shared stylesheet.
+     Three source videos crossfade/loop in sequence as a full-bleed
+     background; a dark scrim + centered wordmark sit on top. */
+  .gage-hero{ padding:0; }
+  .gage-video-bg{ position:absolute; inset:0; z-index:0; background:var(--charcoal); }
+  .gage-video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity 0.7s ease;
+  }
+  .gage-video.active{ opacity:1; }
+  .gage-scrim{ position:absolute; inset:0; background:rgba(12,11,8,0.46); }
+  .gage-hero-content{
+    position:relative; z-index:1;
+    width:100%; height:100%;
+    min-height:100svh;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .gage-hero-title{
+    font-family:var(--serif);
+    font-weight:500;
+    font-size:clamp(38px,7vw,84px);
+    letter-spacing:-0.01em;
+    line-height:1.1;
+    color:#FFFFFF;
+    text-align:center;
+    margin:0;
+    text-shadow:0 2px 40px rgba(0,0,0,0.55);
+  }
+</style>
+</head>
+<body>
+
+<header class="nav nav--overlay" id="nav">
+  <div class="wrap nav__inner">
+    <a href="../index.html#top" class="brand" aria-label="Groundbreakable — home">
+      <span class="brand__mark">
+        <img src="/groundbreakable-logo.png" alt="Groundbreakable" width="26" height="26" class="brand__mark-img" />
+      </span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="../framework.html">Framework</a>
+    </nav>
+
+    <div class="nav__cta">
+      <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
+      <a href="../get-started.html" class="btn btn--gold btn--sm">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+
+    <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="nav__mobile" id="navMobile">
+    <a href="../framework.html">Framework</a>
+    <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
+    <a href="../get-started.html" class="btn btn--gold">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+</header>
+
+<main>
+
+  <!-- VIDEO HERO -->
+  <section class="hero gage-hero" id="top">
+    <div class="gage-video-bg" aria-hidden="true">
+      <video class="gage-video" muted playsinline preload="auto" src="videos/video1.mp4"></video>
+      <video class="gage-video" muted playsinline preload="auto" src="videos/video2.mp4"></video>
+      <video class="gage-video" muted playsinline preload="auto" src="videos/video3.mp4"></video>
+      <div class="gage-scrim"></div>
+    </div>
+
+    <div class="gage-hero-content">
+      <h1 class="gage-hero-title">Gage Landing</h1>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="footer__brand">
+      <span class="brand__mark">
+        <img src="/groundbreakable-logo.png" alt="" width="24" height="24" class="brand__mark-img" />
+      </span>
+      <div>
+        <p class="footer__name">GROUNDBREAKABLE</p>
+        <p class="footer__tag">Development Intelligence · by ROQ</p>
+      </div>
+    </div>
+
+    <nav class="footer__links" aria-label="Footer">
+      <a href="../framework.html">Framework</a>
+      <a href="../faq.html">FAQ</a>
+      <a href="../about.html">About</a>
+      <a href="https://app.groundbreakable.com/login" target="_blank" rel="noopener">Sign in</a>
+    </nav>
+
+    <p class="footer__copy">&copy; <span id="year"></span> Groundbreakable, a ROQ company. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="../js/main.js"></script>
+<script>
+  (function () {
+    var videos = Array.prototype.slice.call(document.querySelectorAll('.gage-video'));
+    if (!videos.length) return;
+
+    var i = 0;
+
+    function play(index) {
+      videos.forEach(function (v, vi) {
+        v.classList.toggle('active', vi === index);
+      });
+      var current = videos[index];
+      current.currentTime = 0;
+      var p = current.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+
+    videos.forEach(function (v, vi) {
+      v.addEventListener('ended', function () {
+        i = (vi + 1) % videos.length;
+        play(i);
+      });
+    });
+
+    play(0);
+  })();
+</script>
+</body>
+</html>
