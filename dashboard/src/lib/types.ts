@@ -159,6 +159,10 @@ export const OPPORTUNITIES_COLOR = "#22c55e"; // green
 // always visible regardless of which segment is active -- see
 // DevelopmentMap.tsx.
 export const CATALYSTS_COLOR = "#ffffff";
+// Light-theme equivalent for Catalyst badges/callouts on white-background
+// cards (BriefingSummary, PlansFeed, PlanDetailPanel) -- CATALYSTS_COLOR
+// is tuned for dark map overlays and disappears on a white card.
+export const CATALYST_LIGHT_ACCENT_COLOR = "#f59e0b";
 
 // --- Activity phases ---
 // Activity's primary grouping axis: construction phase, derived from
@@ -302,6 +306,11 @@ export type CatalystType =
   | "institutional"
   | "public_facility"
   | "mixed_use_anchor"
+  | "data_center"
+  | "housing_development"
+  | "industrial_logistics"
+  | "incentive_district"
+  | "annexation_rezoning"
   | "other";
 
 export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
@@ -310,16 +319,23 @@ export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
   institutional: "Institutional",
   public_facility: "Public Facility",
   mixed_use_anchor: "Mixed-Use Anchor",
+  data_center: "Data Center",
+  housing_development: "Housing Development",
+  industrial_logistics: "Industrial / Logistics",
+  incentive_district: "Incentive / TIF District",
+  annexation_rezoning: "Annexation / Rezoning",
   other: "Other",
 };
 
-export type CatalystStatus = "planned" | "under_construction" | "operating" | "completed";
+export type CatalystStatus = "proposed" | "planned" | "under_construction" | "operating" | "completed" | "cancelled";
 
 export const CATALYST_STATUS_LABEL: Record<CatalystStatus, string> = {
+  proposed: "Proposed",
   planned: "Planned",
   under_construction: "Under Construction",
   operating: "Operating",
   completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 export type Catalyst = {
@@ -338,15 +354,37 @@ export type Catalyst = {
   boundary: GeoJSON.Polygon | GeoJSON.MultiPolygon | null;
   status: CatalystStatus;
   estimated_value: number | null;
+  // Non-dollar scale, e.g. "1,200 housing units" -- estimated_value stays
+  // the $-only figure.
+  estimated_scale_note: string | null;
+  expected_timeline: string | null;
+  why_it_matters: string | null;
+  development_impact: string | null;
+  related_context: string[];
   is_spotlight: boolean;
   date_announced: string | null;
   source_id: string;
+  additional_source_ids: string[];
+  // Nullable -- a catalyst may be elevated from an existing Plan (either
+  // kind) or originate independently (e.g. an employer announcement with
+  // no formal case filed yet). See lib/catalystRules.ts.
+  related_shift_id: string | null;
+  related_entitlement_case_id: string | null;
   confidence: Confidence;
   last_verified_at: string;
   created_at: string;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
+
+// The live Plans/Opportunities dashboard's shape -- also resolves
+// additional_source_ids into full Source rows (same "fetch sources
+// separately, attach here" convention as
+// getDevelopmentOpportunities/source_ids). Kept distinct from
+// CatalystWithSource rather than widening it, since the admin page and the
+// legacy /preview/topeka map layer only ever select `source:sources(*)`
+// and never populate this.
+export type CatalystWithSources = CatalystWithSource & { additionalSources: Source[] };
 
 // --- Opportunity Zones ---
 // Area-based favorable-zoning opportunities -- a second geometry type

@@ -59,6 +59,11 @@ export async function createCatalyst(formData: FormData) {
     throw new Error(sourceError?.message ?? "Failed to save source.");
   }
 
+  const relatedContextRaw = str(formData, "related_context");
+  const relatedContext = relatedContextRaw
+    ? relatedContextRaw.split("\n").map((line) => line.trim()).filter(Boolean)
+    : [];
+
   const { error: catalystError } = await supabase.from("catalysts").insert({
     market_id: marketId,
     title,
@@ -71,6 +76,13 @@ export async function createCatalyst(formData: FormData) {
     boundary,
     status: str(formData, "status") ?? "planned",
     estimated_value: num(formData, "estimated_value"),
+    estimated_scale_note: str(formData, "estimated_scale_note"),
+    expected_timeline: str(formData, "expected_timeline"),
+    why_it_matters: str(formData, "why_it_matters"),
+    development_impact: str(formData, "development_impact"),
+    related_context: relatedContext,
+    related_shift_id: str(formData, "related_shift_id"),
+    related_entitlement_case_id: str(formData, "related_entitlement_case_id"),
     date_announced: str(formData, "date_announced"),
     source_id: source.id,
     confidence: str(formData, "confidence") ?? "reported",

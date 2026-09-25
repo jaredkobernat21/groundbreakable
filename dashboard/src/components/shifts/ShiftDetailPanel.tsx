@@ -1,5 +1,5 @@
-import type { ProjectPersonWithSource, ShiftWithSource } from "@/lib/types";
-import { PROJECT_PERSON_ROLE_LABEL } from "@/lib/types";
+import type { CatalystWithSources, ProjectPersonWithSource, ShiftWithSource } from "@/lib/types";
+import { CATALYSTS_COLOR, CATALYST_TYPE_LABEL, PROJECT_PERSON_ROLE_LABEL } from "@/lib/types";
 import {
   SHIFT_CATEGORY_COLOR,
   SHIFT_CATEGORY_LABEL,
@@ -16,10 +16,12 @@ import { formatDate } from "@/lib/format";
 export default function ShiftDetailPanel({
   shift,
   people,
+  catalyst,
   onClose,
 }: {
   shift: ShiftWithSource;
   people?: ProjectPersonWithSource[];
+  catalyst?: CatalystWithSources | null;
   onClose: () => void;
 }) {
   const color = SHIFT_CATEGORY_COLOR[shift.category];
@@ -35,6 +37,15 @@ export default function ShiftDetailPanel({
       >
         ✕
       </button>
+
+      {catalyst && (
+        <div
+          className="mb-3 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
+          style={{ borderColor: `${CATALYSTS_COLOR}55`, color: CATALYSTS_COLOR, backgroundColor: `${CATALYSTS_COLOR}1a` }}
+        >
+          ⚡ Catalyst · {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+        </div>
+      )}
 
       <div
         className="mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide"

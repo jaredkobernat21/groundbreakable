@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type {
+  CatalystWithSources,
   DevelopmentFrictionCaseWithSource,
   DevelopmentFrictionSignalWithSource,
   DevelopmentOpportunityWithSources,
@@ -24,6 +25,7 @@ import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } fr
 import { deriveOpportunityTypeTag, OPPORTUNITY_TYPE_TAG_LABEL, type OpportunityTypeTag } from "@/lib/opportunityConstants";
 import { computeFrictionOpportunities } from "@/lib/opportunityRules";
 import { buildPlanItems, planItemDate, planItemKey } from "@/lib/planItems";
+import { nearbyCatalystForPoint, nearbyOpportunitiesForCatalyst, nearbyPlanItemsForCatalyst } from "@/lib/catalystRules";
 import type { EntitlementRealityScoreResult } from "@/lib/entitlement/score";
 import { pointInPolygon } from "@/lib/geo";
 import { ICON_PATHS } from "@/lib/icons";
@@ -41,6 +43,7 @@ import DevelopmentFrictionSection from "./DevelopmentFrictionSection";
 import PlansMap from "../plans/PlansMap";
 import PlansFeed from "../plans/PlansFeed";
 import PlanDetailPanel from "../plans/PlanDetailPanel";
+import CatalystDetailPanel from "../catalysts/CatalystDetailPanel";
 
 // Redesign (Jared, 2026-09-25): the dashboard now has exactly two main
 // features -- Plans (early, pre-permit development activity/decisions)
@@ -82,6 +85,7 @@ export default function ShiftDashboardView({
   developmentFrictionCases,
   projectEvents,
   entitlementRealityScores,
+  catalysts,
 }: {
   market: Market;
   shifts: ShiftWithSource[];
@@ -98,6 +102,7 @@ export default function ShiftDashboardView({
   developmentFrictionCases: DevelopmentFrictionCaseWithSource[];
   projectEvents: ProjectEventWithProject[];
   entitlementRealityScores: Record<string, EntitlementRealityScoreResult>;
+  catalysts: CatalystWithSources[];
 }) {
   const [view, setView] = useState<View>("overview");
   const [heroLayer, setHeroLayer] = useState<HeroMapLayer>("both");
@@ -106,6 +111,7 @@ export default function ShiftDashboardView({
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
   const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
+  const [selectedCatalystId, setSelectedCatalystId] = useState<string | null>(null);
   const [opportunityTypeFilter, setOpportunityTypeFilter] = useState<Set<OpportunityTypeTag>>(
     new Set(OPPORTUNITY_TYPE_FILTER_OPTIONS)
   );
@@ -244,24 +250,70 @@ export default function ShiftDashboardView({
     return buildabilityZones.find((zone) => pointInPolygon(point, zone.geom)) ?? null;
   }, [selectedOpportunity, buildabilityZones]);
 
+  const selectedOpportunityNearbyCatalyst = useMemo(() => {
+    if (!selectedOpportunity || selectedOpportunity.latitude == null || selectedOpportunity.longitude == null) return null;
+    return nearbyCatalystForPoint(catalysts, { lat: selectedOpportunity.latitude, lng: selectedOpportunity.longitude });
+  }, [selectedOpportunity, catalysts]);
+
+  // The market's single editorially spotlighted Catalyst ("the one
+  // development most likely to move this market") -- surfaced prominently
+  // in BriefingSummary. At most one per market (DB-enforced), see
+  // lib/queries/catalysts.ts.
+  const spotlightCatalyst = useMemo(() => catalysts.find((c) => c.is_spotlight) ?? null, [catalysts]);
+
+  const selectedCatalyst = useMemo(() => catalysts.find((c) => c.id === selectedCatalystId) ?? null, [catalysts, selectedCatalystId]);
+
+  const selectedCatalystNearbyPlans = useMemo(
+    () => (selectedCatalyst ? nearbyPlanItemsForCatalyst(selectedCatalyst, allPlanItems) : []),
+    [selectedCatalyst, allPlanItems]
+  );
+
+  const selectedCatalystNearbyOpportunities = useMemo(
+    () => (selectedCatalyst ? nearbyOpportunitiesForCatalyst(selectedCatalyst, allOpportunities) : []),
+    [selectedCatalyst, allOpportunities]
+  );
+
   // Momentum Area detail panel lets you click into a shift inside it --
   // routes through the same selectedPlanKey state as everywhere else.
   const selectedShiftIdForMomentum = selectedPlan?.kind === "shift" ? selectedPlan.id : null;
 
-  const heroSelectedKey = selectedPlanKey ?? (selectedOpportunityId ? `opportunity-${selectedOpportunityId}` : null);
+  const heroSelectedKey =
+    selectedPlanKey ??
+    (selectedOpportunityId ? `opportunity-${selectedOpportunityId}` : selectedCatalystId ? `catalyst-${selectedCatalystId}` : null);
 
-  function handleHeroSelect(key: string | null) {
+  // Shared selection router for every map (Hero, Plans) and the "Related
+  // Plans/Opportunities" links inside CatalystDetailPanel and the "Nearby
+  // Catalyst" link inside OpportunityDetailPanel -- one place that knows
+  // how to read the kind-prefixed key convention (see lib/planItems.ts's
+  // planItemKey and the `catalyst-`/`opportunity-` prefixes used on the
+  // maps) and route to the right selection state, clearing the others so
+  // only one detail panel is ever open at once.
+  function handleMapSelect(key: string | null) {
     if (!key) {
       setSelectedPlanKey(null);
       setSelectedOpportunityId(null);
+      setSelectedCatalystId(null);
       return;
     }
-    if (key.startsWith("opportunity-")) {
+    if (key.startsWith("catalyst-")) {
+      setSelectedCatalystId(key.replace("catalyst-", ""));
+      setSelectedPlanKey(null);
+      setSelectedOpportunityId(null);
+    } else if (key.startsWith("opportunity-")) {
       setSelectedOpportunityId(key.replace("opportunity-", ""));
       setSelectedPlanKey(null);
+      setSelectedCatalystId(null);
+      // A "Related Opportunity" link inside a Catalyst panel can be
+      // clicked from the Plans tab (Opportunities aren't shown there) --
+      // jump to a view that actually renders OpportunityDetailPanel.
+      if (view === "plans") setView("overview");
     } else {
       setSelectedPlanKey(key);
       setSelectedOpportunityId(null);
+      setSelectedCatalystId(null);
+      // Same reasoning in reverse: a "Related Plan" link can be clicked
+      // from the Opportunities tab, which never renders PlanDetailPanel.
+      if (view === "opportunities") setView("plans");
     }
   }
 
@@ -349,6 +401,8 @@ export default function ShiftDashboardView({
                 projects={projects}
                 allOpportunities={allOpportunities}
                 plansCount={allPlanItems.length}
+                spotlightCatalyst={spotlightCatalyst}
+                onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)}
                 topMomentumAreaBreakdown={topMomentumAreaBreakdown}
               />
 
@@ -377,14 +431,25 @@ export default function ShiftDashboardView({
                   market={market}
                   plans={allPlanItems}
                   opportunities={filteredOpportunities}
+                  catalysts={catalysts}
                   layer={heroLayer}
                   selectedKey={heroSelectedKey}
-                  onSelectKey={handleHeroSelect}
+                  onSelectKey={handleMapSelect}
                   momentumAreas={momentumAreas}
                 />
-                {selectedPlan && (
+                {selectedCatalyst ? (
+                  <CatalystDetailPanel
+                    catalyst={selectedCatalyst}
+                    nearbyPlans={selectedCatalystNearbyPlans}
+                    nearbyOpportunities={selectedCatalystNearbyOpportunities}
+                    onSelectPlan={handleMapSelect}
+                    onSelectOpportunity={(id) => handleMapSelect(`opportunity-${id}`)}
+                    onClose={() => setSelectedCatalystId(null)}
+                  />
+                ) : selectedPlan ? (
                   <PlanDetailPanel
                     plan={selectedPlan}
+                    catalysts={catalysts}
                     caseDetail={selectedCaseDetail}
                     project={selectedProject}
                     projectEvents={selectedProjectEvents}
@@ -393,15 +458,18 @@ export default function ShiftDashboardView({
                     people={projectPeople}
                     onClose={() => setSelectedPlanKey(null)}
                   />
-                )}
-                {selectedOpportunity && (
-                  <OpportunityDetailPanel
-                    opportunity={selectedOpportunity}
-                    momentumArea={selectedOpportunityMomentumArea}
-                    buildabilityZone={selectedOpportunityBuildabilityZone}
-                    originFrictionCase={selectedOpportunityOriginFrictionCase}
-                    onClose={() => setSelectedOpportunityId(null)}
-                  />
+                ) : (
+                  selectedOpportunity && (
+                    <OpportunityDetailPanel
+                      opportunity={selectedOpportunity}
+                      momentumArea={selectedOpportunityMomentumArea}
+                      buildabilityZone={selectedOpportunityBuildabilityZone}
+                      originFrictionCase={selectedOpportunityOriginFrictionCase}
+                      nearbyCatalyst={selectedOpportunityNearbyCatalyst}
+                      onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)}
+                      onClose={() => setSelectedOpportunityId(null)}
+                    />
+                  )
                 )}
               </div>
 
@@ -420,15 +488,26 @@ export default function ShiftDashboardView({
                   <PlansMap
                     market={market}
                     plans={visiblePlanItems}
-                    selectedPlanKey={selectedPlanKey}
-                    onSelectPlan={setSelectedPlanKey}
+                    catalysts={catalysts}
+                    selectedPlanKey={heroSelectedKey}
+                    onSelectPlan={handleMapSelect}
                     momentumAreas={momentumAreas}
                     selectedMomentumAreaId={selectedMomentumAreaId}
                     onSelectMomentumArea={setSelectedMomentumAreaId}
                   />
-                  {selectedPlan ? (
+                  {selectedCatalyst ? (
+                    <CatalystDetailPanel
+                      catalyst={selectedCatalyst}
+                      nearbyPlans={selectedCatalystNearbyPlans}
+                      nearbyOpportunities={selectedCatalystNearbyOpportunities}
+                      onSelectPlan={handleMapSelect}
+                      onSelectOpportunity={(id) => handleMapSelect(`opportunity-${id}`)}
+                      onClose={() => setSelectedCatalystId(null)}
+                    />
+                  ) : selectedPlan ? (
                     <PlanDetailPanel
                       plan={selectedPlan}
+                      catalysts={catalysts}
                       caseDetail={selectedCaseDetail}
                       project={selectedProject}
                       projectEvents={selectedProjectEvents}
@@ -453,7 +532,7 @@ export default function ShiftDashboardView({
                 </div>
 
                 <div className="h-[calc(100vh-220px)] min-h-[520px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
-                  <PlansFeed plans={visiblePlanItems} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
+                  <PlansFeed plans={visiblePlanItems} catalysts={catalysts} selectedPlanKey={selectedPlanKey} onSelectPlan={setSelectedPlanKey} />
                 </div>
               </div>
 
@@ -491,14 +570,27 @@ export default function ShiftDashboardView({
                     selectedOpportunityId={selectedOpportunityId}
                     onSelectOpportunity={setSelectedOpportunityId}
                   />
-                  {selectedOpportunity && (
-                    <OpportunityDetailPanel
-                      opportunity={selectedOpportunity}
-                      momentumArea={selectedOpportunityMomentumArea}
-                      buildabilityZone={selectedOpportunityBuildabilityZone}
-                      originFrictionCase={selectedOpportunityOriginFrictionCase}
-                      onClose={() => setSelectedOpportunityId(null)}
+                  {selectedCatalyst ? (
+                    <CatalystDetailPanel
+                      catalyst={selectedCatalyst}
+                      nearbyPlans={selectedCatalystNearbyPlans}
+                      nearbyOpportunities={selectedCatalystNearbyOpportunities}
+                      onSelectPlan={handleMapSelect}
+                      onSelectOpportunity={(id) => handleMapSelect(`opportunity-${id}`)}
+                      onClose={() => setSelectedCatalystId(null)}
                     />
+                  ) : (
+                    selectedOpportunity && (
+                      <OpportunityDetailPanel
+                        opportunity={selectedOpportunity}
+                        momentumArea={selectedOpportunityMomentumArea}
+                        buildabilityZone={selectedOpportunityBuildabilityZone}
+                        originFrictionCase={selectedOpportunityOriginFrictionCase}
+                        nearbyCatalyst={selectedOpportunityNearbyCatalyst}
+                        onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)}
+                        onClose={() => setSelectedOpportunityId(null)}
+                      />
+                    )
                   )}
                 </div>
                 <div className="h-[calc(100vh-220px)] min-h-[520px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">

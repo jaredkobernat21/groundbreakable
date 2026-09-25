@@ -1,9 +1,35 @@
-import type { DevelopmentOpportunityWithSources, GrowthArea, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
-import { GROWTH_AREA_MOMENTUM_LABEL } from "@/lib/types";
+import type { CatalystWithSources, DevelopmentOpportunityWithSources, GrowthArea, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
+import { CATALYST_LIGHT_ACCENT_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL } from "@/lib/types";
 import { pointInPolygon } from "@/lib/geo";
 import { formatRelativeVerified } from "@/lib/format";
 import { ICON_PATHS } from "@/lib/icons";
 import Icon from "./Icon";
+
+// The market's single spotlighted Catalyst (is_spotlight -- an
+// editorially curated "the one development most likely to move this
+// market" pick, at most one per market, see lib/queries/catalysts.ts) --
+// rendered above the momentum headline so it's the first thing a
+// developer sees when one exists, per Jared's "appear prominently in the
+// briefing" ask. Nothing renders when no catalyst is spotlighted.
+function CatalystSpotlightCallout({ catalyst, onSelect }: { catalyst: CatalystWithSources; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="mb-3 block w-full rounded-lg border p-3 text-left transition hover:opacity-90"
+      style={{ borderColor: `${CATALYST_LIGHT_ACCENT_COLOR}55`, backgroundColor: `${CATALYST_LIGHT_ACCENT_COLOR}12` }}
+    >
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: CATALYST_LIGHT_ACCENT_COLOR }}>
+        <Icon paths={ICON_PATHS.pulse} className="h-3 w-3" strokeWidth={2.2} />
+        Catalyst · {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+      </div>
+      <p className="mt-1 text-sm font-semibold leading-snug text-[#1c1c1c]">{catalyst.title}</p>
+      {(catalyst.why_it_matters ?? catalyst.description) && (
+        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-[#1c1c1c]/60">{catalyst.why_it_matters ?? catalyst.description}</p>
+      )}
+    </button>
+  );
+}
 
 type MomentumAreaBreakdown = {
   area: GrowthArea;
@@ -67,18 +93,23 @@ export default function BriefingSummary({
   topMomentumAreaBreakdown,
   allOpportunities,
   plansCount,
+  spotlightCatalyst,
+  onSelectCatalyst,
   shifts,
   projects,
 }: {
   topMomentumAreaBreakdown: MomentumAreaBreakdown | null;
   allOpportunities: DevelopmentOpportunityWithSources[];
   plansCount: number;
+  spotlightCatalyst: CatalystWithSources | null;
+  onSelectCatalyst: (id: string) => void;
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
 }) {
   if (!topMomentumAreaBreakdown) {
     return (
       <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
+        {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">What Matters Now</p>
         <p className="text-sm text-[#1c1c1c]/70">
           {plansCount} plan{plansCount === 1 ? "" : "s"} and {allOpportunities.length} opportunit
@@ -103,6 +134,7 @@ export default function BriefingSummary({
 
   return (
     <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
+      {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">
         <Icon paths={ICON_PATHS.pulse} className="h-3.5 w-3.5" />
         What Matters Now

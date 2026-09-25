@@ -1,5 +1,5 @@
-import type { DevelopmentFrictionCaseWithSource, DevelopmentOpportunityWithSources, GrowthArea, ZoningLandUseWithSource } from "@/lib/types";
-import { GROWTH_AREA_MOMENTUM_LABEL, OPPORTUNITY_CATEGORY_LABEL, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
+import type { CatalystWithSources, DevelopmentFrictionCaseWithSource, DevelopmentOpportunityWithSources, GrowthArea, ZoningLandUseWithSource } from "@/lib/types";
+import { CATALYSTS_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL, OPPORTUNITY_CATEGORY_LABEL, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
 import { OPPORTUNITY_CATEGORY_COLOR, OPPORTUNITY_STRENGTH_COLOR, opportunitySignalLabel } from "@/lib/opportunityConstants";
 import DevelopmentFrictionCaseCard from "../friction/DevelopmentFrictionCaseCard";
 
@@ -16,12 +16,16 @@ export default function OpportunityDetailPanel({
   momentumArea,
   buildabilityZone,
   originFrictionCase,
+  nearbyCatalyst,
+  onSelectCatalyst,
   onClose,
 }: {
   opportunity: DevelopmentOpportunityWithSources;
   momentumArea: GrowthArea | null;
   buildabilityZone: ZoningLandUseWithSource | null;
   originFrictionCase?: DevelopmentFrictionCaseWithSource | null;
+  nearbyCatalyst?: CatalystWithSources | null;
+  onSelectCatalyst?: (id: string) => void;
   onClose: () => void;
 }) {
   const strengthColor = OPPORTUNITY_STRENGTH_COLOR[opportunity.strength];
@@ -115,6 +119,22 @@ export default function OpportunityDetailPanel({
           </dd>
         </div>
       </dl>
+
+      {nearbyCatalyst && (
+        <button
+          type="button"
+          onClick={() => onSelectCatalyst?.(nearbyCatalyst.id)}
+          className="mt-4 block w-full rounded-lg border p-3 text-left transition hover:opacity-90"
+          style={{ borderColor: `${CATALYSTS_COLOR}40`, backgroundColor: `${CATALYSTS_COLOR}0d` }}
+        >
+          <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: CATALYSTS_COLOR }}>
+            ⚡ Nearby Catalyst
+          </p>
+          <p className="mt-0.5 text-sm text-white">
+            {nearbyCatalyst.title} <span className="text-white/40">— {CATALYST_TYPE_LABEL[nearbyCatalyst.catalyst_type]}</span>
+          </p>
+        </button>
+      )}
 
       {originFrictionCase && (
         <div className="mt-4 border-t border-white/10 pt-4">

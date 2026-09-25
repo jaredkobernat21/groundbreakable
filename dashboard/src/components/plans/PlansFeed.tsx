@@ -1,10 +1,22 @@
 "use client";
 
-import { ENTITLEMENT_CASE_STATUS_COLOR, ENTITLEMENT_CASE_STATUS_LABEL } from "@/lib/types";
+import { CATALYST_LIGHT_ACCENT_COLOR, ENTITLEMENT_CASE_STATUS_COLOR, ENTITLEMENT_CASE_STATUS_LABEL, type CatalystWithSources } from "@/lib/types";
 import { SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_ICON_PATHS, SHIFT_CATEGORY_LABEL, SHIFT_IMPACT_COLOR, SHIFT_IMPACT_LABEL } from "@/lib/shiftConstants";
 import { planItemDate, planItemKey, planItemTitle, type PlanItem } from "@/lib/planItems";
+import { catalystForPlan } from "@/lib/catalystRules";
 import { formatDate } from "@/lib/format";
 import Icon from "../shifts/Icon";
+
+function CatalystBadge() {
+  return (
+    <span
+      className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+      style={{ color: CATALYST_LIGHT_ACCENT_COLOR, backgroundColor: `${CATALYST_LIGHT_ACCENT_COLOR}1a` }}
+    >
+      ⚡ Catalyst
+    </span>
+  );
+}
 
 // A merged shift + entitlement_cases feed -- one chronological list, each
 // row tagged with which kind of Plan it is (see lib/planItems). Same
@@ -12,10 +24,12 @@ import Icon from "../shifts/Icon";
 // row variant instead of a second, separately-scrolling section.
 export default function PlansFeed({
   plans,
+  catalysts,
   selectedPlanKey,
   onSelectPlan,
 }: {
   plans: PlanItem[];
+  catalysts: CatalystWithSources[];
   selectedPlanKey: string | null;
   onSelectPlan: (key: string) => void;
 }) {
@@ -28,6 +42,7 @@ export default function PlansFeed({
       {plans.map((plan) => {
         const key = planItemKey(plan);
         const selected = key === selectedPlanKey;
+        const catalyst = catalystForPlan(catalysts, plan);
 
         if (plan.kind === "shift") {
           const shift = plan.shift;
@@ -47,6 +62,7 @@ export default function PlansFeed({
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
                     <span style={{ color: SHIFT_CATEGORY_COLOR[shift.category] }}>{SHIFT_CATEGORY_LABEL[shift.category]}</span>
+                    {catalyst && <CatalystBadge />}
                     <span className="text-[#1c1c1c]/30">·</span>
                     <span className="text-[#1c1c1c]/40">{formatDate(planItemDate(plan))}</span>
                     <span
@@ -76,6 +92,7 @@ export default function PlansFeed({
             >
               <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
                 <span className="rounded-full bg-[#818cf8]/15 px-2 py-0.5 text-[#818cf8]">Entitlement Case</span>
+                {catalyst && <CatalystBadge />}
                 <span className="text-[#1c1c1c]/30">·</span>
                 <span className="text-[#1c1c1c]/40">{formatDate(planItemDate(plan))}</span>
                 <span

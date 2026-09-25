@@ -13,6 +13,7 @@ import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOver
 import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
 import { getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
 import { getDevelopmentFrictionCases } from "@/lib/queries/developmentFrictionCases";
+import { getCatalystsWithSource } from "@/lib/queries/catalysts";
 import { computeEntitlementRealityScore, type EntitlementRealityScoreResult } from "@/lib/entitlement/score";
 import { shiftDateRangeToDate } from "@/lib/shiftConstants";
 import type { Market } from "@/lib/types";
@@ -76,6 +77,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
   const entitlementCaseDetails = await getEntitlementCaseDetailsByMarket(supabase, market.id);
   const developmentFrictionCases = await getDevelopmentFrictionCases(supabase);
   const { data: projectEvents } = await getProjectEventsFeed(supabase, market.id);
+  const catalysts = await getCatalystsWithSource(supabase, market.id);
 
   const entitlementRealityScoresEntries = await Promise.all(
     entitlementCaseDetails.map(async (entitlementCase) => {
@@ -126,6 +128,7 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
           developmentFrictionCases={developmentFrictionCases}
           projectEvents={projectEvents ?? []}
           entitlementRealityScores={entitlementRealityScores}
+          catalysts={catalysts}
         />
       </main>
     </div>

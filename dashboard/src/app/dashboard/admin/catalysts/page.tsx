@@ -79,8 +79,37 @@ export default async function AdminCatalystsPage() {
           </div>
 
           <div className="col-span-2">
-            <label className={labelClass} htmlFor="description">Description</label>
+            <label className={labelClass} htmlFor="description">Description / Short Summary</label>
             <textarea id="description" name="description" rows={3} className={inputClass} />
+          </div>
+
+          <div className="col-span-2">
+            <label className={labelClass} htmlFor="why_it_matters">Why It Matters</label>
+            <textarea id="why_it_matters" name="why_it_matters" rows={2} className={inputClass} />
+          </div>
+          <div className="col-span-2">
+            <label className={labelClass} htmlFor="development_impact">Potential Development Impact</label>
+            <textarea id="development_impact" name="development_impact" rows={2} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="expected_timeline">Expected Timeline (optional)</label>
+            <input id="expected_timeline" name="expected_timeline" className={inputClass} placeholder="e.g. Phase 1 opens 2027" />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="estimated_scale_note">Estimated Scale, non-$ (optional)</label>
+            <input id="estimated_scale_note" name="estimated_scale_note" className={inputClass} placeholder="e.g. 1,200 housing units" />
+          </div>
+          <div className="col-span-2">
+            <label className={labelClass} htmlFor="related_context">Related Infrastructure / Zoning / Incentives (optional, one per line)</label>
+            <textarea id="related_context" name="related_context" rows={3} className={inputClass} placeholder={"Rezoned to PUD in 2026\nEligible for city TIF district"} />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="related_shift_id">Related Plan — Shift ID (optional)</label>
+            <input id="related_shift_id" name="related_shift_id" className={inputClass} placeholder="uuid" />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="related_entitlement_case_id">Related Plan — Entitlement Case ID (optional)</label>
+            <input id="related_entitlement_case_id" name="related_entitlement_case_id" className={inputClass} placeholder="uuid" />
           </div>
 
           <div>

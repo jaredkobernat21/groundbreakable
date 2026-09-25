@@ -1,4 +1,5 @@
 import type {
+  CatalystWithSources,
   DevelopmentFrictionCaseWithSource,
   EntitlementCaseDetail,
   ProjectEventWithProject,
@@ -6,6 +7,8 @@ import type {
   ProjectWithSource,
 } from "@/lib/types";
 import {
+  CATALYSTS_COLOR,
+  CATALYST_TYPE_LABEL,
   ENTITLEMENT_APPROVAL_PATH_LABEL,
   ENTITLEMENT_CASE_STATUS_LABEL,
   ENTITLEMENT_DECISION_BODY_LABEL,
@@ -13,6 +16,7 @@ import {
 } from "@/lib/types";
 import type { EntitlementRealityScoreResult } from "@/lib/entitlement/score";
 import type { PlanItem } from "@/lib/planItems";
+import { catalystForPlan } from "@/lib/catalystRules";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { eventTypeLabel, groupEventsByDate } from "@/lib/projectEventDisplay";
 import ShiftDetailPanel from "../shifts/ShiftDetailPanel";
@@ -32,6 +36,7 @@ function humanizeSnakeCase(value: string): string {
 // its own destination (Jared, 2026-09-25).
 export default function PlanDetailPanel({
   plan,
+  catalysts,
   caseDetail,
   project,
   projectEvents,
@@ -41,6 +46,7 @@ export default function PlanDetailPanel({
   onClose,
 }: {
   plan: PlanItem;
+  catalysts: CatalystWithSources[];
   caseDetail: EntitlementCaseDetail | null;
   project: ProjectWithSource | null;
   projectEvents: ProjectEventWithProject[];
@@ -49,8 +55,10 @@ export default function PlanDetailPanel({
   people: ProjectPersonWithSource[];
   onClose: () => void;
 }) {
+  const catalyst = catalystForPlan(catalysts, plan);
+
   if (plan.kind === "shift") {
-    return <ShiftDetailPanel shift={plan.shift} people={people} onClose={onClose} />;
+    return <ShiftDetailPanel shift={plan.shift} people={people} catalyst={catalyst} onClose={onClose} />;
   }
 
   if (!caseDetail) return null;
@@ -61,6 +69,15 @@ export default function PlanDetailPanel({
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 text-white/40 hover:text-white">
         ✕
       </button>
+
+      {catalyst && (
+        <div
+          className="mb-3 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
+          style={{ borderColor: `${CATALYSTS_COLOR}55`, color: CATALYSTS_COLOR, backgroundColor: `${CATALYSTS_COLOR}1a` }}
+        >
+          ⚡ Catalyst · {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+        </div>
+      )}
 
       <div className="mb-3 flex items-center justify-between gap-3 pr-6">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
