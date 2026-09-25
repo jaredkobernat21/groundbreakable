@@ -48,6 +48,9 @@ export const OPPORTUNITY_SIGNAL_LABEL: Record<string, string> = {
   nearby_infrastructure: "Nearby Infrastructure",
   ownership_change: "Recent Ownership Change",
   parcel_assemblage: "Parcel Assemblage",
+  excess_acreage: "Excess Acreage",
+  tif_incentive: "TIF / Tax Incentive",
+  stalled_project: "Stalled / Abandoned",
   high_momentum: "High Momentum",
   nearby_project: "Nearby Project",
   nearby_permit: "Nearby Permit",
@@ -56,6 +59,55 @@ export const OPPORTUNITY_SIGNAL_LABEL: Record<string, string> = {
 
 export function opportunitySignalLabel(signal: string): string {
   return OPPORTUNITY_SIGNAL_LABEL[signal] ?? signal.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+// A developer-facing "what kind of opportunity is this" filter, layered
+// on top of the existing category/signals fields rather than a new
+// column -- every value here is derived, not stored, so re-tagging a row
+// with a clearer signal automatically reclassifies it. Order matters:
+// first match wins, most-specific signals checked before the
+// category-level fallback.
+export type OpportunityTypeTag =
+  | "distressed_owner"
+  | "underutilized_land"
+  | "redevelopment"
+  | "assemblage"
+  | "favorable_zoning"
+  | "infrastructure_benefiting"
+  | "tax_incentive"
+  | "stalled_abandoned"
+  | "other";
+
+export const OPPORTUNITY_TYPE_TAG_LABEL: Record<OpportunityTypeTag, string> = {
+  distressed_owner: "Distressed / Motivated Owner",
+  underutilized_land: "Underutilized Land",
+  redevelopment: "Redevelopment Site",
+  assemblage: "Assemblage",
+  favorable_zoning: "Favorable Zoning",
+  infrastructure_benefiting: "Infrastructure-Benefiting",
+  tax_incentive: "Tax Incentive / TIF",
+  stalled_abandoned: "Stalled / Abandoned",
+  other: "Other",
+};
+
+const SIGNAL_TO_TYPE_TAG: [string[], OpportunityTypeTag][] = [
+  [["stalled_project"], "stalled_abandoned"],
+  [["tax_delinquent", "tax_foreclosure", "pre_foreclosure", "code_violation", "ownership_change"], "distressed_owner"],
+  [["parcel_assemblage"], "assemblage"],
+  [["tif_incentive"], "tax_incentive"],
+  [["nearby_infrastructure"], "infrastructure_benefiting"],
+  [["favorable_zoning", "recent_rezoning"], "favorable_zoning"],
+  [["demolition"], "redevelopment"],
+  [["vacant", "excess_acreage"], "underutilized_land"],
+];
+
+export function deriveOpportunityTypeTag(opportunity: { category: string; signals: string[] }): OpportunityTypeTag {
+  for (const [signals, tag] of SIGNAL_TO_TYPE_TAG) {
+    if (opportunity.signals.some((s) => signals.includes(s))) return tag;
+  }
+  if (opportunity.category === "distress") return "distressed_owner";
+  if (opportunity.category === "zoning") return "favorable_zoning";
+  return "other";
 }
 
 export function opportunityPinMarkerSvgMarkup(strength: OpportunityStrength, opts?: { size?: number }): string {

@@ -1,79 +1,57 @@
-import type { DevelopmentOpportunityWithSources, ProjectPersonWithSource, ProjectWithSource } from "./types";
-import { PROJECT_TYPE_LABEL } from "./types";
-import { deriveLifecycleStage, LIFECYCLE_STAGE_LABEL, type LifecycleStage } from "./lifecycleStage";
+import type { DevelopmentFrictionCaseWithSource, DevelopmentOpportunityWithSources } from "./types";
+import { FRICTION_CASE_OUTCOME_LABEL } from "./types";
 
-// Only Approval/Pre-Construction projects are eligible -- the window
-// between "entitlement cleared" and "vertical construction started."
-// Build-stage projects are deliberately excluded: a project already
-// under active construction with no contractor on record is almost
-// always a sourcing gap in project_people, not a genuine unfilled
-// opportunity, and flagging it as one would be a false claim rather than
-// real intelligence.
-const ELIGIBLE_STAGES: ReadonlySet<LifecycleStage> = new Set(["approval", "pre_construction"]);
+// Outcomes where a real project stopped moving forward -- the site itself
+// is still sitting there, unbuilt, which is exactly Jared's "stalled or
+// abandoned development sites" Opportunity type. "delayed"/"modified"/
+// "resolved"/"pending" cases are still live processes, not yet a site a
+// developer could step into -- those stay as friction context on the
+// related Plan's detail panel instead (see PlanDetailPanel).
+const STALLED_OUTCOMES = new Set(["denied", "withdrawn", "abandoned"]);
 
-function findPerson(people: ProjectPersonWithSource[], projectId: string, role: "developer" | "contractor") {
-  return people.find((p) => p.related_record_type === "project" && p.related_record_id === projectId && p.role === role) ?? null;
-}
-
-// Live rule engine for the spec's Builder/Contractor Opportunity logic:
-//   developer known + GC/builder not identified + stage at Approval or
-//   Pre-Construction -> Builder Opportunity (residential/lot projects)
-//   or Contractor Opportunity (everything else -- multifamily, commercial,
-//   industrial, mixed use).
-// Returns opportunities shaped like DevelopmentOpportunityWithSources so
-// they render through the existing Opportunity map/feed/detail panel
-// unchanged -- `category` is set to "early_project" (the closest existing
-// bucket: a developer-known, not-yet-built signal) and `opportunity_group`
-// carries the real classification.
-export function computeProjectOpportunities(
-  projects: ProjectWithSource[],
-  projectPeople: ProjectPersonWithSource[]
+// Live rule engine for turning a stopped development_friction_cases row
+// into a site Opportunity -- returns opportunities shaped like
+// DevelopmentOpportunityWithSources so they render through the existing
+// Opportunity map/feed/detail panel unchanged. Replaces the old
+// computeProjectOpportunities (Builder/Contractor "no GC yet" leads,
+// dropped 2026-09-25 -- a different audience than "sites a developer
+// could act on").
+export function computeFrictionOpportunities(
+  frictionCases: DevelopmentFrictionCaseWithSource[]
 ): DevelopmentOpportunityWithSources[] {
   const results: DevelopmentOpportunityWithSources[] = [];
 
-  for (const project of projects) {
-    const stage = deriveLifecycleStage(project.stage);
-    if (stage === null || !ELIGIBLE_STAGES.has(stage)) continue;
+  for (const frictionCase of frictionCases) {
+    if (!STALLED_OUTCOMES.has(frictionCase.outcome)) continue;
+    if (frictionCase.latitude == null || frictionCase.longitude == null) continue;
 
-    const developerPerson = findPerson(projectPeople, project.id, "developer");
-    const developerName = developerPerson?.person_name ?? developerPerson?.company_name ?? project.developer;
-    if (!developerName) continue; // no developer on record -- nothing to build an opportunity on
+    const strength = frictionCase.severity === "high" ? "high" : frictionCase.severity === "medium" ? "medium" : "low";
 
-    const contractorPerson = findPerson(projectPeople, project.id, "contractor");
-    if (contractorPerson || project.contractor) continue; // contractor already identified -- not an opportunity
-
-    const group = project.project_type === "residential" ? "builder" : "contractor";
-    const stageLabel = LIFECYCLE_STAGE_LABEL[stage];
-    const typeLabel = project.project_type ? PROJECT_TYPE_LABEL[project.project_type] : "Project";
-
-    // Stage proximity to needing a contractor is the only evidence-based
-    // strength signal available here -- Pre-Construction is closer to
-    // needing one than Approval, so it reads HIGH; Approval reads MEDIUM.
-    const strength: "high" | "medium" = stage === "pre_construction" ? "high" : "medium";
+    const reasons = [
+      `Original plan: ${frictionCase.original_plan_summary}`,
+      frictionCase.final_plan_summary ?? `Outcome: ${FRICTION_CASE_OUTCOME_LABEL[frictionCase.outcome]}.`,
+      frictionCase.impact_project_failed ? "The project failed to move forward -- the site remains undeveloped." : null,
+    ].filter((r): r is string => r != null);
 
     results.push({
-      id: `project-opportunity-${project.id}`,
-      market_id: project.market_id,
-      address: project.address ?? project.title,
-      latitude: project.latitude,
-      longitude: project.longitude,
-      opportunity_type: `${typeLabel} — ${group === "builder" ? "Vertical Builder Not Identified" : "General Contractor Not Identified"}`,
+      id: `friction-opportunity-${frictionCase.id}`,
+      market_id: frictionCase.market_id,
+      address: frictionCase.address ?? frictionCase.project_name,
+      latitude: frictionCase.latitude,
+      longitude: frictionCase.longitude,
+      opportunity_type: "Stalled/Abandoned Site",
       strength,
-      category: "early_project",
-      opportunity_group: group,
-      status: `${stageLabel} — developer known, ${group === "builder" ? "builder" : "GC"} not yet identified`,
-      related_developer: developerName,
+      category: "distress",
+      opportunity_group: "development",
+      status: `${FRICTION_CASE_OUTCOME_LABEL[frictionCase.outcome]} -- previously proposed by ${frictionCase.developer_name ?? "an unnamed developer"}`,
+      related_developer: frictionCase.developer_name,
       related_contractor: null,
-      signals: [group === "builder" ? "builder_not_identified" : "contractor_not_identified"],
-      reasons: [
-        `Developer identified: ${developerName}.`,
-        `Current stage: ${stageLabel}.`,
-        "No contractor identified in available records.",
-      ],
-      source_ids: [],
-      date_identified: project.date_announced ?? project.date_updated,
-      created_at: project.date_updated,
-      sources: project.source ? [project.source] : [],
+      signals: ["stalled_project"],
+      reasons,
+      source_ids: frictionCase.source_id ? [frictionCase.source_id] : [],
+      date_identified: frictionCase.created_at,
+      created_at: frictionCase.created_at,
+      sources: frictionCase.source ? [frictionCase.source] : [],
     });
   }
 

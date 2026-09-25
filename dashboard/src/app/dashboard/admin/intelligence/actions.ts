@@ -120,7 +120,6 @@ export async function createSignal(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/timeline");
   revalidatePath("/dashboard/admin/intelligence");
 }
 
@@ -155,6 +154,5 @@ export async function logStatusUpdate(formData: FormData) {
   if (historyError) throw new Error(historyError.message);
 
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/timeline");
   revalidatePath("/dashboard/admin/intelligence");
 }

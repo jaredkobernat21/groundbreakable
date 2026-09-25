@@ -1,6 +1,7 @@
-import type { DevelopmentOpportunityWithSources, GrowthArea, ZoningLandUseWithSource } from "@/lib/types";
+import type { DevelopmentFrictionCaseWithSource, DevelopmentOpportunityWithSources, GrowthArea, ZoningLandUseWithSource } from "@/lib/types";
 import { GROWTH_AREA_MOMENTUM_LABEL, OPPORTUNITY_CATEGORY_LABEL, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
 import { OPPORTUNITY_CATEGORY_COLOR, OPPORTUNITY_STRENGTH_COLOR, opportunitySignalLabel } from "@/lib/opportunityConstants";
+import DevelopmentFrictionCaseCard from "../friction/DevelopmentFrictionCaseCard";
 
 // The full click-through: address, opportunity type, category (Distress/
 // Zoning/Early Projects), strength, status/stage, related developer/
@@ -14,11 +15,13 @@ export default function OpportunityDetailPanel({
   opportunity,
   momentumArea,
   buildabilityZone,
+  originFrictionCase,
   onClose,
 }: {
   opportunity: DevelopmentOpportunityWithSources;
   momentumArea: GrowthArea | null;
   buildabilityZone: ZoningLandUseWithSource | null;
+  originFrictionCase?: DevelopmentFrictionCaseWithSource | null;
   onClose: () => void;
 }) {
   const strengthColor = OPPORTUNITY_STRENGTH_COLOR[opportunity.strength];
@@ -112,6 +115,13 @@ export default function OpportunityDetailPanel({
           </dd>
         </div>
       </dl>
+
+      {originFrictionCase && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">How this site became available</p>
+          <DevelopmentFrictionCaseCard frictionCase={originFrictionCase} />
+        </div>
+      )}
 
       {opportunity.sources.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t border-white/10 pt-4">

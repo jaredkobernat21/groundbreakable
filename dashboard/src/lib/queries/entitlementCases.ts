@@ -88,3 +88,33 @@ export async function getEntitlementCaseDetail(
 
   return { data: data?.[0] ?? null, error };
 }
+
+// Same embed shape as getEntitlementCaseDetail, but every case in a market
+// at once -- powers the Plans feed's detail panel (§ Plans redesign,
+// 2026-09-25), which needs the full request/hearing/change history for
+// whichever case a developer clicks, not just the list-view fields
+// getEntitlementCasesWithSource returns. One query instead of N, same
+// "fetch everything for the market once" convention as the rest of
+// dashboard/page.tsx.
+export async function getEntitlementCaseDetailsByMarket(
+  supabase: SupabaseClient,
+  marketId: string
+): Promise<EntitlementCaseDetail[]> {
+  const { data } = await supabase
+    .from("entitlement_cases")
+    .select(
+      `*,
+      source:sources(*),
+      approval_type:entitlement_approval_types(*),
+      events:entitlement_case_events(*, votes:entitlement_case_votes(*, commissioner:entitlement_commissioners(*))),
+      changes:entitlement_case_changes(*),
+      conditions:entitlement_case_conditions(*),
+      public_comments:entitlement_public_comments(*),
+      parties:entitlement_case_parties(*)`
+    )
+    .eq("market_id", marketId)
+    .order("created_at", { ascending: false })
+    .returns<EntitlementCaseDetail[]>();
+
+  return data ?? [];
+}

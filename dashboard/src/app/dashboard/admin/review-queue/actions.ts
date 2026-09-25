@@ -85,7 +85,7 @@ export async function approveAsEvent(formData: FormData) {
   await resolveQueueEntry(supabase, reviewQueueId);
 
   revalidatePath("/dashboard/admin/review-queue");
-  revalidatePath("/dashboard/timeline");
+  revalidatePath("/dashboard");
 }
 
 // The "this is genuinely new" path. Requires the reviewer to supply
@@ -157,7 +157,7 @@ export async function approveAsNewProject(formData: FormData) {
   await resolveQueueEntry(supabase, reviewQueueId);
 
   revalidatePath("/dashboard/admin/review-queue");
-  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard");
 }
 
 export async function rejectIntakeRecord(formData: FormData) {

@@ -66,11 +66,13 @@ const TREND_COLOR: Record<Trend, string> = {
 export default function BriefingSummary({
   topMomentumAreaBreakdown,
   allOpportunities,
+  plansCount,
   shifts,
   projects,
 }: {
   topMomentumAreaBreakdown: MomentumAreaBreakdown | null;
   allOpportunities: DevelopmentOpportunityWithSources[];
+  plansCount: number;
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
 }) {
@@ -79,8 +81,8 @@ export default function BriefingSummary({
       <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">What Matters Now</p>
         <p className="text-sm text-[#1c1c1c]/70">
-          {shifts.length} shift{shifts.length === 1 ? "" : "s"} and {projects.length} project
-          {projects.length === 1 ? "" : "s"} tracked -- no momentum area has been identified for this market yet.
+          {plansCount} plan{plansCount === 1 ? "" : "s"} and {allOpportunities.length} opportunit
+          {allOpportunities.length === 1 ? "y" : "ies"} tracked -- no momentum area has been identified for this market yet.
         </p>
       </div>
     );
@@ -125,6 +127,12 @@ export default function BriefingSummary({
           <Icon paths={ICON_PATHS.mapPin} className="h-3 w-3" strokeWidth={2.2} />
           {area.name} &middot; {GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]}
         </span>
+        {plansCount > 0 && (
+          <span className="flex items-center gap-1 rounded-full bg-[#f97316]/15 px-2.5 py-1 text-xs font-medium text-[#f97316]">
+            <Icon paths={ICON_PATHS.pulse} className="h-3 w-3" strokeWidth={2.2} />
+            {plansCount} plan{plansCount === 1 ? "" : "s"} market-wide
+          </span>
+        )}
         {opportunityCount > 0 && (
           <span className="flex items-center gap-1 rounded-full bg-[#eab308]/15 px-2.5 py-1 text-xs font-medium text-[#eab308]">
             <Icon paths={ICON_PATHS.barChart} className="h-3 w-3" strokeWidth={2.2} />
