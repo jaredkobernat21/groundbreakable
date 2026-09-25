@@ -36,10 +36,10 @@ export default async function DashboardLayout({
         <div className="flex items-center gap-3 text-sm text-[#1c1c1c]/50">
           {admin && (
             <Link
-              href="/dashboard/admin/slade"
+              href="/dashboard/admin/opportunities"
               className="rounded-full border border-[#1c1c1c]/15 px-3 py-1 text-xs font-medium text-[#1c1c1c]/60 transition hover:border-[#1c1c1c]/30 hover:text-[#1c1c1c]"
             >
-              SLADE
+              Admin
             </Link>
           )}
           <MarketSwitcher markets={markets ?? []} />

@@ -110,7 +110,7 @@ export default function BriefingSummary({
     return (
       <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
         {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">What Matters Now</p>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">Market Pulse</p>
         <p className="text-sm text-[#1c1c1c]/70">
           {plansCount} plan{plansCount === 1 ? "" : "s"} and {allOpportunities.length} opportunit
           {allOpportunities.length === 1 ? "y" : "ies"} tracked -- no momentum area has been identified for this market yet.
@@ -137,7 +137,7 @@ export default function BriefingSummary({
       {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">
         <Icon paths={ICON_PATHS.pulse} className="h-3.5 w-3.5" />
-        What Matters Now
+        Market Pulse
         <span className="text-[#1c1c1c]/25">&middot;</span>
         <span className="normal-case tracking-normal text-[#1c1c1c]/35">Updated {formatRelativeVerified(area.updated_at)}</span>
       </div>

@@ -154,15 +154,15 @@ export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 };
 
 // --- View colors ---
-export const OPPORTUNITIES_COLOR = "#22c55e"; // green
-// Catalysts render as a white "watch zone" area outline (not a point pin),
-// always visible regardless of which segment is active -- see
-// DevelopmentMap.tsx.
-export const CATALYSTS_COLOR = "#ffffff";
+export const OPPORTUNITIES_COLOR = "#22c55e"; // green -- every Opportunity pin on the map uses this one color, regardless of strength.
+// Purple -- Catalysts' "watch zone" area outline and marker (Jared,
+// 2026-09-25), always visible regardless of which segment is active. Also
+// used by the legacy DevelopmentMap.tsx.
+export const CATALYSTS_COLOR = "#a855f7";
 // Light-theme equivalent for Catalyst badges/callouts on white-background
 // cards (BriefingSummary, PlansFeed, PlanDetailPanel) -- CATALYSTS_COLOR
-// is tuned for dark map overlays and disappears on a white card.
-export const CATALYST_LIGHT_ACCENT_COLOR = "#f59e0b";
+// is tuned for dark map overlays and reads too pale on a white card.
+export const CATALYST_LIGHT_ACCENT_COLOR = "#a855f7";
 
 // --- Activity phases ---
 // Activity's primary grouping axis: construction phase, derived from

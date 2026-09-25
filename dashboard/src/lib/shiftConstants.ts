@@ -29,7 +29,10 @@ export const SHIFT_CATEGORY_LABEL: Record<ShiftCategory, string> = {
 };
 
 export const SHIFT_CATEGORY_COLOR: Record<ShiftCategory, string> = {
-  plans: "#f97316", // orange
+  // Yellow -- every Plan pin on the map (PlansMap/HeroMap) uses this one
+  // color regardless of kind (shift or entitlement case) or the shift's
+  // own category, per Jared's "all plans should be yellow" (2026-09-25).
+  plans: "#eab308",
   building: "#3b82f6", // blue
   infrastructure: "#14b8a6", // teal
   business: "#818cf8", // indigo

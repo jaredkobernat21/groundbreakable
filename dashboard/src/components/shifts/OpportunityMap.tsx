@@ -4,8 +4,8 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { DevelopmentOpportunityWithSources, Market } from "@/lib/types";
-import { OPPORTUNITY_STRENGTH_COLOR, opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
-import { OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
+import { opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
+import { OPPORTUNITIES_COLOR, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
 
 // Same structure as InvestmentMap/ShiftMap -- one small map component per
 // surface, marker rendering in a ready-keyed effect (not called directly
@@ -77,7 +77,6 @@ export default function OpportunityMap({
       opportunities.forEach((opp) => {
         if (opp.latitude == null || opp.longitude == null) return;
 
-        const color = OPPORTUNITY_STRENGTH_COLOR[opp.strength];
         const el = document.createElement("div");
         el.className = "roq-marker";
         el.style.opacity = !selectedOpportunityId || opp.id === selectedOpportunityId ? "1" : "0.35";
@@ -88,8 +87,8 @@ export default function OpportunityMap({
             <span class="roq-marker-card-title">${escapeHtml(opp.address)}</span>
             <span class="roq-marker-card-sub">${escapeHtml(opp.opportunity_type)} · ${OPPORTUNITY_STRENGTH_LABEL[opp.strength]}</span>
           </div>
-          <div class="roq-marker-line" style="background:${color}"></div>
-          <div class="roq-marker-pin">${opportunityPinMarkerSvgMarkup(opp.strength)}</div>
+          <div class="roq-marker-line" style="background:${OPPORTUNITIES_COLOR}"></div>
+          <div class="roq-marker-pin">${opportunityPinMarkerSvgMarkup(opp.strength, { fill: OPPORTUNITIES_COLOR })}</div>
         `;
         el.addEventListener("click", (event) => {
           event.stopPropagation();

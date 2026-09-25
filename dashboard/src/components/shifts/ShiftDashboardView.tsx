@@ -33,7 +33,6 @@ import BriefingSummary from "./BriefingSummary";
 import MetricCardRow, { type MetricCard } from "./MetricCardRow";
 import HeroMap, { type HeroMapLayer } from "./HeroMap";
 import ShiftFilters from "./ShiftFilters";
-import MomentumAreaDetailPanel from "./MomentumAreaDetailPanel";
 import OpportunityMap from "./OpportunityMap";
 import OpportunityFeed from "./OpportunityFeed";
 import OpportunityDetailPanel from "./OpportunityDetailPanel";
@@ -55,7 +54,7 @@ import CatalystDetailPanel from "../catalysts/CatalystDetailPanel";
 type View = "overview" | "plans" | "opportunities";
 
 const NAV: { value: View; label: string }[] = [
-  { value: "overview", label: "Overview" },
+  { value: "overview", label: "Market" },
   { value: "plans", label: "Plans" },
   { value: "opportunities", label: "Opportunities" },
 ];
@@ -109,7 +108,6 @@ export default function ShiftDashboardView({
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("all");
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
-  const [selectedMomentumAreaId, setSelectedMomentumAreaId] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [selectedCatalystId, setSelectedCatalystId] = useState<string | null>(null);
   const [opportunityTypeFilter, setOpportunityTypeFilter] = useState<Set<OpportunityTypeTag>>(
@@ -202,7 +200,6 @@ export default function ShiftDashboardView({
   }, [momentumAreaBreakdowns]);
 
   const topMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === primaryMomentumAreaId) ?? null;
-  const selectedMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === selectedMomentumAreaId) ?? null;
 
   const selectedPlan = useMemo(() => allPlanItems.find((p) => planItemKey(p) === selectedPlanKey) ?? null, [allPlanItems, selectedPlanKey]);
 
@@ -273,10 +270,6 @@ export default function ShiftDashboardView({
     [selectedCatalyst, allOpportunities]
   );
 
-  // Momentum Area detail panel lets you click into a shift inside it --
-  // routes through the same selectedPlanKey state as everywhere else.
-  const selectedShiftIdForMomentum = selectedPlan?.kind === "shift" ? selectedPlan.id : null;
-
   const heroSelectedKey =
     selectedPlanKey ??
     (selectedOpportunityId ? `opportunity-${selectedOpportunityId}` : selectedCatalystId ? `catalyst-${selectedCatalystId}` : null);
@@ -328,7 +321,7 @@ export default function ShiftDashboardView({
     return [
       {
         key: "plans",
-        label: "Active Plans",
+        label: "Plans",
         value: String(allPlanItems.length),
         weeklyDelta: plansDelta,
         iconPaths: ICON_PATHS.pulse,
@@ -435,7 +428,6 @@ export default function ShiftDashboardView({
                   layer={heroLayer}
                   selectedKey={heroSelectedKey}
                   onSelectKey={handleMapSelect}
-                  momentumAreas={momentumAreas}
                 />
                 {selectedCatalyst ? (
                   <CatalystDetailPanel
@@ -491,9 +483,6 @@ export default function ShiftDashboardView({
                     catalysts={catalysts}
                     selectedPlanKey={heroSelectedKey}
                     onSelectPlan={handleMapSelect}
-                    momentumAreas={momentumAreas}
-                    selectedMomentumAreaId={selectedMomentumAreaId}
-                    onSelectMomentumArea={setSelectedMomentumAreaId}
                   />
                   {selectedCatalyst ? (
                     <CatalystDetailPanel
@@ -504,28 +493,18 @@ export default function ShiftDashboardView({
                       onSelectOpportunity={(id) => handleMapSelect(`opportunity-${id}`)}
                       onClose={() => setSelectedCatalystId(null)}
                     />
-                  ) : selectedPlan ? (
-                    <PlanDetailPanel
-                      plan={selectedPlan}
-                      catalysts={catalysts}
-                      caseDetail={selectedCaseDetail}
-                      project={selectedProject}
-                      projectEvents={selectedProjectEvents}
-                      realityScore={selectedRealityScore}
-                      relatedFrictionCases={selectedPlanFrictionCases}
-                      people={projectPeople}
-                      onClose={() => setSelectedPlanKey(null)}
-                    />
                   ) : (
-                    selectedMomentumAreaBreakdown && (
-                      <MomentumAreaDetailPanel
-                        area={selectedMomentumAreaBreakdown.area}
-                        shiftsByCategory={selectedMomentumAreaBreakdown.shiftsByCategory}
-                        projects={selectedMomentumAreaBreakdown.projects}
-                        projectPeople={projectPeople}
-                        selectedShiftId={selectedShiftIdForMomentum}
-                        onSelectShift={(id) => setSelectedPlanKey(id ? `plan-shift-${id}` : null)}
-                        onClose={() => setSelectedMomentumAreaId(null)}
+                    selectedPlan && (
+                      <PlanDetailPanel
+                        plan={selectedPlan}
+                        catalysts={catalysts}
+                        caseDetail={selectedCaseDetail}
+                        project={selectedProject}
+                        projectEvents={selectedProjectEvents}
+                        realityScore={selectedRealityScore}
+                        relatedFrictionCases={selectedPlanFrictionCases}
+                        people={projectPeople}
+                        onClose={() => setSelectedPlanKey(null)}
                       />
                     )
                   )}

@@ -110,9 +110,12 @@ export function deriveOpportunityTypeTag(opportunity: { category: string; signal
   return "other";
 }
 
-export function opportunityPinMarkerSvgMarkup(strength: OpportunityStrength, opts?: { size?: number }): string {
-  const { size = 30 } = opts ?? {};
-  const fill = OPPORTUNITY_STRENGTH_COLOR[strength];
+// `fill` defaults to the strength gradient, but every map pin passes
+// OPPORTUNITIES_COLOR explicitly -- Jared, 2026-09-25: all Opportunities
+// read as one green on the map, strength stays a feed/detail-panel badge
+// dimension rather than a map color.
+export function opportunityPinMarkerSvgMarkup(strength: OpportunityStrength, opts?: { size?: number; fill?: string }): string {
+  const { size = 30, fill = OPPORTUNITY_STRENGTH_COLOR[strength] } = opts ?? {};
   const height = Math.round((size * 32) / 24);
   // A single "spark" glyph -- opportunities are one concept (a
   // multi-signal property worth watching), not a category needing its

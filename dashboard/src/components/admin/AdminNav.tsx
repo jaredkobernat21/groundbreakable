@@ -10,17 +10,11 @@ type NavGroup = { label: string; items: NavItem[] };
 // slade_* CRM (SLADE) vs. shifts/entitlement_cases/etc. (Market Intelligence).
 // Applies to every /dashboard/admin/* route via AdminLayout -- add a route
 // here when a new admin page is added, rather than leaving it unlinked.
+//
+// SLADE removed from this nav (Jared, 2026-09-25) -- routes/pages/data are
+// untouched and still reachable by direct URL, just not linked here while
+// it's shelved for a future phase.
 const GROUPS: NavGroup[] = [
-  {
-    label: "SLADE",
-    items: [
-      { href: "/dashboard/admin/slade", label: "Chat" },
-      { href: "/dashboard/admin/slade/contacts", label: "Network" },
-      { href: "/dashboard/admin/slade/organizations", label: "Organizations" },
-      { href: "/dashboard/admin/slade/buy-boxes", label: "Buy Boxes" },
-      { href: "/dashboard/admin/slade/lode", label: "LODE" },
-    ],
-  },
   {
     label: "Market Intelligence",
     items: [
@@ -93,7 +87,7 @@ export default function AdminNav() {
           pairing as the investor-facing rail in ShiftDashboardView.tsx,
           recolored for this section's dark panel rather than reskinned. */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-20 lg:flex lg:w-56 lg:flex-col lg:overflow-y-auto lg:border-r lg:border-white/10 lg:bg-[#0b0e14] lg:px-3 lg:py-6">
-        <Link href="/dashboard/admin/slade" className="mb-6 px-3 text-sm font-semibold tracking-tight text-white">
+        <Link href="/dashboard/admin/opportunities" className="mb-6 px-3 text-sm font-semibold tracking-tight text-white">
           Groundbreakable Admin
         </Link>
         <nav>

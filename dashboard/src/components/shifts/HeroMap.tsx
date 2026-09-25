@@ -3,28 +3,27 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MapboxMap, Marker } from "mapbox-gl";
-import type { CatalystWithSources, DevelopmentOpportunityWithSources, GrowthArea, Market } from "@/lib/types";
-import { CATALYSTS_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL, OPPORTUNITY_STRENGTH_LABEL, POTENTIAL_COLOR } from "@/lib/types";
+import type { CatalystWithSources, DevelopmentOpportunityWithSources, Market } from "@/lib/types";
+import { CATALYSTS_COLOR, CATALYST_TYPE_LABEL, OPPORTUNITIES_COLOR, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
 import { SHIFT_CATEGORY_COLOR, shiftPinMarkerSvgMarkup } from "@/lib/shiftConstants";
-import { OPPORTUNITY_STRENGTH_COLOR, opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
+import { opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
 import { planItemKey, planItemLocation, planItemSubtitle, planItemTitle, type PlanItem } from "@/lib/planItems";
 import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
-import { polygonCentroid } from "@/lib/geo";
 
-const MOMENTUM_AREA_SOURCE_ID = "roq-hero-momentum-areas";
-const MOMENTUM_AREA_LABEL_SOURCE_ID = "roq-hero-momentum-area-labels";
 const CATALYST_AREA_SOURCE_ID = "roq-hero-catalyst-areas";
 
 export type HeroMapLayer = "both" | "plans" | "opportunities";
 
-// The Overview page's single hero map -- Plans and Opportunities pins
-// together (per the redesign, a developer's two questions -- "what's
-// changing" and "what should I pursue" -- live on one map, not two), plus
-// the same Momentum Area polygon layer every other map in this app draws.
-// Same mapbox init/marker-effect structure as PlansMap/OpportunityMap;
-// duplicated rather than shared, matching this codebase's existing
-// "one small map component per surface" convention (see OpportunityMap).
+// The Overview page's single hero map -- Plans (yellow) and Opportunities
+// (green) pins together, plus Catalysts (purple, always on regardless of
+// the toggle) with their affected-area outline. The Momentum Area polygon
+// layer was removed from every map per Jared, 2026-09-25 -- momentum
+// context still drives BriefingSummary's headline, it's just no longer
+// drawn on the map itself. Same mapbox init/marker-effect structure as
+// PlansMap/OpportunityMap; duplicated rather than shared, matching this
+// codebase's existing "one small map component per surface" convention
+// (see OpportunityMap).
 export default function HeroMap({
   market,
   plans,
@@ -33,7 +32,6 @@ export default function HeroMap({
   layer,
   selectedKey,
   onSelectKey,
-  momentumAreas,
 }: {
   market: Market;
   plans: PlanItem[];
@@ -42,7 +40,6 @@ export default function HeroMap({
   layer: HeroMapLayer;
   selectedKey: string | null;
   onSelectKey: (key: string | null) => void;
-  momentumAreas?: GrowthArea[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -75,37 +72,15 @@ export default function HeroMap({
         readyRef.current = true;
         setReady(true);
 
-        map.addSource(MOMENTUM_AREA_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({
-          id: `${MOMENTUM_AREA_SOURCE_ID}-fill`,
-          type: "fill",
-          source: MOMENTUM_AREA_SOURCE_ID,
-          paint: { "fill-color": POTENTIAL_COLOR, "fill-opacity": 0.08 },
-        });
-        map.addLayer({
-          id: `${MOMENTUM_AREA_SOURCE_ID}-line`,
-          type: "line",
-          source: MOMENTUM_AREA_SOURCE_ID,
-          paint: { "line-color": POTENTIAL_COLOR, "line-width": 1, "line-opacity": 0.75 },
-        });
-        map.addSource(MOMENTUM_AREA_LABEL_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({
-          id: `${MOMENTUM_AREA_LABEL_SOURCE_ID}-symbol`,
-          type: "symbol",
-          source: MOMENTUM_AREA_LABEL_SOURCE_ID,
-          layout: { "text-field": ["get", "name"], "text-size": 12, "text-anchor": "center", "text-allow-overlap": false },
-          paint: { "text-color": POTENTIAL_COLOR, "text-opacity": 0.9, "text-halo-color": "rgba(0,0,0,0.65)", "text-halo-width": 1.2 },
-        });
-
-        // Catalyst affected-area layer -- a distinct dashed white outline
-        // (CATALYSTS_COLOR), own source/color from the Momentum Area
-        // polygons, per Jared's "distinct marker or visual treatment" ask.
+        // Catalyst affected-area layer -- a distinct dashed purple outline
+        // (CATALYSTS_COLOR), per Jared's "distinct marker or visual
+        // treatment" ask.
         map.addSource(CATALYST_AREA_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
         map.addLayer({
           id: `${CATALYST_AREA_SOURCE_ID}-fill`,
           type: "fill",
           source: CATALYST_AREA_SOURCE_ID,
-          paint: { "fill-color": CATALYSTS_COLOR, "fill-opacity": 0.06 },
+          paint: { "fill-color": CATALYSTS_COLOR, "fill-opacity": 0.08 },
         });
         map.addLayer({
           id: `${CATALYST_AREA_SOURCE_ID}-line`,
@@ -168,7 +143,6 @@ export default function HeroMap({
           if (opp.latitude == null || opp.longitude == null) return;
 
           const key = `opportunity-${opp.id}`;
-          const color = OPPORTUNITY_STRENGTH_COLOR[opp.strength];
           const el = document.createElement("div");
           el.className = "roq-marker";
           el.style.opacity = !selectedKey || key === selectedKey ? "1" : "0.35";
@@ -178,8 +152,8 @@ export default function HeroMap({
               <span class="roq-marker-card-title">${escapeHtml(opp.address)}</span>
               <span class="roq-marker-card-sub">${escapeHtml(opp.opportunity_type)} · ${OPPORTUNITY_STRENGTH_LABEL[opp.strength]}</span>
             </div>
-            <div class="roq-marker-line" style="background:${color}"></div>
-            <div class="roq-marker-pin">${opportunityPinMarkerSvgMarkup(opp.strength)}</div>
+            <div class="roq-marker-line" style="background:${OPPORTUNITIES_COLOR}"></div>
+            <div class="roq-marker-pin">${opportunityPinMarkerSvgMarkup(opp.strength, { fill: OPPORTUNITIES_COLOR })}</div>
           `;
           el.addEventListener("click", (event) => {
             event.stopPropagation();
@@ -230,30 +204,6 @@ export default function HeroMap({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, catalysts]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !readyRef.current) return;
-    if (!map.getSource(MOMENTUM_AREA_SOURCE_ID)) return;
-
-    const areas = momentumAreas ?? [];
-    (map.getSource(MOMENTUM_AREA_SOURCE_ID) as GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: areas.map((area) => ({ type: "Feature" as const, properties: { id: area.id }, geometry: area.geom })),
-    });
-    (map.getSource(MOMENTUM_AREA_LABEL_SOURCE_ID) as GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: areas.map((area) => {
-        const center = polygonCentroid(area.geom);
-        return {
-          type: "Feature" as const,
-          properties: { name: `${area.name} (${GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]})` },
-          geometry: { type: "Point" as const, coordinates: [center.lng, center.lat] },
-        };
-      }),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, momentumAreas]);
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
     return (
