@@ -10,6 +10,7 @@ import { opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
 import { planItemKey, planItemLocation, planItemSubtitle, planItemTitle, type PlanItem } from "@/lib/planItems";
 import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
+import { applyPremiumMapStyling, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
 
 const CATALYST_AREA_SOURCE_ID = "roq-hero-catalyst-areas";
 
@@ -62,6 +63,7 @@ export default function HeroMap({
         style: "mapbox://styles/mapbox/dark-v11",
         center: [market.center_lng, market.center_lat],
         zoom: market.default_zoom,
+        pitch: PREMIUM_MAP_PITCH,
       });
       mapRef.current = map;
 
@@ -71,6 +73,8 @@ export default function HeroMap({
         if (cancelled) return;
         readyRef.current = true;
         setReady(true);
+
+        applyPremiumMapStyling(map);
 
         // Catalyst affected-area layer -- a distinct dashed purple outline
         // (CATALYSTS_COLOR), per Jared's "distinct marker or visual

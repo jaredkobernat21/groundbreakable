@@ -6,6 +6,7 @@ import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import type { DevelopmentOpportunityWithSources, Market } from "@/lib/types";
 import { opportunityPinMarkerSvgMarkup } from "@/lib/opportunityConstants";
 import { OPPORTUNITIES_COLOR, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
+import { applyPremiumMapStyling, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
 
 // Same structure as InvestmentMap/ShiftMap -- one small map component per
 // surface, marker rendering in a ready-keyed effect (not called directly
@@ -42,6 +43,7 @@ export default function OpportunityMap({
         style: "mapbox://styles/mapbox/dark-v11",
         center: [market.center_lng, market.center_lat],
         zoom: market.default_zoom,
+        pitch: PREMIUM_MAP_PITCH,
       });
       mapRef.current = map;
 
@@ -51,6 +53,7 @@ export default function OpportunityMap({
         if (cancelled) return;
         readyRef.current = true;
         setReady(true);
+        applyPremiumMapStyling(map);
       });
     });
 
