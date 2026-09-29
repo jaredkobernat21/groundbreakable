@@ -20,15 +20,14 @@ import type {
   ShiftWithSource,
   ZoningLandUseWithSource,
 } from "@/lib/types";
-import { ACTIVITY_COLOR, OPPORTUNITIES_COLOR } from "@/lib/types";
-import { ACTIVE_SHIFT_CATEGORIES, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
+import { OPPORTUNITIES_COLOR } from "@/lib/types";
+import { ACTIVE_SHIFT_CATEGORIES, SHIFT_CATEGORY_COLOR, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { deriveOpportunityTypeTag, OPPORTUNITY_TYPE_TAG_LABEL, type OpportunityTypeTag } from "@/lib/opportunityConstants";
 import { computeFrictionOpportunities } from "@/lib/opportunityRules";
 import { buildPlanItems, planItemDate, planItemKey } from "@/lib/planItems";
 import { nearbyCatalystForPoint, nearbyOpportunitiesForCatalyst, nearbyPlanItemsForCatalyst } from "@/lib/catalystRules";
 import type { EntitlementRealityScoreResult } from "@/lib/entitlement/score";
 import { pointInPolygon } from "@/lib/geo";
-import { ICON_PATHS } from "@/lib/icons";
 import BriefingSummary from "./BriefingSummary";
 import MetricCardRow, { type MetricCard } from "./MetricCardRow";
 import HeroMap, { type HeroMapLayer } from "./HeroMap";
@@ -324,8 +323,7 @@ export default function ShiftDashboardView({
         label: "Plans",
         value: String(allPlanItems.length),
         weeklyDelta: plansDelta,
-        iconPaths: ICON_PATHS.pulse,
-        color: ACTIVITY_COLOR,
+        color: SHIFT_CATEGORY_COLOR.plans,
         onClick: () => setView("plans"),
       },
       {
@@ -333,7 +331,6 @@ export default function ShiftDashboardView({
         label: "Opportunities",
         value: String(allOpportunities.length),
         weeklyDelta: opportunitiesDelta,
-        iconPaths: ICON_PATHS.barChart,
         color: OPPORTUNITIES_COLOR,
         onClick: () => setView("opportunities"),
       },
@@ -350,8 +347,6 @@ export default function ShiftDashboardView({
     return NAV.map((n) => (
       <button key={n.value} type="button" onClick={() => setView(n.value)} className={navButtonClass(view === n.value)}>
         {n.label}
-        {n.value === "plans" && ` (${allPlanItems.length})`}
-        {n.value === "opportunities" && ` (${allOpportunities.length})`}
       </button>
     ));
   }
@@ -373,11 +368,9 @@ export default function ShiftDashboardView({
             <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
           </Link>
 
-          <div>
-            <h1 className="text-2xl font-semibold text-[#1c1c1c]">
-              {market.name}, {market.state}
-            </h1>
-          </div>
+          <h1 className="text-xs font-semibold uppercase tracking-wide text-[#1c1c1c]/45">
+            {market.name}, {market.state}
+          </h1>
 
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">
             {NAV.map((n) => (
@@ -401,8 +394,7 @@ export default function ShiftDashboardView({
 
               <MetricCardRow cards={metricCards} />
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-[#1c1c1c]/40">Plans &amp; Opportunities</p>
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <div className="flex items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1">
                   {(["both", "plans", "opportunities"] as HeroMapLayer[]).map((l) => (
                     <button
@@ -419,7 +411,7 @@ export default function ShiftDashboardView({
                 </div>
               </div>
 
-              <div className="relative h-[calc(100vh-320px)] min-h-[420px]">
+              <div className="relative h-[calc(100vh-260px)] min-h-[520px]">
                 <HeroMap
                   market={market}
                   plans={allPlanItems}

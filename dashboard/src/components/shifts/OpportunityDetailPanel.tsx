@@ -1,6 +1,7 @@
 import type { CatalystWithSources, DevelopmentFrictionCaseWithSource, DevelopmentOpportunityWithSources, GrowthArea, ZoningLandUseWithSource } from "@/lib/types";
 import { CATALYSTS_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL, OPPORTUNITY_CATEGORY_LABEL, OPPORTUNITY_STRENGTH_LABEL } from "@/lib/types";
 import { OPPORTUNITY_CATEGORY_COLOR, OPPORTUNITY_STRENGTH_COLOR, opportunitySignalLabel } from "@/lib/opportunityConstants";
+import { formatDate } from "@/lib/format";
 import DevelopmentFrictionCaseCard from "../friction/DevelopmentFrictionCaseCard";
 
 // The full click-through: address, opportunity type, category (Distress/
@@ -141,6 +142,10 @@ export default function OpportunityDetailPanel({
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">How this site became available</p>
           <DevelopmentFrictionCaseCard frictionCase={originFrictionCase} />
         </div>
+      )}
+
+      {opportunity.date_identified && (
+        <div className="mt-4 border-t border-white/10 pt-4 text-sm text-white/60">Identified {formatDate(opportunity.date_identified)}</div>
       )}
 
       {opportunity.sources.length > 0 && (

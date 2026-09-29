@@ -184,11 +184,25 @@ export default function PlansMap({
   }
 
   return (
-    <div
-      ref={containerRef}
-      onClick={() => onSelectPlan(null)}
-      className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
-    />
+    <>
+      <div
+        ref={containerRef}
+        onClick={() => onSelectPlan(null)}
+        className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
+      />
+      <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-wrap gap-x-3 gap-y-1 rounded-full bg-black/70 px-3 py-1.5 backdrop-blur-sm">
+        <span className="flex items-center gap-1.5 text-[11px] text-white/80">
+          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SHIFT_CATEGORY_COLOR.plans }} />
+          Plans
+        </span>
+        {catalysts.length > 0 && (
+          <span className="flex items-center gap-1.5 text-[11px] text-white/80">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: CATALYSTS_COLOR }} />
+            Catalysts
+          </span>
+        )}
+      </div>
+    </>
   );
 }
 

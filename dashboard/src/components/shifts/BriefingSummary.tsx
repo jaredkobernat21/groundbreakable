@@ -1,6 +1,5 @@
 import type { CatalystWithSources, DevelopmentOpportunityWithSources, GrowthArea, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
 import { CATALYST_LIGHT_ACCENT_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL } from "@/lib/types";
-import { pointInPolygon } from "@/lib/geo";
 import { formatRelativeVerified } from "@/lib/format";
 import { ICON_PATHS } from "@/lib/icons";
 import Icon from "./Icon";
@@ -106,15 +105,24 @@ export default function BriefingSummary({
   shifts: ShiftWithSource[];
   projects: ProjectWithSource[];
 }) {
+  // Counts line -- always market-wide totals (plansCount/allOpportunities),
+  // not scoped to whichever momentum area happens to be leading, so the
+  // number here always matches what the stat cards below show.
+  const countsLine = (
+    <p className="text-sm font-medium text-[#1c1c1c]/70">
+      <span className="text-[#1c1c1c]">{plansCount}</span> Plan{plansCount === 1 ? "" : "s"}
+      <span className="mx-2 text-[#1c1c1c]/25">&middot;</span>
+      <span className="text-[#1c1c1c]">{allOpportunities.length}</span> Opportunit{allOpportunities.length === 1 ? "y" : "ies"}
+    </p>
+  );
+
   if (!topMomentumAreaBreakdown) {
     return (
-      <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
+      <div>
         {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">Market Pulse</p>
-        <p className="text-sm text-[#1c1c1c]/70">
-          {plansCount} plan{plansCount === 1 ? "" : "s"} and {allOpportunities.length} opportunit
-          {allOpportunities.length === 1 ? "y" : "ies"} tracked -- no momentum area has been identified for this market yet.
-        </p>
+        <h2 className="mb-2 text-2xl font-semibold leading-snug text-[#1c1c1c]">No momentum area identified yet</h2>
+        {countsLine}
       </div>
     );
   }
@@ -123,17 +131,13 @@ export default function BriefingSummary({
   const areaShifts = Object.values(topMomentumAreaBreakdown.shiftsByCategory).flat();
   const trend = computeTrend(areaShifts);
 
-  const opportunityCount = allOpportunities.filter(
-    (o) => o.latitude != null && o.longitude != null && pointInPolygon({ lat: o.latitude, lng: o.longitude }, area.geom)
-  ).length;
-
   const headline = HEADLINE_BY_MOMENTUM[area.momentum_state](area.name);
   const subtext = area.narrative
     ? firstSentence(area.narrative)
     : `${areaShifts.length + areaProjects.length} tracked signal${areaShifts.length + areaProjects.length === 1 ? "" : "s"} in this area.`;
 
   return (
-    <div className="rounded-xl border border-[#1c1c1c]/10 bg-white p-5">
+    <div>
       {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
       <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">
         <Icon paths={ICON_PATHS.pulse} className="h-3.5 w-3.5" />
@@ -142,10 +146,12 @@ export default function BriefingSummary({
         <span className="normal-case tracking-normal text-[#1c1c1c]/35">Updated {formatRelativeVerified(area.updated_at)}</span>
       </div>
 
-      <h2 className="mb-1.5 text-xl font-semibold leading-snug text-[#1c1c1c]">{headline}</h2>
-      <p className="mb-3 text-sm leading-relaxed text-[#1c1c1c]/60">{subtext}</p>
+      <h2 className="mb-1.5 text-3xl font-semibold leading-tight tracking-tight text-[#1c1c1c] md:text-4xl">{headline}</h2>
+      <p className="mb-3 max-w-2xl text-sm leading-relaxed text-[#1c1c1c]/60">{subtext}</p>
 
-      <div className="flex flex-wrap items-center gap-1.5">
+      {countsLine}
+
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {trend && (
           <span
             className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
@@ -159,18 +165,6 @@ export default function BriefingSummary({
           <Icon paths={ICON_PATHS.mapPin} className="h-3 w-3" strokeWidth={2.2} />
           {area.name} &middot; {GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]}
         </span>
-        {plansCount > 0 && (
-          <span className="flex items-center gap-1 rounded-full bg-[#f97316]/15 px-2.5 py-1 text-xs font-medium text-[#f97316]">
-            <Icon paths={ICON_PATHS.pulse} className="h-3 w-3" strokeWidth={2.2} />
-            {plansCount} plan{plansCount === 1 ? "" : "s"} market-wide
-          </span>
-        )}
-        {opportunityCount > 0 && (
-          <span className="flex items-center gap-1 rounded-full bg-[#eab308]/15 px-2.5 py-1 text-xs font-medium text-[#eab308]">
-            <Icon paths={ICON_PATHS.barChart} className="h-3 w-3" strokeWidth={2.2} />
-            {opportunityCount} opportunit{opportunityCount === 1 ? "y" : "ies"}
-          </span>
-        )}
       </div>
     </div>
   );

@@ -116,11 +116,19 @@ export default function OpportunityMap({
   }
 
   return (
-    <div
-      ref={containerRef}
-      onClick={() => onSelectOpportunity(null)}
-      className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
-    />
+    <>
+      <div
+        ref={containerRef}
+        onClick={() => onSelectOpportunity(null)}
+        className="roq-dev-map h-full w-full overflow-hidden rounded-xl"
+      />
+      <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-x-3 rounded-full bg-black/70 px-3 py-1.5 backdrop-blur-sm">
+        <span className="flex items-center gap-1.5 text-[11px] text-white/80">
+          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: OPPORTUNITIES_COLOR }} />
+          Opportunities
+        </span>
+      </div>
+    </>
   );
 }
 
