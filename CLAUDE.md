@@ -26,6 +26,12 @@ This repo contains three things:
   `dashboard/scripts/PLAN_DATA_COLLECTION_BIBLE.md` first. It has the required-field checklist and
   the one hard rule (`summary`/`description` must describe one case, never a whole meeting's
   agenda) that the dashboard's Plans display (`dashboard/src/lib/planNarrative.ts`) depends on.
+- Before building a new collector (any source beyond the existing PDF-based agenda parsers), or
+  touching `parcels`/`sources`/adding a `source_registry`/`relationships` table — read
+  `docs/DATA_INTELLIGENCE_PIPELINE.md` first. It's the schema-grounded design for how Market,
+  Plans, Opportunities, and Catalysts data gets discovered, collected, normalized, scored, and kept
+  current, and it distinguishes what already exists (reuse) from what's orphaned (wire up) from
+  what's genuinely missing (build).
 
 ## Before touching the database
 
