@@ -1,5 +1,6 @@
 import type { EntitlementCaseWithSource, ShiftWithSource } from "./types";
 import { ENTITLEMENT_CASE_STATUS_LABEL } from "./types";
+import { deriveLocationLabel } from "./planNarrative";
 
 // A "Plan" is one of two underlying record kinds merged into a single
 // concept for the Plans feature (per the PLANS/OPPORTUNITIES redesign,
@@ -35,12 +36,26 @@ export function planItemLocation(item: PlanItem): { lat: number; lng: number } |
 
 export function planItemTitle(item: PlanItem): string {
   if (item.kind === "shift") return item.shift.event;
-  return item.case.case_number ? `${item.case.case_number} — ${item.case.address ?? "Address not on file"}` : item.case.address ?? "Untitled case";
+  return item.case.case_number ?? "Untitled Case";
 }
 
 export function planItemSubtitle(item: PlanItem): string {
   if (item.kind === "shift") return item.shift.shift_type ? item.shift.shift_type.replace(/_/g, " ") : "Plan signal";
   return ENTITLEMENT_CASE_STATUS_LABEL[item.case.status];
+}
+
+// The best-available location string for this Plan -- address, else the
+// next-best identifier (parcel/planning area/council district), else
+// "Location not identified". Never renders "Address not on file" as a
+// generic empty-location fallback (see lib/planNarrative.ts).
+export function planItemLocationLabel(item: PlanItem): string {
+  if (item.kind === "shift") return deriveLocationLabel({ address: item.shift.address });
+  return deriveLocationLabel({
+    address: item.case.address,
+    parcelId: item.case.parcel_id,
+    planningArea: item.case.planning_area,
+    councilDistrict: item.case.council_district,
+  });
 }
 
 // Merges the market's shifts (already category-filtered by the caller --

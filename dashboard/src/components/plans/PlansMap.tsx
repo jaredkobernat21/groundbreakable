@@ -175,6 +175,28 @@ export default function PlansMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, catalysts]);
 
+  // Subtle pan/recenter to whichever Plan or Catalyst was just selected --
+  // never zooms in below the market's default (Jared: "do not aggressively
+  // zoom the user in/out on every click"). Selected-pin emphasis itself is
+  // pure CSS (.is-selected in globals.css), this just moves the camera.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || !selectedPlanKey) return;
+
+    const matchedPlan = plans.find((p) => planItemKey(p) === selectedPlanKey);
+    const location = matchedPlan
+      ? planItemLocation(matchedPlan)
+      : (() => {
+          const catalystId = selectedPlanKey.startsWith("catalyst-") ? selectedPlanKey.replace("catalyst-", "") : null;
+          const catalyst = catalystId ? catalysts.find((c) => c.id === catalystId) : null;
+          return catalyst ? { lat: catalyst.latitude, lng: catalyst.longitude } : null;
+        })();
+    if (!location) return;
+
+    map.flyTo({ center: [location.lng, location.lat], zoom: Math.max(map.getZoom(), market.default_zoom), duration: 800, essential: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlanKey]);
+
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-black/40 text-sm text-white/40">

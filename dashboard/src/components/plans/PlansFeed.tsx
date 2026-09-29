@@ -2,7 +2,7 @@
 
 import { CATALYST_LIGHT_ACCENT_COLOR, ENTITLEMENT_CASE_STATUS_COLOR, ENTITLEMENT_CASE_STATUS_LABEL, type CatalystWithSources } from "@/lib/types";
 import { SHIFT_CATEGORY_COLOR, SHIFT_CATEGORY_ICON_PATHS, SHIFT_CATEGORY_LABEL, SHIFT_IMPACT_COLOR, SHIFT_IMPACT_LABEL } from "@/lib/shiftConstants";
-import { planItemDate, planItemKey, planItemTitle, type PlanItem } from "@/lib/planItems";
+import { planItemDate, planItemKey, planItemLocationLabel, planItemTitle, type PlanItem } from "@/lib/planItems";
 import { catalystForPlan } from "@/lib/catalystRules";
 import { formatDate } from "@/lib/format";
 import Icon from "../shifts/Icon";
@@ -19,9 +19,11 @@ function CatalystBadge() {
 }
 
 // A merged shift + entitlement_cases feed -- one chronological list, each
-// row tagged with which kind of Plan it is (see lib/planItems). Same
-// scannable-row anatomy as ShiftFeed, extended with an Entitlement Case
-// row variant instead of a second, separately-scrolling section.
+// row scannable in three tiers (Jared, 2026-09-29): small metadata (kind +
+// date), a primary title (the case number for entitlement cases, the
+// headline for shifts), and a secondary location line via
+// planItemLocationLabel's fallback hierarchy -- never a bare "Address not
+// on file". Status/impact stays a badge, top-right.
 export default function PlansFeed({
   plans,
   catalysts,
@@ -43,6 +45,7 @@ export default function PlansFeed({
         const key = planItemKey(plan);
         const selected = key === selectedPlanKey;
         const catalyst = catalystForPlan(catalysts, plan);
+        const location = planItemLocationLabel(plan);
 
         if (plan.kind === "shift") {
           const shift = plan.shift;
@@ -59,7 +62,7 @@ export default function PlansFeed({
                 >
                   <Icon paths={SHIFT_CATEGORY_ICON_PATHS[shift.category]} className="h-4 w-4" strokeWidth={2} />
                 </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
                     <span style={{ color: SHIFT_CATEGORY_COLOR[shift.category] }}>{SHIFT_CATEGORY_LABEL[shift.category]}</span>
                     {catalyst && <CatalystBadge />}
@@ -72,10 +75,8 @@ export default function PlansFeed({
                       {SHIFT_IMPACT_LABEL[shift.impact]} impact
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-[#1c1c1c]">{shift.event}</span>
-                  {(shift.stage || shift.address) && (
-                    <span className="text-xs text-[#1c1c1c]/45">{[shift.stage, shift.address].filter(Boolean).join(" · ")}</span>
-                  )}
+                  <span className="truncate text-sm font-medium text-[#1c1c1c]">{shift.event}</span>
+                  <span className="truncate text-xs text-[#1c1c1c]/45">{location}</span>
                 </div>
               </button>
             </li>
@@ -88,7 +89,7 @@ export default function PlansFeed({
             <button
               type="button"
               onClick={() => onSelectPlan(key)}
-              className={`flex w-full flex-col gap-1 px-4 py-3 text-left transition hover:bg-[#1c1c1c]/[0.03] ${selected ? "bg-[#1c1c1c]/[0.05]" : ""}`}
+              className={`flex w-full flex-col gap-0.5 px-4 py-3 text-left transition hover:bg-[#1c1c1c]/[0.03] ${selected ? "bg-[#1c1c1c]/[0.05]" : ""}`}
             >
               <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
                 <span className="rounded-full bg-[#818cf8]/15 px-2 py-0.5 text-[#818cf8]">Entitlement Case</span>
@@ -102,8 +103,8 @@ export default function PlansFeed({
                   {ENTITLEMENT_CASE_STATUS_LABEL[entitlementCase.status]}
                 </span>
               </div>
-              <span className="text-sm font-medium text-[#1c1c1c]">{planItemTitle(plan)}</span>
-              {entitlementCase.proposed_use && <span className="text-xs text-[#1c1c1c]/45">{entitlementCase.proposed_use}</span>}
+              <span className="truncate text-sm font-medium text-[#1c1c1c]">{planItemTitle(plan)}</span>
+              <span className="truncate text-xs text-[#1c1c1c]/45">{location}</span>
             </button>
           </li>
         );
