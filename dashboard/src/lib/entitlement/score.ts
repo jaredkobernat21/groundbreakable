@@ -2,6 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
 import { getEntitlementApprovalTypes, getEntitlementCaseDetail } from "@/lib/queries/entitlementCases";
 import { findEntitlementPrecedent, type EntitlementPrecedentCriteria } from "@/lib/entitlement/precedent";
+import type {
+  DevelopmentFrictionSignalWithSource,
+  EntitlementApprovalTypeWithSource,
+  EntitlementCase,
+  EntitlementCaseDetail,
+} from "@/lib/types";
 
 // Entitlement Reality Score (spec §9): a 0-100 decision-support index, NOT
 // a probability of approval. Every point awarded traces to real evidence
@@ -54,16 +60,34 @@ function includesAny(text: string, keywords: string[]): boolean {
   return keywords.some((k) => new RegExp(`\\b${k}\\b`, "i").test(text));
 }
 
+// Pre-fetched data a caller scoring MANY cases at once (e.g. every case in
+// a market on a single dashboard page load) can supply so this function
+// never re-queries the same market-wide tables once per case -- see the
+// comment on findEntitlementPrecedent's `candidates` option for why that
+// matters. Every field is optional; anything omitted falls back to its
+// own query exactly as before, so single-case callers need no changes.
+export type EntitlementRealityScoreContext = {
+  approvalTypes?: EntitlementApprovalTypeWithSource[];
+  allCases?: EntitlementCase[];
+  frictionSignals?: DevelopmentFrictionSignalWithSource[];
+  // Keyed by entitlement_cases.id -- lets precedent-detail lookups (the
+  // "historical friction" component) reuse cases the caller already
+  // fetched with the full join shape instead of one query per precedent
+  // match.
+  caseDetailsById?: Map<string, EntitlementCaseDetail>;
+};
+
 export async function computeEntitlementRealityScore(
   supabase: SupabaseClient,
   marketId: string,
-  input: EntitlementRealityScoreInput
+  input: EntitlementRealityScoreInput,
+  context: EntitlementRealityScoreContext = {}
 ): Promise<EntitlementRealityScoreResult> {
   const components: EntitlementRealityScoreComponent[] = [];
   const missingInformation: string[] = [];
 
   // 1. Approval path (20)
-  const approvalTypes = await getEntitlementApprovalTypes(supabase, marketId);
+  const approvalTypes = context.approvalTypes ?? (await getEntitlementApprovalTypes(supabase, marketId));
   const approvalType = input.approvalTypeKey ? approvalTypes.find((t) => t.key === input.approvalTypeKey) : null;
   if (approvalType) {
     components.push({
@@ -84,7 +108,11 @@ export async function computeEntitlementRealityScore(
   missingInformation.push("Comprehensive-plan alignment is not yet computed from the zoning_land_use future_land_use GIS layer -- this component is a neutral placeholder.");
 
   // 3. Comparable precedent (15)
-  const precedent = await findEntitlementPrecedent(supabase, marketId, input, { limit: 5, excludeCaseId: input.excludeCaseId });
+  const precedent = await findEntitlementPrecedent(supabase, marketId, input, {
+    limit: 5,
+    excludeCaseId: input.excludeCaseId,
+    candidates: context.allCases,
+  });
   if (precedent.length > 0) {
     const avgSimilarity = precedent.reduce((sum, p) => sum + p.similarity, 0) / precedent.length;
     components.push({
@@ -119,7 +147,7 @@ export async function computeEntitlementRealityScore(
   // 5 & 6. Infrastructure readiness / transportation constraints (10 each) --
   // scan development_friction_signals for risk-kind rows whose text
   // mentions the relevant keywords.
-  const friction = await getDevelopmentFrictionSignals(supabase, marketId);
+  const friction = context.frictionSignals ?? (await getDevelopmentFrictionSignals(supabase, marketId));
   const riskSignals = friction.filter((f) => f.kind === "risk");
 
   const infraSignals = riskSignals.filter((f) => includesAny(`${f.title} ${f.summary}`, ["sewer", "utility", "utilities", "water", "infrastructure", "stormwater"]));
@@ -157,7 +185,9 @@ export async function computeEntitlementRealityScore(
 
   // 7. Historical entitlement friction (10) -- how often comparable cases
   // required a requested-vs-approved change.
-  const precedentDetails = await Promise.all(precedent.map((p) => getEntitlementCaseDetail(supabase, p.case.id)));
+  const precedentDetails = context.caseDetailsById
+    ? precedent.map((p) => ({ data: context.caseDetailsById!.get(p.case.id) ?? null }))
+    : await Promise.all(precedent.map((p) => getEntitlementCaseDetail(supabase, p.case.id)));
   const withChangeData = precedentDetails.filter((d) => d.data);
   if (withChangeData.length > 0) {
     const changedCount = withChangeData.filter((d) => (d.data!.changes?.length ?? 0) > 0).length;

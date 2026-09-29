@@ -10,7 +10,7 @@ import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
 import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
-import { getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
+import { getEntitlementApprovalTypes, getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
 import { getDevelopmentFrictionCases } from "@/lib/queries/developmentFrictionCases";
 import { getCatalystsWithSource } from "@/lib/queries/catalysts";
 import { computeEntitlementRealityScore, type EntitlementRealityScoreResult } from "@/lib/entitlement/score";
@@ -53,26 +53,47 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const developmentFrictionCases = await getDevelopmentFrictionCases(supabase);
   const { data: projectEvents } = await getProjectEventsFeed(supabase, market.id);
   const catalysts = await getCatalystsWithSource(supabase, market.id);
+  const entitlementApprovalTypes = await getEntitlementApprovalTypes(supabase, market.id);
 
   // Entitlement Reality Score (spec §9) computed for every case up front --
   // same reasoning as the rest of this page (fetch everything for the
   // market once, filter/select client-side) rather than a round trip per
   // click in PlanDetailPanel. A plain object, not a Map, since this
   // crosses the Server -> Client Component boundary as a prop.
+  //
+  // Passing `context` here is required, not an optimization -- without it,
+  // computeEntitlementRealityScore re-queries the market's full case list
+  // (plus a rich detail query for each of its top-5 precedent matches)
+  // once PER case, turning an O(n) page load into O(n^2) database
+  // round-trips. That was tolerable at Lawrence's ~150 cases but made the
+  // dashboard effectively unloadable once Nashville reached 725
+  // (2026-09-29) -- everything needed is already fetched above, so this
+  // just reuses it instead of re-querying it hundreds of times.
+  const caseDetailsById = new Map(entitlementCaseDetails.map((c) => [c.id, c]));
   const entitlementRealityScoresEntries = await Promise.all(
     entitlementCaseDetails.map(async (entitlementCase) => {
-      const score = await computeEntitlementRealityScore(supabase, market.id, {
-        latitude: entitlementCase.latitude,
-        longitude: entitlementCase.longitude,
-        existingZoning: entitlementCase.existing_zoning,
-        requestedZoning: entitlementCase.requested_zoning,
-        proposedUse: entitlementCase.proposed_use,
-        acreage: entitlementCase.acreage,
-        proposedUnits: entitlementCase.proposed_units,
-        planningArea: entitlementCase.planning_area,
-        approvalTypeKey: entitlementCase.approval_type?.key ?? null,
-        excludeCaseId: entitlementCase.id,
-      });
+      const score = await computeEntitlementRealityScore(
+        supabase,
+        market.id,
+        {
+          latitude: entitlementCase.latitude,
+          longitude: entitlementCase.longitude,
+          existingZoning: entitlementCase.existing_zoning,
+          requestedZoning: entitlementCase.requested_zoning,
+          proposedUse: entitlementCase.proposed_use,
+          acreage: entitlementCase.acreage,
+          proposedUnits: entitlementCase.proposed_units,
+          planningArea: entitlementCase.planning_area,
+          approvalTypeKey: entitlementCase.approval_type?.key ?? null,
+          excludeCaseId: entitlementCase.id,
+        },
+        {
+          approvalTypes: entitlementApprovalTypes,
+          allCases: entitlementCaseDetails,
+          frictionSignals: developmentFrictionSignals,
+          caseDetailsById,
+        }
+      );
       return [entitlementCase.id, score] as const;
     })
   );

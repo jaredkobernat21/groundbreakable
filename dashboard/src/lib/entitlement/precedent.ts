@@ -101,9 +101,15 @@ export async function findEntitlementPrecedent(
   supabase: SupabaseClient,
   marketId: string,
   criteria: EntitlementPrecedentCriteria,
-  options: { excludeCaseId?: string; limit?: number } = {}
+  // `candidates`: pass the market's full case list when the caller already
+  // has it (e.g. scoring every case on a dashboard page load) -- refetching
+  // all cases from scratch on every single call turns an O(n) page load
+  // into O(n^2) database round-trips, which is fine at Lawrence's ~150
+  // cases but made the dashboard unusably slow once Nashville reached 725
+  // (2026-09-29).
+  options: { excludeCaseId?: string; limit?: number; candidates?: EntitlementCase[] } = {}
 ): Promise<EntitlementPrecedentMatch[]> {
-  const candidates = await getEntitlementCases(supabase, marketId);
+  const candidates = options.candidates ?? (await getEntitlementCases(supabase, marketId));
   const limit = options.limit ?? 5;
 
   return candidates

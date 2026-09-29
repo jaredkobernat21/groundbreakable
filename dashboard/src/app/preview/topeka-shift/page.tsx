@@ -11,7 +11,7 @@ import { getProjectPeople } from "@/lib/queries/projectPeople";
 import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
 import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
 import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
-import { getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
+import { getEntitlementApprovalTypes, getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
 import { getDevelopmentFrictionCases } from "@/lib/queries/developmentFrictionCases";
 import { getCatalystsWithSource } from "@/lib/queries/catalysts";
 import { computeEntitlementRealityScore, type EntitlementRealityScoreResult } from "@/lib/entitlement/score";
@@ -79,20 +79,35 @@ export default async function ShiftPreviewPage({ searchParams }: { searchParams:
   const { data: projectEvents } = await getProjectEventsFeed(supabase, market.id);
   const catalysts = await getCatalystsWithSource(supabase, market.id);
 
+  // See dashboard/page.tsx's identical fix (2026-09-29) -- passing context
+  // here avoids re-querying the market's full case list (plus a rich
+  // detail fetch per precedent match) once per case.
+  const entitlementApprovalTypes = await getEntitlementApprovalTypes(supabase, market.id);
+  const caseDetailsById = new Map(entitlementCaseDetails.map((c) => [c.id, c]));
   const entitlementRealityScoresEntries = await Promise.all(
     entitlementCaseDetails.map(async (entitlementCase) => {
-      const score = await computeEntitlementRealityScore(supabase, market.id, {
-        latitude: entitlementCase.latitude,
-        longitude: entitlementCase.longitude,
-        existingZoning: entitlementCase.existing_zoning,
-        requestedZoning: entitlementCase.requested_zoning,
-        proposedUse: entitlementCase.proposed_use,
-        acreage: entitlementCase.acreage,
-        proposedUnits: entitlementCase.proposed_units,
-        planningArea: entitlementCase.planning_area,
-        approvalTypeKey: entitlementCase.approval_type?.key ?? null,
-        excludeCaseId: entitlementCase.id,
-      });
+      const score = await computeEntitlementRealityScore(
+        supabase,
+        market.id,
+        {
+          latitude: entitlementCase.latitude,
+          longitude: entitlementCase.longitude,
+          existingZoning: entitlementCase.existing_zoning,
+          requestedZoning: entitlementCase.requested_zoning,
+          proposedUse: entitlementCase.proposed_use,
+          acreage: entitlementCase.acreage,
+          proposedUnits: entitlementCase.proposed_units,
+          planningArea: entitlementCase.planning_area,
+          approvalTypeKey: entitlementCase.approval_type?.key ?? null,
+          excludeCaseId: entitlementCase.id,
+        },
+        {
+          approvalTypes: entitlementApprovalTypes,
+          allCases: entitlementCaseDetails,
+          frictionSignals: developmentFrictionSignals,
+          caseDetailsById,
+        }
+      );
       return [entitlementCase.id, score] as const;
     })
   );
