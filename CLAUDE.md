@@ -21,6 +21,11 @@ This repo contains three things:
 - SLADE service/query code → `dashboard/src/lib/slade/` (plain async functions per file, same
   convention as `dashboard/src/lib/queries/` and `dashboard/src/lib/leads/` — no service classes).
 - SLADE operating instructions, architecture, and methodology → `SLADE/*.md`.
+- Before writing/editing a `shifts` or `entitlement_cases` collector script
+  (`dashboard/scripts/collect*.ts`), or manually/AI-logging a Plan record — read
+  `dashboard/scripts/PLAN_DATA_COLLECTION_BIBLE.md` first. It has the required-field checklist and
+  the one hard rule (`summary`/`description` must describe one case, never a whole meeting's
+  agenda) that the dashboard's Plans display (`dashboard/src/lib/planNarrative.ts`) depends on.
 
 ## Before touching the database
 
