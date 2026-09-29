@@ -57,6 +57,47 @@ export function investmentPinMarkerSvgMarkup(type: InvestmentType, opts?: { size
   </svg>`;
 }
 
+// --- Market-tab subcategories (Jared, 2026-09-29) -----------------------
+// A developer-facing "what kind of public/private capital is this" filter
+// for the Market tab, layered on top of the existing investment_type/
+// asset_type/primary_impact fields rather than a new column -- purely
+// derived, no new tagging required. "Budget" maps to the existing
+// public_capital investment_type (public capital spending is budget
+// spending); "Utilities" isn't one of the 5 existing investment_type
+// values, so it's matched off primary_impact's expands_utilities tag or
+// utility keywords in the free-text fields instead. Order matters: most
+// specific signal wins first (an infrastructure_enabling row that's
+// explicitly a sewer project reads as Utilities, not generic
+// Infrastructure; an incentivized row reads as Incentive even if it also
+// happens to be public capital).
+export type InvestmentMarketCategory = "infrastructure" | "budget" | "utilities" | "incentive" | "other";
+
+export const INVESTMENT_MARKET_CATEGORY_LABEL: Record<InvestmentMarketCategory, string> = {
+  infrastructure: "Infrastructure",
+  budget: "Budget",
+  utilities: "Utilities",
+  incentive: "Incentive",
+  other: "Other",
+};
+
+const UTILITY_KEYWORDS = /\b(sewer|water|utility|utilities|wastewater|stormwater)\b/i;
+
+export function deriveInvestmentMarketCategory(investment: Investment): InvestmentMarketCategory {
+  if (investment.incentive_amount != null || investment.investment_type === "incentivized_development") return "incentive";
+
+  const haystack = [investment.asset_type, investment.project_description, investment.funding_source, investment.notes]
+    .filter(Boolean)
+    .join(" ");
+  if (investment.primary_impact.includes("expands_utilities") || UTILITY_KEYWORDS.test(haystack)) return "utilities";
+
+  if (investment.investment_type === "infrastructure_enabling" || investment.primary_impact.includes("improves_transportation")) {
+    return "infrastructure";
+  }
+  if (investment.investment_type === "public_capital" || investment.public_investment_amount != null) return "budget";
+
+  return "other";
+}
+
 // --- Project status (spec section 2's normalized status list) ---
 
 export const INVESTMENT_STATUS_LABEL: Record<InvestmentProjectStatus, string> = {
