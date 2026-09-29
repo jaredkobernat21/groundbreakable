@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,45 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Whether we're still checking the URL for an invite/recovery link's
+  // session tokens before showing the plain sign-in form -- see the effect
+  // below. Starts true so the form never flashes before a redirect fires.
+  const [checkingLink, setCheckingLink] = useState(true);
+
+  useEffect(() => {
+    // Supabase's hosted invite/recovery verify link redirects with session
+    // tokens in a URL fragment (#access_token=...&refresh_token=...) --
+    // the "implicit flow." Fragments are never sent to a server, so
+    // /auth/confirm's server-side route handler can't see them there, and
+    // per standard browser behavior, a same-origin redirect that doesn't
+    // specify its own fragment carries the old one forward -- landing
+    // here regardless of what the email template's link actually points
+    // to. Pick the tokens up directly rather than depending on getting
+    // that link format exactly right.
+    const hash = window.location.hash;
+    if (!hash.includes("access_token")) {
+      setCheckingLink(false);
+      return;
+    }
+
+    const params = new URLSearchParams(hash.slice(1));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    if (!access_token || !refresh_token) {
+      setCheckingLink(false);
+      return;
+    }
+
+    createClient()
+      .auth.setSession({ access_token, refresh_token })
+      .then(({ error }) => {
+        if (!error) {
+          router.replace("/set-password");
+          return;
+        }
+        setCheckingLink(false);
+      });
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +66,14 @@ export default function LoginPage() {
 
     router.push("/dashboard");
     router.refresh();
+  }
+
+  if (checkingLink) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f4f2ee] px-4">
+        <p className="text-sm text-[#1c1c1c]/40">Signing you in…</p>
+      </main>
+    );
   }
 
   return (
