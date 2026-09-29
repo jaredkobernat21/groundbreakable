@@ -15,6 +15,8 @@
     "collect:lawrence-parcels": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectLawrenceParcels.ts",
     "collect:nashville-parcels": "NODE_EXTRA_CA_CERTS=./scripts/lib/certs/sectigo-public-server-authentication-ca-ov-r36.pem node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectNashvilleParcels.ts",
     "collect:nashville-council-zoning": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectNashvilleCouncilZoning.ts",
+    "collect:nashville-planning-commission": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/collectNashvillePlanningCommission.ts",
+    "seed:nashville-opportunities": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/seedNashvilleOpportunities.ts",
     "generate:friction-insights": "node --env-file=.env.local ./node_modules/.bin/tsx scripts/generateFrictionInsights.ts"
   },
   "dependencies": {
