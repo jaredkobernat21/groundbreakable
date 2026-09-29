@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market } from "@/lib/types";
-import { createUser, setUserMarkets, updateUser } from "./actions";
+import { createInvitation, revokeInvitation, setUserMarkets, updateUser } from "./actions";
+import CopyLinkBanner from "./CopyLinkBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -17,20 +18,33 @@ type Profile = {
   investor_markets: { market_id: string }[];
 };
 
+type Invitation = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  company_name: string | null;
+  status: string;
+  expires_at: string;
+  created_at: string;
+  invitation_markets: { market_id: string }[];
+};
+
 const inputClass =
   "w-full rounded border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30";
 const labelClass = "mb-1 block text-[11px] uppercase tracking-wide text-white/40";
 
-// Developer account management (Jared, 2026-09-29). The account/market-
-// access data model (investor_profiles, investor_markets, is_admin(),
-// has_market_access()) already existed and already gates every
-// market-scoped table in the app -- this page is the missing admin UI on
-// top of it. Same page pattern as every other /dashboard/admin/* route:
-// inline role check via the regular server client, RLS is the real gate.
+// Developer account management (Jared, 2026-09-29, invitation-link version
+// 2026-09-29). The account/market-access data model (investor_profiles,
+// investor_markets, is_admin(), has_market_access()) already existed and
+// already gates every market-scoped table in the app -- this page is the
+// admin UI on top of it. Same page pattern as every other /dashboard/admin/*
+// route: inline role check via the regular server client, RLS is the real
+// gate.
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { created_email?: string; created_password?: string };
+  searchParams: { invite_link?: string; invite_email?: string };
 }) {
   const supabase = createClient();
   const {
@@ -45,13 +59,19 @@ export default async function UsersPage({
     redirect("/dashboard");
   }
 
-  const [{ data: profiles }, { data: markets }] = await Promise.all([
+  const [{ data: profiles }, { data: markets }, { data: invitations }] = await Promise.all([
     supabase
       .from("investor_profiles")
       .select("id, first_name, last_name, company_name, role, status, created_at, investor_markets(market_id)")
       .order("created_at", { ascending: false })
       .returns<Profile[]>(),
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
+    supabase
+      .from("user_invitations")
+      .select("id, email, first_name, last_name, company_name, status, expires_at, created_at, invitation_markets(market_id)")
+      .order("created_at", { ascending: false })
+      .limit(25)
+      .returns<Invitation[]>(),
   ]);
 
   // Email lives on auth.users, not investor_profiles -- fetched once via
@@ -71,28 +91,19 @@ export default async function UsersPage({
       <div>
         <h1 className="text-2xl font-semibold text-white">Users — Admin</h1>
         <p className="text-sm text-white/40">
-          Create developer accounts and control which markets each one can see. Share the temporary
-          password directly (call/text) — never over email — the developer will be required to
-          change it the moment they log in.
+          Invite a developer, then copy the link and send it however you'd like — text, Slack, email.
+          It's single-use and expires after 7 days. They pick how to sign in; no password ever passes
+          through you.
         </p>
       </div>
 
-      {searchParams.created_email && searchParams.created_password && (
-        <div className="rounded-lg border border-[#eab308]/40 bg-[#eab308]/10 p-5">
-          <p className="text-sm font-semibold text-[#eab308]">Account created for {searchParams.created_email}</p>
-          <p className="mt-1 text-xs text-white/50">
-            Share this temporary password with them directly (call, text, Signal — not email). They'll be
-            required to set their own password the moment they log in.
-          </p>
-          <p className="mt-3 select-all rounded border border-white/10 bg-black/30 px-3 py-2 font-mono text-lg text-white">
-            {searchParams.created_password}
-          </p>
-        </div>
+      {searchParams.invite_link && (
+        <CopyLinkBanner email={searchParams.invite_email ?? ""} link={searchParams.invite_link} />
       )}
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-5">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/50">Add User</h2>
-        <form action={createUser} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/50">Invite Developer</h2>
+        <form action={createInvitation} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass} htmlFor="first_name">First Name</label>
             <input id="first_name" name="first_name" required className={inputClass} />
@@ -125,11 +136,58 @@ export default async function UsersPage({
               type="submit"
               className="rounded bg-[#eab308] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#eab308]/85"
             >
-              Create User
+              Create Invitation
             </button>
           </div>
         </form>
       </div>
+
+      {(invitations ?? []).filter((i) => i.status === "pending").length > 0 && (
+        <div className="overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-[11px] uppercase tracking-wide text-white/40">
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Markets</th>
+                <th className="px-4 py-3">Expires</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(invitations ?? [])
+                .filter((i) => i.status === "pending")
+                .map((i) => (
+                  <tr key={i.id} className="border-b border-white/5">
+                    <td className="px-4 py-3 text-white">
+                      {i.first_name} {i.last_name}
+                    </td>
+                    <td className="px-4 py-3 text-white/60">{i.email}</td>
+                    <td className="px-4 py-3 text-white/60">
+                      {i.invitation_markets.length === 0
+                        ? "None"
+                        : i.invitation_markets.map((im) => marketById.get(im.market_id)?.name ?? "?").join(", ")}
+                    </td>
+                    <td className="px-4 py-3 text-white/60">
+                      {new Date(i.expires_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <form action={revokeInvitation}>
+                        <input type="hidden" name="invitation_id" value={i.id} />
+                        <button
+                          type="submit"
+                          className="text-white/50 hover:text-red-400"
+                        >
+                          Revoke
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-white/10">
         <table className="w-full text-left text-sm">

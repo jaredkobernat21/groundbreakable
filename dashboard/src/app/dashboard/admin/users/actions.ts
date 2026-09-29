@@ -1,19 +1,10 @@
 "use server";
 
-import { randomBytes } from "crypto";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-// A readable temporary password -- avoids ambiguous characters (0/O, 1/l/I)
-// since an admin will be reading this aloud or texting it, not the
-// developer typing a long random string off a screen unaided.
-function generateTempPassword(): string {
-  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = randomBytes(12);
-  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
 
 function str(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -33,11 +24,26 @@ async function requireAdmin() {
   }
 }
 
-// Creating a real login credential is meaningfully more sensitive than the
-// rest of this codebase's admin actions (which trust the page-level
-// redirect + RLS write policy) -- worth an explicit re-check here as a
-// deliberate exception, not an oversight of the established convention.
-export async function createUser(formData: FormData) {
+// No dedicated app-URL env var exists in this project -- every other
+// absolute-link spot (auth/confirm/route.ts) derives origin from the
+// current request instead, so this does the same via next/headers rather
+// than introducing a new env var for one feature.
+function appOrigin(): string {
+  const h = headers();
+  const host = h.get("host") ?? "app.groundbreakable.com";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  return `${proto}://${host}`;
+}
+
+// Invitation-link onboarding (Jared, 2026-09-29) -- replaces the earlier
+// admin-set temporary password flow, which worked but meant Jared relaying
+// a password by phone/text, which read as unprofessional. This mints a
+// single-use, 7-day link instead; no password exists until the developer
+// sets their own. Creating a real credential path is more sensitive than
+// this codebase's other admin actions (which trust the page-level redirect
+// + RLS write policy), so this re-checks admin explicitly, same as the
+// temp-password version did.
+export async function createInvitation(formData: FormData) {
   await requireAdmin();
 
   const firstName = str(formData, "first_name");
@@ -51,49 +57,66 @@ export async function createUser(formData: FormData) {
   }
 
   const admin = createAdminClient();
-  const tempPassword = generateTempPassword();
 
-  // Admin-set temporary password (Jared, 2026-09-29) -- the invite-email
-  // path hit repeated Supabase Auth-settings issues that couldn't be
-  // reliably resolved; this needs no email delivery at all, so it works
-  // immediately. must_change_password forces them to /set-password on
-  // first login (see middleware.ts) before they can reach the dashboard.
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password: tempPassword,
-    email_confirm: true,
-  });
-  if (createError || !created.user) {
-    throw new Error(createError?.message ?? "Failed to create user.");
+  // auth.users isn't reachable through the regular RLS-aware client --
+  // listUsers() is the only way to check for a pre-existing account before
+  // minting an invitation that could never be redeemed.
+  const {
+    data: { users: existingUsers },
+  } = await admin.auth.admin.listUsers();
+  if (existingUsers.some((u) => u.email?.toLowerCase() === email.toLowerCase())) {
+    throw new Error("An account already exists for this email.");
   }
 
-  const { error: profileError } = await admin.from("investor_profiles").insert({
-    id: created.user.id,
-    first_name: firstName,
-    last_name: lastName,
-    full_name: `${firstName} ${lastName}`,
-    company_name: companyName,
-    role: "developer",
-    status: "active",
-    must_change_password: true,
-  });
-  if (profileError) {
-    throw new Error(`User created, but failed to create profile: ${profileError.message}`);
+  const supabase = createClient();
+  const {
+    data: { user: adminUser },
+  } = await supabase.auth.getUser();
+
+  const { data: invitation, error: inviteError } = await supabase
+    .from("user_invitations")
+    .insert({
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      company_name: companyName,
+      invited_by: adminUser?.id ?? null,
+    })
+    .select("id")
+    .single();
+  if (inviteError || !invitation) {
+    throw new Error(inviteError?.message ?? "Failed to create invitation.");
   }
 
   if (marketIds.length > 0) {
-    const { error: marketsError } = await admin
-      .from("investor_markets")
-      .insert(marketIds.map((marketId) => ({ investor_id: created.user!.id, market_id: marketId })));
+    const { error: marketsError } = await supabase
+      .from("invitation_markets")
+      .insert(marketIds.map((marketId) => ({ invitation_id: invitation.id, market_id: marketId })));
     if (marketsError) {
-      throw new Error(`User and profile created, but failed to assign markets: ${marketsError.message}`);
+      throw new Error(`Invitation created, but failed to assign markets: ${marketsError.message}`);
     }
   }
 
   revalidatePath("/dashboard/admin/users");
   redirect(
-    `/dashboard/admin/users?created_email=${encodeURIComponent(email)}&created_password=${encodeURIComponent(tempPassword)}`
+    `/dashboard/admin/users?invite_link=${encodeURIComponent(`${appOrigin()}/invite/${invitation.id}`)}&invite_email=${encodeURIComponent(email)}`
   );
+}
+
+export async function revokeInvitation(formData: FormData) {
+  await requireAdmin();
+  const invitationId = str(formData, "invitation_id");
+  if (!invitationId) throw new Error("Missing invitation id.");
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_invitations")
+    .update({ status: "revoked" })
+    .eq("id", invitationId)
+    .eq("status", "pending");
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/dashboard/admin/users");
 }
 
 export async function updateUser(formData: FormData) {
