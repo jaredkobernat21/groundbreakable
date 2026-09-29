@@ -16,6 +16,10 @@ type NavGroup = { label: string; items: NavItem[] };
 // it's shelved for a future phase.
 const GROUPS: NavGroup[] = [
   {
+    label: "Accounts",
+    items: [{ href: "/dashboard/admin/users", label: "Users" }],
+  },
+  {
     label: "Market Intelligence",
     items: [
       { href: "/dashboard/admin/opportunities", label: "Opportunities" },

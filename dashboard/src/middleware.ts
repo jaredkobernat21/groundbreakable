@@ -29,7 +29,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/leads"))) {
+  const protectedPath =
+    request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/leads") ||
+    request.nextUrl.pathname.startsWith("/welcome");
+
+  if (!user && protectedPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -41,9 +46,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // First-login welcome screen: an authenticated developer whose profile
+  // hasn't been marked welcomed yet gets sent there before the dashboard,
+  // exactly once (welcome/page.tsx's "Enter Dashboard" action sets
+  // welcomed_at). Existing accounts were backfilled non-null in the
+  // migration that added this column, so this only ever fires for
+  // genuinely new accounts.
+  if (user && request.nextUrl.pathname.startsWith("/dashboard")) {
+    const { data: profile } = await supabase.from("investor_profiles").select("welcomed_at").eq("id", user.id).single();
+    if (profile && profile.welcomed_at === null) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/welcome";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/leads/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/leads/:path*", "/login", "/welcome"],
 };
