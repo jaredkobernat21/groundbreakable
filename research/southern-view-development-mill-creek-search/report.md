@@ -6,6 +6,19 @@ infrastructure or entitlement expansion — specifically parcels near a planned 
 route. Written into SLADE (`slade_sites`/`slade_site_facts`/`slade_opportunities`,
 `opportunity_status = discovered`) as it was found — this doc is the narrative version.
 
+> **2026-09-29, later same day — CORRECTED after direct pre-client verification.** The original
+> PRIMARY candidate below (14446 Old Hickory Blvd) was described as "83.63 acres of raw vacant
+> land." That was wrong on two material points, found only once actually checked against current
+> records rather than the Sept-29 GIS snapshot alone: (1) **58.4% of the parcel (49.22 acres) is
+> in FEMA's 100-year floodplain/floodway**, confirmed by a direct PostGIS intersection against the
+> real parcel boundary; (2) **Nashville Collegiate Prep's Middle/High School campus is visibly
+> built and operating on part of the site** per current (2026) aerial imagery, even though the
+> county assessor record still codes the whole parcel "vacant rural land" with $0 improvement
+> value — that assessor field is demonstrably stale and should not have been taken as current fact
+> without a visual/independent check. See the corrected opportunity card delivered to Jared for
+> the full rewrite; this file's body below is left as the original research trail, not edited in
+> place, so the correction is traceable rather than silently overwritten.
+
 ## 0. Method
 
 1. Searched for a real, currently planned/funded sewer or infrastructure expansion in Tennessee.
