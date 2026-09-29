@@ -29,12 +29,19 @@ export default function SetPasswordPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error, data } = await supabase.auth.updateUser({ password });
 
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    // Clears the admin-set-temporary-password flag, if this account has
+    // one -- a no-op update for accounts that came through some other
+    // path. RLS already allows a user to update their own profile row.
+    if (data.user) {
+      await supabase.from("investor_profiles").update({ must_change_password: false }).eq("id", data.user.id);
     }
 
     router.push("/welcome");

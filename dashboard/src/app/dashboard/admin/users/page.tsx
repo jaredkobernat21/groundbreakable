@@ -27,7 +27,11 @@ const labelClass = "mb-1 block text-[11px] uppercase tracking-wide text-white/40
 // market-scoped table in the app -- this page is the missing admin UI on
 // top of it. Same page pattern as every other /dashboard/admin/* route:
 // inline role check via the regular server client, RLS is the real gate.
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: { created_email?: string; created_password?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
@@ -67,10 +71,24 @@ export default async function UsersPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Users — Admin</h1>
         <p className="text-sm text-white/40">
-          Create developer accounts and control which markets each one can see. New accounts get a
-          Supabase invite email to set their own password.
+          Create developer accounts and control which markets each one can see. Share the temporary
+          password directly (call/text) — never over email — the developer will be required to
+          change it the moment they log in.
         </p>
       </div>
+
+      {searchParams.created_email && searchParams.created_password && (
+        <div className="rounded-lg border border-[#eab308]/40 bg-[#eab308]/10 p-5">
+          <p className="text-sm font-semibold text-[#eab308]">Account created for {searchParams.created_email}</p>
+          <p className="mt-1 text-xs text-white/50">
+            Share this temporary password with them directly (call, text, Signal — not email). They'll be
+            required to set their own password the moment they log in.
+          </p>
+          <p className="mt-3 select-all rounded border border-white/10 bg-black/30 px-3 py-2 font-mono text-lg text-white">
+            {searchParams.created_password}
+          </p>
+        </div>
+      )}
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-5">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/50">Add User</h2>

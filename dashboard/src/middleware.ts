@@ -46,14 +46,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // First-login welcome screen: an authenticated developer whose profile
-  // hasn't been marked welcomed yet gets sent there before the dashboard,
-  // exactly once (welcome/page.tsx's "Enter Dashboard" action sets
-  // welcomed_at). Existing accounts were backfilled non-null in the
-  // migration that added this column, so this only ever fires for
-  // genuinely new accounts.
   if (user && request.nextUrl.pathname.startsWith("/dashboard")) {
-    const { data: profile } = await supabase.from("investor_profiles").select("welcomed_at").eq("id", user.id).single();
+    const { data: profile } = await supabase
+      .from("investor_profiles")
+      .select("welcomed_at, must_change_password")
+      .eq("id", user.id)
+      .single();
+
+    // Admin-set temporary passwords (2026-09-29 fallback -- see
+    // dashboard/admin/users/actions.ts) must be changed before anything
+    // else. Checked ahead of the welcome screen so the order is always
+    // password -> welcome -> dashboard, never welcome -> password.
+    if (profile?.must_change_password) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/set-password";
+      return NextResponse.redirect(url);
+    }
+
+    // First-login welcome screen: an authenticated developer whose profile
+    // hasn't been marked welcomed yet gets sent there before the dashboard,
+    // exactly once (welcome/page.tsx's "Enter Dashboard" action sets
+    // welcomed_at). Existing accounts were backfilled non-null in the
+    // migration that added this column, so this only ever fires for
+    // genuinely new accounts.
     if (profile && profile.welcomed_at === null) {
       const url = request.nextUrl.clone();
       url.pathname = "/welcome";

@@ -1,14 +1,19 @@
 "use server";
 
+import { randomBytes } from "crypto";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Hardcoded rather than read from a request -- Server Actions have no
-// access to the request URL the way a Route Handler does, and this is the
-// one confirmed production domain the invite email's link needs to land
-// on. Update here if the app ever moves domains.
-const APP_URL = "https://app.groundbreakable.com";
+// A readable temporary password -- avoids ambiguous characters (0/O, 1/l/I)
+// since an admin will be reading this aloud or texting it, not the
+// developer typing a long random string off a screen unaided.
+function generateTempPassword(): string {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = randomBytes(12);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
 
 function str(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -46,37 +51,49 @@ export async function createUser(formData: FormData) {
   }
 
   const admin = createAdminClient();
+  const tempPassword = generateTempPassword();
 
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${APP_URL}/auth/confirm`,
+  // Admin-set temporary password (Jared, 2026-09-29) -- the invite-email
+  // path hit repeated Supabase Auth-settings issues that couldn't be
+  // reliably resolved; this needs no email delivery at all, so it works
+  // immediately. must_change_password forces them to /set-password on
+  // first login (see middleware.ts) before they can reach the dashboard.
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
   });
-  if (inviteError || !invited.user) {
-    throw new Error(inviteError?.message ?? "Failed to invite user.");
+  if (createError || !created.user) {
+    throw new Error(createError?.message ?? "Failed to create user.");
   }
 
   const { error: profileError } = await admin.from("investor_profiles").insert({
-    id: invited.user.id,
+    id: created.user.id,
     first_name: firstName,
     last_name: lastName,
     full_name: `${firstName} ${lastName}`,
     company_name: companyName,
     role: "developer",
     status: "active",
+    must_change_password: true,
   });
   if (profileError) {
-    throw new Error(`User invited, but failed to create profile: ${profileError.message}`);
+    throw new Error(`User created, but failed to create profile: ${profileError.message}`);
   }
 
   if (marketIds.length > 0) {
     const { error: marketsError } = await admin
       .from("investor_markets")
-      .insert(marketIds.map((marketId) => ({ investor_id: invited.user!.id, market_id: marketId })));
+      .insert(marketIds.map((marketId) => ({ investor_id: created.user!.id, market_id: marketId })));
     if (marketsError) {
       throw new Error(`User and profile created, but failed to assign markets: ${marketsError.message}`);
     }
   }
 
   revalidatePath("/dashboard/admin/users");
+  redirect(
+    `/dashboard/admin/users?created_email=${encodeURIComponent(email)}&created_password=${encodeURIComponent(tempPassword)}`
+  );
 }
 
 export async function updateUser(formData: FormData) {
