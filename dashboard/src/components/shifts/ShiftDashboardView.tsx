@@ -24,6 +24,7 @@ import { OPPORTUNITIES_COLOR } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, SHIFT_CATEGORY_COLOR, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { deriveOpportunityTypeTag, OPPORTUNITY_TYPE_TAG_LABEL, type OpportunityTypeTag } from "@/lib/opportunityConstants";
 import { deriveInvestmentMarketCategory, INVESTMENT_MARKET_CATEGORY_LABEL, type InvestmentMarketCategory } from "@/lib/investmentConstants";
+import { derivePlanSubcategory, PLAN_SUBCATEGORY_LABEL, type PlanSubcategory } from "@/lib/planSubcategory";
 import { computeFrictionOpportunities } from "@/lib/opportunityRules";
 import { buildPlanItems, planItemDate, planItemKey } from "@/lib/planItems";
 import { nearbyCatalystForPoint, nearbyOpportunitiesForCatalyst, nearbyPlanItemsForCatalyst } from "@/lib/catalystRules";
@@ -43,6 +44,8 @@ import PlansMap from "../plans/PlansMap";
 import PlansFeed from "../plans/PlansFeed";
 import PlanDetailPanel from "../plans/PlanDetailPanel";
 import CatalystDetailPanel from "../catalysts/CatalystDetailPanel";
+import CatalystMap from "../catalysts/CatalystMap";
+import CatalystFeed from "../catalysts/CatalystFeed";
 
 // Redesign (Jared, 2026-09-25): the dashboard now has exactly two main
 // features -- Plans (early, pre-permit development activity/decisions)
@@ -51,33 +54,48 @@ import CatalystDetailPanel from "../catalysts/CatalystDetailPanel";
 // Friction/Companies are no longer their own destinations; that data now
 // lives as context inside a Plan or Opportunity's own detail panel (see
 // PlanDetailPanel and OpportunityDetailPanel's originFrictionCase).
-type View = "overview" | "plans" | "opportunities";
+// Catalysts is a real 4th top-level tab (Jared, 2026-09-29 -- supersedes
+// the original "do not make CATALYST a third top-level category in V1"
+// instruction) with its own map+feed, matching the Plans/Opportunities
+// structural pattern. Market/Plans/Opportunities each carry a subcategory
+// list, rendered as a collapsible dropdown nested under their sidebar
+// entry (desktop) or a second chip row under the top nav (mobile) --
+// replacing the in-page tab row (Market) and multi-select filter chips
+// (Opportunities) that used to live on each page. Catalysts has none.
+type View = "overview" | "plans" | "opportunities" | "catalysts";
 
 const NAV: { value: View; label: string }[] = [
   { value: "overview", label: "Market" },
   { value: "plans", label: "Plans" },
   { value: "opportunities", label: "Opportunities" },
+  { value: "catalysts", label: "Catalysts" },
 ];
 
-// Sub-tabs within the Market tab (Jared, 2026-09-29): "Overview" is the
-// existing unfiltered market briefing; the other four narrow the Investment
-// Summary to one InvestmentMarketCategory (see investmentConstants.ts).
-// Market indicators and the friction section aren't collapsed into any of
-// the four categories in the schema today, so they only show under
-// Overview rather than being force-fit or silently duplicated under every
-// tab -- filtering here only ever narrows to data that's genuinely tagged
-// for that subcategory, never a fabricated split.
+// "overview" means "no subcategory filter" for each -- Market indicators
+// and the friction section aren't collapsed into any of the four
+// Infrastructure/Budget/Utilities/Incentive categories in the schema
+// today, so they only show under Market's unfiltered state rather than
+// being force-fit or silently duplicated under every subcategory.
 type MarketSubTab = "overview" | InvestmentMarketCategory;
+type OpportunitySubTab = "all" | OpportunityTypeTag;
+type PlanSubTab = "all" | PlanSubcategory;
 
-const MARKET_SUB_TABS: { value: MarketSubTab; label: string }[] = [
-  { value: "overview", label: "Overview" },
+const MARKET_SUB_TABS: { value: InvestmentMarketCategory; label: string }[] = [
   { value: "infrastructure", label: INVESTMENT_MARKET_CATEGORY_LABEL.infrastructure },
   { value: "budget", label: INVESTMENT_MARKET_CATEGORY_LABEL.budget },
   { value: "utilities", label: INVESTMENT_MARKET_CATEGORY_LABEL.utilities },
   { value: "incentive", label: INVESTMENT_MARKET_CATEGORY_LABEL.incentive },
 ];
 
-const OPPORTUNITY_TYPE_FILTER_OPTIONS = Object.keys(OPPORTUNITY_TYPE_TAG_LABEL) as OpportunityTypeTag[];
+const OPPORTUNITY_SUB_TABS: { value: OpportunityTypeTag; label: string }[] = (
+  Object.keys(OPPORTUNITY_TYPE_TAG_LABEL) as OpportunityTypeTag[]
+).map((value) => ({ value, label: OPPORTUNITY_TYPE_TAG_LABEL[value] }));
+
+// "other" is a catch-all bucket (see derivePlanSubcategory) for whatever
+// doesn't match a real request type -- not worth its own dropdown row.
+const PLAN_SUB_TABS: { value: PlanSubcategory; label: string }[] = (
+  ["rezoning", "plat", "conditional_use_permit", "annexation", "site_plan", "infrastructure"] as PlanSubcategory[]
+).map((value) => ({ value, label: PLAN_SUBCATEGORY_LABEL[value] }));
 
 // Tie-break for "which Momentum Area is the primary one" -- higher wins.
 const MOMENTUM_STATE_RANK: Record<GrowthArea["momentum_state"], number> = {
@@ -122,16 +140,16 @@ export default function ShiftDashboardView({
   catalysts: CatalystWithSources[];
 }) {
   const [view, setView] = useState<View>("overview");
+  const [expandedNav, setExpandedNav] = useState<Set<View>>(new Set());
   const [marketSubTab, setMarketSubTab] = useState<MarketSubTab>("overview");
+  const [opportunitySubTab, setOpportunitySubTab] = useState<OpportunitySubTab>("all");
+  const [plansSubTab, setPlansSubTab] = useState<PlanSubTab>("all");
   const [heroLayer, setHeroLayer] = useState<HeroMapLayer>("both");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("all");
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [selectedCatalystId, setSelectedCatalystId] = useState<string | null>(null);
-  const [opportunityTypeFilter, setOpportunityTypeFilter] = useState<Set<OpportunityTypeTag>>(
-    new Set(OPPORTUNITY_TYPE_FILTER_OPTIONS)
-  );
 
   function toggleCategory(category: ShiftCategory) {
     setCategories((prev) => {
@@ -142,11 +160,25 @@ export default function ShiftDashboardView({
     });
   }
 
-  function toggleOpportunityType(tag: OpportunityTypeTag) {
-    setOpportunityTypeFilter((prev) => {
+  // Switching main sidebar tab always resets that tab's own subcategory
+  // back to "all"/"overview" -- clicking a subcategory item directly (see
+  // the nav tree below) is the only way to land on a filtered view.
+  function selectView(v: View) {
+    setView(v);
+    if (v === "overview") setMarketSubTab("overview");
+    else if (v === "plans") setPlansSubTab("all");
+    else if (v === "opportunities") setOpportunitySubTab("all");
+  }
+
+  function isNavExpanded(v: View) {
+    return view === v || expandedNav.has(v);
+  }
+
+  function toggleNavExpanded(v: View) {
+    setExpandedNav((prev) => {
       const next = new Set(prev);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
       return next;
     });
   }
@@ -163,9 +195,10 @@ export default function ShiftDashboardView({
     const since = shiftDateRangeToDate(range);
     return allPlanItems.filter((item) => {
       if (item.kind === "shift" && !categories.has(item.shift.category)) return false;
+      if (plansSubTab !== "all" && derivePlanSubcategory(item) !== plansSubTab) return false;
       return planItemDate(item) >= since;
     });
-  }, [allPlanItems, categories, range]);
+  }, [allPlanItems, categories, range, plansSubTab]);
 
   // Site Opportunities (development_opportunities rows tagged for the
   // "development" audience) plus stalled/abandoned sites derived live from
@@ -183,8 +216,9 @@ export default function ShiftDashboardView({
   }, [opportunities, marketFrictionCases]);
 
   const filteredOpportunities = useMemo(
-    () => allOpportunities.filter((o) => opportunityTypeFilter.has(deriveOpportunityTypeTag(o))),
-    [allOpportunities, opportunityTypeFilter]
+    () =>
+      opportunitySubTab === "all" ? allOpportunities : allOpportunities.filter((o) => deriveOpportunityTypeTag(o) === opportunitySubTab),
+    [allOpportunities, opportunitySubTab]
   );
 
   const marketSubTabInvestments = useMemo(
@@ -321,16 +355,17 @@ export default function ShiftDashboardView({
       setSelectedPlanKey(null);
       setSelectedCatalystId(null);
       // A "Related Opportunity" link inside a Catalyst panel can be
-      // clicked from the Plans tab (Opportunities aren't shown there) --
-      // jump to a view that actually renders OpportunityDetailPanel.
-      if (view === "plans") setView("overview");
+      // clicked from Plans or Catalysts (neither renders
+      // OpportunityDetailPanel) -- jump to a view that does.
+      if (view === "plans" || view === "catalysts") setView("overview");
     } else {
       setSelectedPlanKey(key);
       setSelectedOpportunityId(null);
       setSelectedCatalystId(null);
       // Same reasoning in reverse: a "Related Plan" link can be clicked
-      // from the Opportunities tab, which never renders PlanDetailPanel.
-      if (view === "opportunities") setView("plans");
+      // from Opportunities or Catalysts, neither of which renders
+      // PlanDetailPanel.
+      if (view === "opportunities" || view === "catalysts") setView("plans");
     }
   }
 
@@ -349,7 +384,7 @@ export default function ShiftDashboardView({
         value: String(allPlanItems.length),
         weeklyDelta: plansDelta,
         color: SHIFT_CATEGORY_COLOR.plans,
-        onClick: () => setView("plans"),
+        onClick: () => selectView("plans"),
       },
       {
         key: "opportunities",
@@ -357,7 +392,7 @@ export default function ShiftDashboardView({
         value: String(allOpportunities.length),
         weeklyDelta: opportunitiesDelta,
         color: OPPORTUNITIES_COLOR,
-        onClick: () => setView("opportunities"),
+        onClick: () => selectView("opportunities"),
       },
     ];
   }, [allPlanItems, allOpportunities]);
@@ -368,12 +403,74 @@ export default function ShiftDashboardView({
     }`;
   }
 
+  function subNavButtonClass(active: boolean) {
+    return `rounded-lg px-3 py-1.5 text-left text-xs font-medium transition ${
+      active ? "bg-[#1c1c1c]/10 text-[#1c1c1c]" : "text-[#1c1c1c]/50 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
+    }`;
+  }
+
+  // Desktop sidebar nav tree: Market/Plans/Opportunities each get a label
+  // button + a chevron toggle (siblings, not nested, so the chevron click
+  // never also fires the label's onClick) and a collapsible subcategory
+  // list; Catalysts has none. Explicit per-category JSX rather than a
+  // generic loop -- each subcategory list has its own value type
+  // (InvestmentMarketCategory / PlanSubcategory / OpportunityTypeTag), and
+  // this codebase favors direct repetition over forcing them into one
+  // shared shape.
+  function navGroup<T extends string>(
+    navValue: View,
+    label: string,
+    subTabs: { value: T; label: string }[],
+    activeSubTab: string,
+    onSelectSubTab: (value: T) => void
+  ) {
+    return (
+      <div key={navValue} className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => selectView(navValue)} className={`flex-1 ${navButtonClass(view === navValue)}`}>
+            {label}
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleNavExpanded(navValue)}
+            aria-label={`Toggle ${label} subcategories`}
+            className="rounded-lg px-2 py-2 text-[#1c1c1c]/40 transition hover:text-[#1c1c1c]"
+          >
+            <span className={`inline-block transition-transform ${isNavExpanded(navValue) ? "rotate-90" : ""}`}>›</span>
+          </button>
+        </div>
+        {isNavExpanded(navValue) && (
+          <div className="ml-3 flex flex-col gap-0.5 border-l border-[#1c1c1c]/10 pl-2">
+            {subTabs.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => {
+                  setView(navValue);
+                  onSelectSubTab(t.value);
+                }}
+                className={subNavButtonClass(view === navValue && activeSubTab === t.value)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function desktopNav() {
-    return NAV.map((n) => (
-      <button key={n.value} type="button" onClick={() => setView(n.value)} className={navButtonClass(view === n.value)}>
-        {n.label}
-      </button>
-    ));
+    return (
+      <>
+        {navGroup("overview", "Market", MARKET_SUB_TABS, marketSubTab, setMarketSubTab)}
+        {navGroup("plans", "Plans", PLAN_SUB_TABS, plansSubTab, setPlansSubTab)}
+        {navGroup("opportunities", "Opportunities", OPPORTUNITY_SUB_TABS, opportunitySubTab, setOpportunitySubTab)}
+        <button type="button" onClick={() => setView("catalysts")} className={navButtonClass(view === "catalysts")}>
+          Catalysts
+        </button>
+      </>
+    );
   }
 
   return (
@@ -399,11 +496,47 @@ export default function ShiftDashboardView({
 
           <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">
             {NAV.map((n) => (
-              <button key={n.value} type="button" onClick={() => setView(n.value)} className={navButtonClass(view === n.value)}>
+              <button key={n.value} type="button" onClick={() => selectView(n.value)} className={navButtonClass(view === n.value)}>
                 {n.label}
               </button>
             ))}
           </nav>
+
+          {/* Mobile has no room for a nested dropdown -- the active tab's
+              subcategory list (when it has one) renders as a second
+              horizontal chip row instead, same data as the desktop dropdown. */}
+          {view === "overview" && (
+            <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">
+              {MARKET_SUB_TABS.map((t) => (
+                <button key={t.value} type="button" onClick={() => setMarketSubTab(t.value)} className={subNavButtonClass(marketSubTab === t.value)}>
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+          )}
+          {view === "plans" && (
+            <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">
+              {PLAN_SUB_TABS.map((t) => (
+                <button key={t.value} type="button" onClick={() => setPlansSubTab(t.value)} className={subNavButtonClass(plansSubTab === t.value)}>
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+          )}
+          {view === "opportunities" && (
+            <nav className="flex shrink-0 gap-1 overflow-x-auto lg:hidden">
+              {OPPORTUNITY_SUB_TABS.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setOpportunitySubTab(t.value)}
+                  className={subNavButtonClass(opportunitySubTab === t.value)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+          )}
 
           {view === "overview" && (
             <>
@@ -416,21 +549,6 @@ export default function ShiftDashboardView({
                 onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)}
                 topMomentumAreaBreakdown={topMomentumAreaBreakdown}
               />
-
-              <div className="flex flex-wrap gap-1 border-b border-[#1c1c1c]/10 pb-2">
-                {MARKET_SUB_TABS.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => setMarketSubTab(t.value)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                      marketSubTab === t.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
 
               <MetricCardRow cards={metricCards} />
 
@@ -555,24 +673,6 @@ export default function ShiftDashboardView({
 
           {view === "opportunities" && (
             <>
-              <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#1c1c1c]/15 p-1 w-fit">
-                {OPPORTUNITY_TYPE_FILTER_OPTIONS.map((tag) => {
-                  const active = opportunityTypeFilter.has(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleOpportunityType(tag)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                        active ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:text-[#1c1c1c]"
-                      }`}
-                    >
-                      {OPPORTUNITY_TYPE_TAG_LABEL[tag]}
-                    </button>
-                  );
-                })}
-              </div>
-
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
                 <div className="relative h-[calc(100vh-220px)] min-h-[520px]">
                   <OpportunityMap
@@ -612,6 +712,38 @@ export default function ShiftDashboardView({
                   />
                 </div>
               </div>
+            </>
+          )}
+
+          {view === "catalysts" && (
+            <>
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_360px]">
+                <div className="relative h-[calc(100vh-220px)] min-h-[520px]">
+                  <CatalystMap
+                    market={market}
+                    catalysts={catalysts}
+                    selectedCatalystId={selectedCatalystId}
+                    onSelectCatalyst={setSelectedCatalystId}
+                  />
+                  {selectedCatalyst && (
+                    <CatalystDetailPanel
+                      catalyst={selectedCatalyst}
+                      nearbyPlans={selectedCatalystNearbyPlans}
+                      nearbyOpportunities={selectedCatalystNearbyOpportunities}
+                      onSelectPlan={handleMapSelect}
+                      onSelectOpportunity={(id) => handleMapSelect(`opportunity-${id}`)}
+                      onClose={() => setSelectedCatalystId(null)}
+                    />
+                  )}
+                </div>
+                <div className="h-[calc(100vh-220px)] min-h-[520px] overflow-y-auto rounded-xl border border-[#1c1c1c]/10 bg-white">
+                  <CatalystFeed catalysts={catalysts} selectedCatalystId={selectedCatalystId} onSelectCatalyst={setSelectedCatalystId} />
+                </div>
+              </div>
+
+              {catalysts.length === 0 && (
+                <p className="text-sm text-[#1c1c1c]/40">No catalysts identified yet for {market.name}.</p>
+              )}
             </>
           )}
         </div>
