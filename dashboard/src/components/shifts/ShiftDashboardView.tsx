@@ -97,13 +97,6 @@ const PLAN_SUB_TABS: { value: PlanSubcategory; label: string }[] = (
   ["rezoning", "plat", "conditional_use_permit", "annexation", "site_plan", "infrastructure"] as PlanSubcategory[]
 ).map((value) => ({ value, label: PLAN_SUBCATEGORY_LABEL[value] }));
 
-// Tie-break for "which Momentum Area is the primary one" -- higher wins.
-const MOMENTUM_STATE_RANK: Record<GrowthArea["momentum_state"], number> = {
-  accelerating: 2,
-  established: 1,
-  emerging: 0,
-};
-
 export default function ShiftDashboardView({
   market,
   shifts,
@@ -225,39 +218,6 @@ export default function ShiftDashboardView({
     () => (marketSubTab === "overview" ? investments : investments.filter((i) => deriveInvestmentMarketCategory(i) === marketSubTab)),
     [investments, marketSubTab]
   );
-
-  // Every real shift/project whose lat/lng falls inside a Momentum Area's
-  // polygon -- computed client-side (pointInPolygon), not a join table.
-  // Scoped to the full shifts/projects lists (not the user's Plans-tab
-  // filters), so an area's breakdown always explains its whole story.
-  const momentumAreaBreakdowns = useMemo(() => {
-    return momentumAreas.map((area) => {
-      const shiftsByCategory: Partial<Record<ShiftCategory, ShiftWithSource[]>> = {};
-      for (const shift of shifts) {
-        if (shift.lat == null || shift.lng == null) continue;
-        if (!pointInPolygon({ lat: shift.lat, lng: shift.lng }, area.geom)) continue;
-        (shiftsByCategory[shift.category] ??= []).push(shift);
-      }
-      const areaProjects = projects.filter(
-        (p) => p.latitude != null && p.longitude != null && pointInPolygon({ lat: p.latitude, lng: p.longitude }, area.geom)
-      );
-      const count = Object.values(shiftsByCategory).reduce((sum, items) => sum + items.length, 0) + areaProjects.length;
-      return { area, shiftsByCategory, projects: areaProjects, count };
-    });
-  }, [momentumAreas, shifts, projects]);
-
-  const primaryMomentumAreaId = useMemo(() => {
-    if (momentumAreaBreakdowns.length === 0) return null;
-    const sorted = [...momentumAreaBreakdowns].sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      const rankDiff = MOMENTUM_STATE_RANK[b.area.momentum_state] - MOMENTUM_STATE_RANK[a.area.momentum_state];
-      if (rankDiff !== 0) return rankDiff;
-      return a.area.name.localeCompare(b.area.name);
-    });
-    return sorted[0].area.id;
-  }, [momentumAreaBreakdowns]);
-
-  const topMomentumAreaBreakdown = momentumAreaBreakdowns.find((b) => b.area.id === primaryMomentumAreaId) ?? null;
 
   const selectedPlan = useMemo(() => allPlanItems.find((p) => planItemKey(p) === selectedPlanKey) ?? null, [allPlanItems, selectedPlanKey]);
 
@@ -540,15 +500,7 @@ export default function ShiftDashboardView({
 
           {view === "overview" && (
             <>
-              <BriefingSummary
-                shifts={shifts}
-                projects={projects}
-                allOpportunities={allOpportunities}
-                plansCount={allPlanItems.length}
-                spotlightCatalyst={spotlightCatalyst}
-                onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)}
-                topMomentumAreaBreakdown={topMomentumAreaBreakdown}
-              />
+              <BriefingSummary spotlightCatalyst={spotlightCatalyst} onSelectCatalyst={(id) => handleMapSelect(`catalyst-${id}`)} />
 
               <MetricCardRow cards={metricCards} />
 

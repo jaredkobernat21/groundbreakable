@@ -1,171 +1,45 @@
-import type { CatalystWithSources, DevelopmentOpportunityWithSources, GrowthArea, ProjectWithSource, ShiftCategory, ShiftWithSource } from "@/lib/types";
-import { CATALYST_LIGHT_ACCENT_COLOR, CATALYST_TYPE_LABEL, GROWTH_AREA_MOMENTUM_LABEL } from "@/lib/types";
-import { formatRelativeVerified } from "@/lib/format";
+import type { CatalystWithSources } from "@/lib/types";
+import { CATALYST_LIGHT_ACCENT_COLOR, CATALYST_TYPE_LABEL } from "@/lib/types";
 import { ICON_PATHS } from "@/lib/icons";
 import Icon from "./Icon";
 
 // The market's single spotlighted Catalyst (is_spotlight -- an
 // editorially curated "the one development most likely to move this
 // market" pick, at most one per market, see lib/queries/catalysts.ts) --
-// rendered above the momentum headline so it's the first thing a
-// developer sees when one exists, per Jared's "appear prominently in the
-// briefing" ask. Nothing renders when no catalyst is spotlighted.
-function CatalystSpotlightCallout({ catalyst, onSelect }: { catalyst: CatalystWithSources; onSelect: () => void }) {
+// rendered at the top of the Market tab so it's the first thing a
+// developer sees when one exists. Nothing renders when no catalyst is
+// spotlighted.
+//
+// The "Market Pulse" momentum headline that used to sit above this
+// (trending growth area + trend badge + Plans/Opportunities counts) was
+// removed per Jared, 2026-09-29 -- MetricCardRow already shows the
+// Plans/Opportunities counts directly below.
+export default function BriefingSummary({
+  spotlightCatalyst,
+  onSelectCatalyst,
+}: {
+  spotlightCatalyst: CatalystWithSources | null;
+  onSelectCatalyst: (id: string) => void;
+}) {
+  if (!spotlightCatalyst) return null;
+
   return (
     <button
       type="button"
-      onClick={onSelect}
-      className="mb-3 block w-full rounded-lg border p-3 text-left transition hover:opacity-90"
+      onClick={() => onSelectCatalyst(spotlightCatalyst.id)}
+      className="block w-full rounded-lg border p-3 text-left transition hover:opacity-90"
       style={{ borderColor: `${CATALYST_LIGHT_ACCENT_COLOR}55`, backgroundColor: `${CATALYST_LIGHT_ACCENT_COLOR}12` }}
     >
       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: CATALYST_LIGHT_ACCENT_COLOR }}>
         <Icon paths={ICON_PATHS.pulse} className="h-3 w-3" strokeWidth={2.2} />
-        Catalyst · {CATALYST_TYPE_LABEL[catalyst.catalyst_type]}
+        Catalyst · {CATALYST_TYPE_LABEL[spotlightCatalyst.catalyst_type]}
       </div>
-      <p className="mt-1 text-sm font-semibold leading-snug text-[#1c1c1c]">{catalyst.title}</p>
-      {(catalyst.why_it_matters ?? catalyst.description) && (
-        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-[#1c1c1c]/60">{catalyst.why_it_matters ?? catalyst.description}</p>
+      <p className="mt-1 text-sm font-semibold leading-snug text-[#1c1c1c]">{spotlightCatalyst.title}</p>
+      {(spotlightCatalyst.why_it_matters ?? spotlightCatalyst.description) && (
+        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-[#1c1c1c]/60">
+          {spotlightCatalyst.why_it_matters ?? spotlightCatalyst.description}
+        </p>
       )}
     </button>
-  );
-}
-
-type MomentumAreaBreakdown = {
-  area: GrowthArea;
-  shiftsByCategory: Partial<Record<ShiftCategory, ShiftWithSource[]>>;
-  projects: ProjectWithSource[];
-  count: number;
-};
-
-const HEADLINE_BY_MOMENTUM: Record<GrowthArea["momentum_state"], (name: string) => string> = {
-  accelerating: (name) => `${name} is gaining momentum.`,
-  established: (name) => `${name} is an established development corridor.`,
-  emerging: (name) => `${name} is starting to see new activity.`,
-};
-
-// The first sentence of a growth area's human-authored narrative -- a
-// short, already-reviewed line rather than a fresh generated summary.
-function firstSentence(text: string): string {
-  const match = text.match(/^[^.]+\./);
-  return match ? match[0] : text;
-}
-
-type Trend = "rising" | "steady" | "cooling";
-
-// A real week-over-week comparison of shift activity inside the area --
-// "rising" only when the trailing 7 days genuinely out-counts the 7 days
-// before that, never a decorative default. Null when there's nothing to
-// compare (no shifts in the area at all).
-function computeTrend(areaShifts: ShiftWithSource[]): Trend | null {
-  if (areaShifts.length === 0) return null;
-  const day = 86_400_000;
-  const since7d = new Date(Date.now() - 7 * day).toISOString().slice(0, 10);
-  const since14d = new Date(Date.now() - 14 * day).toISOString().slice(0, 10);
-  const recent = areaShifts.filter((s) => s.event_date >= since7d).length;
-  const prior = areaShifts.filter((s) => s.event_date >= since14d && s.event_date < since7d).length;
-  if (recent > prior) return "rising";
-  if (recent < prior) return "cooling";
-  return "steady";
-}
-
-const TREND_LABEL: Record<Trend, string> = {
-  rising: "Activity rising",
-  steady: "Activity steady",
-  cooling: "Activity cooling",
-};
-
-const TREND_COLOR: Record<Trend, string> = {
-  rising: "#22c55e",
-  steady: "#94a3b8",
-  cooling: "#f97316",
-};
-
-// The single most important thing happening in this market right now --
-// replaces the old 4-badge Market Pulse/Momentum/Buildability/Insight
-// row with one real, computed headline: which growth area is most
-// active, why (its own already-reviewed narrative), whether activity
-// there is genuinely trending up week-over-week, and how many open
-// opportunities sit inside it. Every figure traces back to props
-// ShiftDashboardView already computes (momentumAreaBreakdowns,
-// allOpportunities) -- nothing here is decorative or hardcoded.
-export default function BriefingSummary({
-  topMomentumAreaBreakdown,
-  allOpportunities,
-  plansCount,
-  spotlightCatalyst,
-  onSelectCatalyst,
-  shifts,
-  projects,
-}: {
-  topMomentumAreaBreakdown: MomentumAreaBreakdown | null;
-  allOpportunities: DevelopmentOpportunityWithSources[];
-  plansCount: number;
-  spotlightCatalyst: CatalystWithSources | null;
-  onSelectCatalyst: (id: string) => void;
-  shifts: ShiftWithSource[];
-  projects: ProjectWithSource[];
-}) {
-  // Counts line -- always market-wide totals (plansCount/allOpportunities),
-  // not scoped to whichever momentum area happens to be leading, so the
-  // number here always matches what the stat cards below show.
-  const countsLine = (
-    <p className="text-sm font-medium text-[#1c1c1c]/70">
-      <span className="text-[#1c1c1c]">{plansCount}</span> Plan{plansCount === 1 ? "" : "s"}
-      <span className="mx-2 text-[#1c1c1c]/25">&middot;</span>
-      <span className="text-[#1c1c1c]">{allOpportunities.length}</span> Opportunit{allOpportunities.length === 1 ? "y" : "ies"}
-    </p>
-  );
-
-  if (!topMomentumAreaBreakdown) {
-    return (
-      <div>
-        {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">Market Pulse</p>
-        <h2 className="mb-2 text-2xl font-semibold leading-snug text-[#1c1c1c]">No momentum area identified yet</h2>
-        {countsLine}
-      </div>
-    );
-  }
-
-  const { area, projects: areaProjects } = topMomentumAreaBreakdown;
-  const areaShifts = Object.values(topMomentumAreaBreakdown.shiftsByCategory).flat();
-  const trend = computeTrend(areaShifts);
-
-  const headline = HEADLINE_BY_MOMENTUM[area.momentum_state](area.name);
-  const subtext = area.narrative
-    ? firstSentence(area.narrative)
-    : `${areaShifts.length + areaProjects.length} tracked signal${areaShifts.length + areaProjects.length === 1 ? "" : "s"} in this area.`;
-
-  return (
-    <div>
-      {spotlightCatalyst && <CatalystSpotlightCallout catalyst={spotlightCatalyst} onSelect={() => onSelectCatalyst(spotlightCatalyst.id)} />}
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#1c1c1c]/40">
-        <Icon paths={ICON_PATHS.pulse} className="h-3.5 w-3.5" />
-        Market Pulse
-        <span className="text-[#1c1c1c]/25">&middot;</span>
-        <span className="normal-case tracking-normal text-[#1c1c1c]/35">Updated {formatRelativeVerified(area.updated_at)}</span>
-      </div>
-
-      <h2 className="mb-1.5 text-3xl font-semibold leading-tight tracking-tight text-[#1c1c1c] md:text-4xl">{headline}</h2>
-      <p className="mb-3 max-w-2xl text-sm leading-relaxed text-[#1c1c1c]/60">{subtext}</p>
-
-      {countsLine}
-
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {trend && (
-          <span
-            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
-            style={{ color: TREND_COLOR[trend], backgroundColor: `${TREND_COLOR[trend]}1a` }}
-          >
-            <Icon paths={ICON_PATHS.trendingUp} className="h-3 w-3" strokeWidth={2.2} />
-            {TREND_LABEL[trend]}
-          </span>
-        )}
-        <span className="flex items-center gap-1 rounded-full bg-[#818cf8]/15 px-2.5 py-1 text-xs font-medium text-[#818cf8]">
-          <Icon paths={ICON_PATHS.mapPin} className="h-3 w-3" strokeWidth={2.2} />
-          {area.name} &middot; {GROWTH_AREA_MOMENTUM_LABEL[area.momentum_state]}
-        </span>
-      </div>
-    </div>
   );
 }
