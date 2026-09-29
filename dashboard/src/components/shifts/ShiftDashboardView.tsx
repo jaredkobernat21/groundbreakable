@@ -23,6 +23,7 @@ import type {
 import { OPPORTUNITIES_COLOR } from "@/lib/types";
 import { ACTIVE_SHIFT_CATEGORIES, SHIFT_CATEGORY_COLOR, shiftDateRangeToDate, type ShiftDateRange } from "@/lib/shiftConstants";
 import { deriveOpportunityTypeTag, OPPORTUNITY_TYPE_TAG_LABEL, type OpportunityTypeTag } from "@/lib/opportunityConstants";
+import { deriveInvestmentMarketCategory, INVESTMENT_MARKET_CATEGORY_LABEL, type InvestmentMarketCategory } from "@/lib/investmentConstants";
 import { computeFrictionOpportunities } from "@/lib/opportunityRules";
 import { buildPlanItems, planItemDate, planItemKey } from "@/lib/planItems";
 import { nearbyCatalystForPoint, nearbyOpportunitiesForCatalyst, nearbyPlanItemsForCatalyst } from "@/lib/catalystRules";
@@ -56,6 +57,24 @@ const NAV: { value: View; label: string }[] = [
   { value: "overview", label: "Market" },
   { value: "plans", label: "Plans" },
   { value: "opportunities", label: "Opportunities" },
+];
+
+// Sub-tabs within the Market tab (Jared, 2026-09-29): "Overview" is the
+// existing unfiltered market briefing; the other four narrow the Investment
+// Summary to one InvestmentMarketCategory (see investmentConstants.ts).
+// Market indicators and the friction section aren't collapsed into any of
+// the four categories in the schema today, so they only show under
+// Overview rather than being force-fit or silently duplicated under every
+// tab -- filtering here only ever narrows to data that's genuinely tagged
+// for that subcategory, never a fabricated split.
+type MarketSubTab = "overview" | InvestmentMarketCategory;
+
+const MARKET_SUB_TABS: { value: MarketSubTab; label: string }[] = [
+  { value: "overview", label: "Overview" },
+  { value: "infrastructure", label: INVESTMENT_MARKET_CATEGORY_LABEL.infrastructure },
+  { value: "budget", label: INVESTMENT_MARKET_CATEGORY_LABEL.budget },
+  { value: "utilities", label: INVESTMENT_MARKET_CATEGORY_LABEL.utilities },
+  { value: "incentive", label: INVESTMENT_MARKET_CATEGORY_LABEL.incentive },
 ];
 
 const OPPORTUNITY_TYPE_FILTER_OPTIONS = Object.keys(OPPORTUNITY_TYPE_TAG_LABEL) as OpportunityTypeTag[];
@@ -103,6 +122,7 @@ export default function ShiftDashboardView({
   catalysts: CatalystWithSources[];
 }) {
   const [view, setView] = useState<View>("overview");
+  const [marketSubTab, setMarketSubTab] = useState<MarketSubTab>("overview");
   const [heroLayer, setHeroLayer] = useState<HeroMapLayer>("both");
   const [categories, setCategories] = useState<Set<ShiftCategory>>(new Set(ACTIVE_SHIFT_CATEGORIES));
   const [range, setRange] = useState<ShiftDateRange>("all");
@@ -165,6 +185,11 @@ export default function ShiftDashboardView({
   const filteredOpportunities = useMemo(
     () => allOpportunities.filter((o) => opportunityTypeFilter.has(deriveOpportunityTypeTag(o))),
     [allOpportunities, opportunityTypeFilter]
+  );
+
+  const marketSubTabInvestments = useMemo(
+    () => (marketSubTab === "overview" ? investments : investments.filter((i) => deriveInvestmentMarketCategory(i) === marketSubTab)),
+    [investments, marketSubTab]
   );
 
   // Every real shift/project whose lat/lng falls inside a Momentum Area's
@@ -392,6 +417,21 @@ export default function ShiftDashboardView({
                 topMomentumAreaBreakdown={topMomentumAreaBreakdown}
               />
 
+              <div className="flex flex-wrap gap-1 border-b border-[#1c1c1c]/10 pb-2">
+                {MARKET_SUB_TABS.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setMarketSubTab(t.value)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                      marketSubTab === t.value ? "bg-[#1c1c1c] text-white" : "text-[#1c1c1c]/50 hover:bg-[#1c1c1c]/5 hover:text-[#1c1c1c]"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
               <MetricCardRow cards={metricCards} />
 
               <div className="flex flex-wrap items-center justify-end gap-2">
@@ -457,9 +497,9 @@ export default function ShiftDashboardView({
                 )}
               </div>
 
-              <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />
-              <InvestmentSummary investments={investments} />
-              <DevelopmentFrictionSection signals={developmentFrictionSignals} />
+              {marketSubTab === "overview" && <MarketOverviewSection indicators={marketIndicators} overview={marketOverview} />}
+              <InvestmentSummary investments={marketSubTabInvestments} category={marketSubTab === "overview" ? null : marketSubTab} />
+              {marketSubTab === "overview" && <DevelopmentFrictionSection signals={developmentFrictionSignals} />}
             </>
           )}
 
