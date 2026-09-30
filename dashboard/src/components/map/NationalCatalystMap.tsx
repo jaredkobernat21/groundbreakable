@@ -6,7 +6,7 @@ import type { GeoJSONSource, LngLatBoundsLike, Map as MapboxMap, Marker } from "
 import type { CatalystWithSources } from "@/lib/types";
 import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
-import { applyPremiumMapStyling, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
+import { applyPremiumMapStyling, addZoomAdaptiveSatellite, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
 import { CATALYST_SIZE_TIER_PX, catalystColorHex, catalystSizeTier } from "@/lib/catalystTypeColors";
 
 const CATALYST_AREA_SOURCE_ID = "roq-national-catalyst-areas";
@@ -80,6 +80,7 @@ const NationalCatalystMap = forwardRef<
         setReady(true);
 
         applyPremiumMapStyling(map);
+        addZoomAdaptiveSatellite(map);
 
         map.addSource(CATALYST_AREA_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
         map.addLayer({

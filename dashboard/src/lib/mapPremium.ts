@@ -37,3 +37,44 @@ export function applyPremiumMapStyling(map: MapboxMap) {
 // A slight tilt makes the building extrusions above actually read as 3D --
 // flat-down (pitch 0) would render them with no visible sides at all.
 export const PREMIUM_MAP_PITCH = 45;
+
+// Zoom-adaptive satellite hybrid (Jared, 2026-09-30): "premium, satellite
+// type view" without giving up the dark/muted look at the national zoom
+// this map actually lives at most of the time -- real aerial imagery looks
+// flat and washed-out at that scale (no information advantage over a
+// styled vector map) but genuinely premium once zoomed into a specific
+// catalyst/parcel. Rather than swapping the whole style (map.setStyle()
+// tears down and reloads every layer/source, a visible flash, and would
+// need the load handler's setup re-run on every style.load), this layers
+// Mapbox's standard satellite raster tileset directly on top of the
+// existing dark-v11 style with a zoom-interpolated opacity ramp -- zero at
+// national/metro zoom, fading in only past city scale. raster-brightness/
+// -contrast/-saturation darken and desaturate the imagery so it reads as
+// this product's own moody, institutional tone rather than a bright,
+// generic satellite photo. Inserted just below the first road layer so
+// roads/labels stay legible on top of it once it's visible.
+export function addZoomAdaptiveSatellite(map: MapboxMap) {
+  map.addSource("roq-satellite", {
+    type: "raster",
+    url: "mapbox://mapbox.satellite",
+    tileSize: 256,
+  });
+
+  const style = map.getStyle();
+  const firstRoadLayerId = style?.layers?.find((l) => l.id.startsWith("road-"))?.id;
+
+  map.addLayer(
+    {
+      id: "roq-satellite-layer",
+      type: "raster",
+      source: "roq-satellite",
+      paint: {
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 0.55, 17, 0.9],
+        "raster-brightness-max": 0.55,
+        "raster-contrast": 0.15,
+        "raster-saturation": -0.25,
+      },
+    },
+    firstRoadLayerId
+  );
+}
