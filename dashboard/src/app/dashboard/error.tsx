@@ -14,6 +14,12 @@ import { useEffect } from "react";
 // different, old product instead of just hit a hiccup. Full-screen dark
 // shell matching NationalMapExperience.tsx so an error here still reads as
 // this same product, not a fallback to something else.
+//
+// Kept intentionally generic (2026-09-30, v2) -- this boundary is inherited
+// by every route under /dashboard that doesn't have its own error.tsx
+// (e.g. /dashboard/admin/**), not just the map page itself, so it must not
+// claim "the map" specifically. /dashboard/admin has its own scoped
+// error.tsx now for admin-specific copy; this one is the generic fallback.
 export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error("dashboard route error:", error);
@@ -21,7 +27,7 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black px-4 text-center">
-      <p className="text-sm font-medium text-white/70">Something went wrong loading the map.</p>
+      <p className="text-sm font-medium text-white/70">Something went wrong loading this page.</p>
       <p className="mt-1 max-w-sm text-sm text-white/40">This is usually temporary -- try again in a moment.</p>
       <button
         type="button"

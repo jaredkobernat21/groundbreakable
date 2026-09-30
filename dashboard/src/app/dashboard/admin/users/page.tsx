@@ -80,9 +80,16 @@ export default async function UsersPage({
   // merged in app code, rather than denormalizing/duplicating email onto
   // investor_profiles where it could drift out of sync. Same "server-only,
   // explicit scope" convention as /preview/topeka's use of this client.
-  const {
-    data: { users: authUsers },
-  } = await createAdminClient().auth.admin.listUsers();
+  //
+  // Caught (2026-09-30): this call threw once right after creating an
+  // invitation, taking down the whole page (same Promise-rejects-the-
+  // render failure mode as the isAdmin() bug on the map page). Email
+  // lookup is a display nicety, not load-bearing -- worst case some rows
+  // show "--" for email instead of the whole admin panel breaking.
+  const authUsers = await createAdminClient()
+    .auth.admin.listUsers()
+    .then(({ data }) => data.users)
+    .catch(() => []);
   const emailById = new Map(authUsers.map((u) => [u.id, u.email ?? ""]));
 
   const marketById = new Map((markets ?? []).map((m) => [m.id, m]));
