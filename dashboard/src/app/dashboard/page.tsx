@@ -1,123 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
-import ShiftDashboardView from "@/components/shifts/ShiftDashboardView";
-import { selectMarket } from "@/lib/selectMarket";
-import { getShifts } from "@/lib/queries/shifts";
-import { getActiveProjects } from "@/lib/queries/activeProjects";
-import { getBuildabilityZones } from "@/lib/queries/buildability";
-import { getInvestments } from "@/lib/queries/investments";
-import { getGrowthAreas, getProjectEventsFeed } from "@/lib/queries/planIntelligence";
-import { getProjectPeople } from "@/lib/queries/projectPeople";
-import { getDevelopmentOpportunities } from "@/lib/queries/developmentOpportunities";
-import { getMarketIndicators, getMarketOverview } from "@/lib/queries/marketOverview";
-import { getDevelopmentFrictionSignals } from "@/lib/queries/developmentFriction";
-import { getEntitlementApprovalTypes, getEntitlementCaseDetailsByMarket } from "@/lib/queries/entitlementCases";
-import { getDevelopmentFrictionCases } from "@/lib/queries/developmentFrictionCases";
-import { getCatalystsWithSource } from "@/lib/queries/catalysts";
-import { computeEntitlementRealityScore, type EntitlementRealityScoreResult } from "@/lib/entitlement/score";
-import { shiftDateRangeToDate } from "@/lib/shiftConstants";
+import { getNationalCatalystsWithSource } from "@/lib/queries/catalysts";
+import { getFollowedCatalystIds } from "@/lib/queries/catalystFollows";
+import { getFollowedMarketIds } from "@/lib/queries/marketFollows";
+import NationalMapExperience from "@/components/map/NationalMapExperience";
 import type { Market } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage({ searchParams }: { searchParams: { market?: string } }) {
+// National map redesign (Jared, 2026-09-30): the investor dashboard is now
+// one full-screen map, not a per-market tabbed view -- see
+// docs/DATA_INTELLIGENCE_PIPELINE.md and the 2026-09-30 plan file for the
+// full rationale. RLS scopes both queries below to markets/follows this
+// signed-in investor actually has access to; no market_id param needed
+// anymore (dashboard/src/app/dashboard/map/page.tsx's old redirect back to
+// here stays correct as-is).
+export default async function DashboardPage() {
   const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // RLS scopes this to markets the signed-in investor has access to.
-  const { data: markets } = await supabase.from("markets").select("*").order("name").returns<Market[]>();
-
-  const market = selectMarket(markets ?? [], searchParams.market);
-
-  if (!market) {
-    return (
-      <p className="text-sm text-[#1c1c1c]/50">
-        You don't have access to a market yet — an admin needs to grant you access
-        in Supabase.
-      </p>
-    );
-  }
-
-  // Fetch the widest window the filter bar offers ("all") once, and let
-  // ShiftDashboardView narrow to 7d/30d/90d/category/audience client-side,
-  // no round-trip per filter change.
-  const shifts = await getShifts(supabase, market.id, { since: shiftDateRangeToDate("all") });
-  const projects = await getActiveProjects(supabase, market.id);
-  const buildabilityZones = await getBuildabilityZones(supabase, market.id);
-  const investments = await getInvestments(supabase, market.id);
-  const { data: momentumAreas } = await getGrowthAreas(supabase, market.id);
-  const projectPeople = await getProjectPeople(supabase, market.id);
-  const opportunities = await getDevelopmentOpportunities(supabase, market.id);
-  const marketIndicators = await getMarketIndicators(supabase, market.id);
-  const marketOverview = await getMarketOverview(supabase, market.id);
-  const developmentFrictionSignals = await getDevelopmentFrictionSignals(supabase, market.id);
-  const entitlementCaseDetails = await getEntitlementCaseDetailsByMarket(supabase, market.id);
-  const developmentFrictionCases = await getDevelopmentFrictionCases(supabase);
-  const { data: projectEvents } = await getProjectEventsFeed(supabase, market.id);
-  const catalysts = await getCatalystsWithSource(supabase, market.id);
-  const entitlementApprovalTypes = await getEntitlementApprovalTypes(supabase, market.id);
-
-  // Entitlement Reality Score (spec §9) computed for every case up front --
-  // same reasoning as the rest of this page (fetch everything for the
-  // market once, filter/select client-side) rather than a round trip per
-  // click in PlanDetailPanel. A plain object, not a Map, since this
-  // crosses the Server -> Client Component boundary as a prop.
-  //
-  // Passing `context` here is required, not an optimization -- without it,
-  // computeEntitlementRealityScore re-queries the market's full case list
-  // (plus a rich detail query for each of its top-5 precedent matches)
-  // once PER case, turning an O(n) page load into O(n^2) database
-  // round-trips. That was tolerable at Lawrence's ~150 cases but made the
-  // dashboard effectively unloadable once Nashville reached 725
-  // (2026-09-29) -- everything needed is already fetched above, so this
-  // just reuses it instead of re-querying it hundreds of times.
-  const caseDetailsById = new Map(entitlementCaseDetails.map((c) => [c.id, c]));
-  const entitlementRealityScoresEntries = await Promise.all(
-    entitlementCaseDetails.map(async (entitlementCase) => {
-      const score = await computeEntitlementRealityScore(
-        supabase,
-        market.id,
-        {
-          latitude: entitlementCase.latitude,
-          longitude: entitlementCase.longitude,
-          existingZoning: entitlementCase.existing_zoning,
-          requestedZoning: entitlementCase.requested_zoning,
-          proposedUse: entitlementCase.proposed_use,
-          acreage: entitlementCase.acreage,
-          proposedUnits: entitlementCase.proposed_units,
-          planningArea: entitlementCase.planning_area,
-          approvalTypeKey: entitlementCase.approval_type?.key ?? null,
-          excludeCaseId: entitlementCase.id,
-        },
-        {
-          approvalTypes: entitlementApprovalTypes,
-          allCases: entitlementCaseDetails,
-          frictionSignals: developmentFrictionSignals,
-          caseDetailsById,
-        }
-      );
-      return [entitlementCase.id, score] as const;
-    })
-  );
-  const entitlementRealityScores = Object.fromEntries(entitlementRealityScoresEntries) as Record<string, EntitlementRealityScoreResult>;
+  const [{ data: markets }, catalysts, followedCatalystIds, followedMarketIds] = await Promise.all([
+    supabase.from("markets").select("*").order("name").returns<Market[]>(),
+    getNationalCatalystsWithSource(supabase),
+    user ? getFollowedCatalystIds(supabase, user.id) : Promise.resolve(new Set<string>()),
+    user ? getFollowedMarketIds(supabase, user.id) : Promise.resolve(new Set<string>()),
+  ]);
 
   return (
-    <ShiftDashboardView
-      key={market.id}
-      market={market}
-      shifts={shifts}
-      projects={projects}
-      buildabilityZones={buildabilityZones}
-      investments={investments}
-      momentumAreas={momentumAreas ?? []}
-      projectPeople={projectPeople}
-      opportunities={opportunities}
-      marketIndicators={marketIndicators}
-      marketOverview={marketOverview}
-      developmentFrictionSignals={developmentFrictionSignals}
-      entitlementCaseDetails={entitlementCaseDetails}
-      developmentFrictionCases={developmentFrictionCases}
-      projectEvents={projectEvents ?? []}
-      entitlementRealityScores={entitlementRealityScores}
+    <NationalMapExperience
+      markets={markets ?? []}
       catalysts={catalysts}
+      userId={user?.id ?? ""}
+      userEmail={user?.email ?? null}
+      initialFollowedCatalystIds={Array.from(followedCatalystIds)}
+      initialFollowedMarketIds={Array.from(followedMarketIds)}
     />
   );
 }
