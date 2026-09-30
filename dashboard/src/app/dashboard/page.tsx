@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getNationalCatalystsWithSource } from "@/lib/queries/catalysts";
 import { getFollowedCatalystIds } from "@/lib/queries/catalystFollows";
 import { getFollowedMarketIds } from "@/lib/queries/marketFollows";
+import { isAdmin } from "@/lib/auth/admin";
 import NationalMapExperience from "@/components/map/NationalMapExperience";
 import type { Market } from "@/lib/types";
 
@@ -20,11 +21,12 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: markets }, catalysts, followedCatalystIds, followedMarketIds] = await Promise.all([
+  const [{ data: markets }, catalysts, followedCatalystIds, followedMarketIds, admin] = await Promise.all([
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
     getNationalCatalystsWithSource(supabase),
     user ? getFollowedCatalystIds(supabase, user.id) : Promise.resolve(new Set<string>()),
     user ? getFollowedMarketIds(supabase, user.id) : Promise.resolve(new Set<string>()),
+    isAdmin(supabase, user?.id),
   ]);
 
   return (
@@ -33,6 +35,7 @@ export default async function DashboardPage() {
       catalysts={catalysts}
       userId={user?.id ?? ""}
       userEmail={user?.email ?? null}
+      isAdmin={admin}
       initialFollowedCatalystIds={Array.from(followedCatalystIds)}
       initialFollowedMarketIds={Array.from(followedMarketIds)}
     />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { CatalystWithSources, Market } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows";
@@ -24,6 +25,7 @@ export default function NationalMapExperience({
   catalysts,
   userId,
   userEmail,
+  isAdmin = false,
   initialFollowedCatalystIds,
   initialFollowedMarketIds,
 }: {
@@ -31,6 +33,7 @@ export default function NationalMapExperience({
   catalysts: CatalystWithSources[];
   userId: string;
   userEmail: string | null;
+  isAdmin?: boolean;
   initialFollowedCatalystIds: string[];
   initialFollowedMarketIds: string[];
 }) {
@@ -142,6 +145,14 @@ export default function NationalMapExperience({
         </div>
 
         <div className="pointer-events-auto flex items-center gap-2">
+          {isAdmin && (
+            <Link
+              href="/dashboard/admin/users"
+              className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
+            >
+              Admin
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
