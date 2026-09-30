@@ -21,12 +21,17 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // isAdmin() only controls whether the "Admin" nav pill shows -- a failure
+  // here must never take down the whole map (it briefly did: Promise.all
+  // rejects as a whole if any one promise rejects, which surfaced the
+  // stale pre-redesign error boundary and, with it, the old hidden-behind-
+  // the-map header). Caught and defaulted to false instead.
   const [{ data: markets }, catalysts, followedCatalystIds, followedMarketIds, admin] = await Promise.all([
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
     getNationalCatalystsWithSource(supabase),
     user ? getFollowedCatalystIds(supabase, user.id) : Promise.resolve(new Set<string>()),
     user ? getFollowedMarketIds(supabase, user.id) : Promise.resolve(new Set<string>()),
-    isAdmin(supabase, user?.id),
+    isAdmin(supabase, user?.id).catch(() => false),
   ]);
 
   return (
