@@ -253,21 +253,20 @@ export const CATALYST_ICON_PATHS: Record<CatalystIconKey, string[]> = {
 
 // Catalysts no longer render as a map pin -- they're an always-on white
 // "watch zone" area outline drawn as a map layer, not a Marker (see
-// DevelopmentMap.tsx). This glyph survives as the marker's own icon (dashed
-// outer ring around the category glyph, reading as "a zone of influence"
-// around a point) and as a small badge/legend icon (e.g. the detail panel's
-// type badge).
+// DevelopmentMap.tsx). This glyph survives as the marker's own icon and as
+// a small badge/legend icon (e.g. the detail panel's type badge). The
+// dashed outer ring was dropped (Jared, 2026-10-01) in favor of the bare
+// category glyph, sized up to fill the space the ring used to occupy.
 export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string; icon?: CatalystIconKey }): string {
   const { size = 16, fill = "#ffffff", icon } = opts ?? {};
   const glyph = icon
     ? icon === "bolt"
-      ? `<path d="${CATALYST_ICON_PATHS.bolt[0]}" fill="${fill}" transform="translate(12,12) scale(0.5) translate(-12,-12)" />`
-      : `<g transform="translate(12,12) scale(0.5) translate(-12,-12)" fill="none" stroke="${fill}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[icon]
+      ? `<path d="${CATALYST_ICON_PATHS.bolt[0]}" fill="${fill}" transform="translate(12,12) scale(0.8) translate(-12,-12)" />`
+      : `<g transform="translate(12,12) scale(0.8) translate(-12,-12)" fill="none" stroke="${fill}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[icon]
           .map((d) => `<path d="${d}" />`)
           .join("")}</g>`
-    : `<circle cx="12" cy="12" r="4" stroke="${fill}" stroke-width="1.5" opacity="0.9" />`;
+    : `<circle cx="12" cy="12" r="6" stroke="${fill}" stroke-width="1.5" opacity="0.9" />`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="10" stroke="${fill}" stroke-width="1.5" opacity="0.5" stroke-dasharray="2 2" />
     ${glyph}
   </svg>`;
 }
