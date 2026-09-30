@@ -1,15 +1,35 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import type { GeoJSONSource, LngLatBoundsLike, Map as MapboxMap, Marker } from "mapbox-gl";
 import type { CatalystWithSources } from "@/lib/types";
 import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
 import { applyPremiumMapStyling, addZoomAdaptiveSatellite, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
-import { CATALYST_SIZE_TIER_PX, catalystColorHex, catalystIconKey, catalystSizeTier } from "@/lib/catalystTypeColors";
+import {
+  CATALYST_SIZE_TIER_PX,
+  catalystColorHex,
+  catalystIconKey,
+  catalystMarkerPriority,
+  catalystMarkerTier,
+  catalystSizeTier,
+} from "@/lib/catalystTypeColors";
 
 const CATALYST_AREA_SOURCE_ID = "roq-national-catalyst-areas";
+
+// Screen-space declutter (Jared, 2026-10-01): Mapbox DOM markers have no
+// collision handling of their own -- every marker draws, so a dense metro
+// like KC turns into a pile of overlapping squares at national zoom. This
+// is a greedy highest-priority-wins pass: project every marker to screen
+// px, walk them in priority order, and collapse any marker whose circle
+// would overlap one already placed. Collapsed markers stay in the DOM as
+// quiet dots (hover restores them) rather than disappearing, so nothing is
+// silently lost from the map. O(n^2) over ~100 markers is a few thousand
+// distance checks per frame -- cheap, and it's rAF-throttled below.
+const COLLISION_PADDING_PX = 3;
+
+type DeclutterEntry = { el: HTMLElement; lng: number; lat: number; size: number; priority: number };
 
 // Continental US -- fitBounds default view. No `projection: 'globe'`: Jared
 // already considered and passed on globe curvature this session (see
@@ -44,8 +64,47 @@ const NationalCatalystMap = forwardRef<
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
+  const declutterRef = useRef<DeclutterEntry[]>([]);
+  const declutterFrameRef = useRef<number | null>(null);
   const readyRef = useRef(false);
   const [ready, setReady] = useState(false);
+
+  const runDeclutter = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const entries = declutterRef.current;
+    if (entries.length === 0) return;
+
+    const placed: { x: number; y: number; radius: number }[] = [];
+    // Highest priority first, so the winner of any overlap is the more
+    // significant catalyst rather than whichever happened to render first.
+    const byPriority = [...entries].sort((a, b) => b.priority - a.priority);
+
+    for (const entry of byPriority) {
+      const point = map.project([entry.lng, entry.lat]);
+      const radius = entry.size / 2 + COLLISION_PADDING_PX;
+      let collapsed = false;
+      for (const other of placed) {
+        const dx = point.x - other.x;
+        const dy = point.y - other.y;
+        const minDistance = radius + other.radius;
+        if (dx * dx + dy * dy < minDistance * minDistance) {
+          collapsed = true;
+          break;
+        }
+      }
+      entry.el.classList.toggle("is-collapsed", collapsed);
+      if (!collapsed) placed.push({ x: point.x, y: point.y, radius });
+    }
+  }, []);
+
+  const scheduleDeclutter = useCallback(() => {
+    if (declutterFrameRef.current != null) return;
+    declutterFrameRef.current = requestAnimationFrame(() => {
+      declutterFrameRef.current = null;
+      runDeclutter();
+    });
+  }, [runDeclutter]);
 
   useImperativeHandle(ref, () => ({
     flyTo: (center, zoom = 10) => {
@@ -115,23 +174,36 @@ const NationalCatalystMap = forwardRef<
 
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
+    declutterRef.current = [];
 
     import("mapbox-gl").then((mapboxgl) => {
+      const entries: DeclutterEntry[] = [];
+
       catalysts.forEach((catalyst) => {
         const color = catalystColorHex(catalyst);
         const size = CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+        const isSelected = catalyst.id === selectedCatalystId;
 
         const el = document.createElement("div");
         el.className = "roq-marker roq-marker-catalyst";
-        el.style.opacity = !selectedCatalystId || catalyst.id === selectedCatalystId ? "1" : "0.4";
-        el.classList.toggle("is-selected", catalyst.id === selectedCatalystId);
+        el.style.opacity = !selectedCatalystId || isSelected ? "1" : "0.4";
+        // Drives the category-tinted selection glow in globals.css -- kept
+        // as a CSS variable so the glow colour follows the marker without
+        // the stylesheet needing to know anything about catalyst types.
+        el.style.setProperty("--marker-accent", color);
+        el.classList.toggle("is-selected", isSelected);
         el.innerHTML = `
           <div class="roq-marker-card">
             <span class="roq-marker-card-title">${escapeHtml(catalyst.title)}</span>
             <span class="roq-marker-card-sub">${escapeHtml(catalyst.address ?? "")}</span>
           </div>
           <div class="roq-marker-line" style="background:${color}"></div>
-          <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ size, fill: color, icon: catalystIconKey(catalyst) })}</div>
+          <div class="roq-marker-pin">${catalystMarkerSvgMarkup({
+            size,
+            fill: color,
+            icon: catalystIconKey(catalyst),
+            tier: catalystMarkerTier(catalyst),
+          })}</div>
         `;
         el.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -140,10 +212,39 @@ const NationalCatalystMap = forwardRef<
 
         const marker = new mapboxgl.default.Marker({ element: el, anchor: "center" }).setLngLat([catalyst.longitude, catalyst.latitude]).addTo(map);
         markersRef.current.set(catalyst.id, marker);
+        entries.push({
+          el,
+          lng: catalyst.longitude,
+          lat: catalyst.latitude,
+          size,
+          // A selected catalyst always wins its spot -- collapsing the thing
+          // the user just clicked on would be actively wrong.
+          priority: catalystMarkerPriority(catalyst) + (isSelected ? 1_000_000 : 0),
+        });
       });
+
+      declutterRef.current = entries;
+      runDeclutter();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, catalysts, selectedCatalystId]);
+
+  // Re-run the overlap pass as the viewport changes -- what collides at
+  // national zoom is fully separated three zoom levels in.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    map.on("move", scheduleDeclutter);
+    map.on("zoom", scheduleDeclutter);
+    return () => {
+      map.off("move", scheduleDeclutter);
+      map.off("zoom", scheduleDeclutter);
+      if (declutterFrameRef.current != null) {
+        cancelAnimationFrame(declutterFrameRef.current);
+        declutterFrameRef.current = null;
+      }
+    };
+  }, [ready, scheduleDeclutter]);
 
   useEffect(() => {
     const map = mapRef.current;

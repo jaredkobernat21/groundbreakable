@@ -233,58 +233,101 @@ export function bulbMarkerSvgMarkup(opts?: {
   </svg>`;
 }
 
-// One glyph per catalyst color group -- lightning bolt for data centers,
-// road for infrastructure, courthouse for schools/civic, house for
-// housing, shovel for everything else. Same hand-authored 24x24 stroke-path
-// convention as PROJECT_ICON_PATHS/SIGNAL_ICON_PATHS above; road and shovel
-// are literally the same paths already used there. The bolt is a closed
-// zigzag path stroked the same as the other four (not filled) -- it used
-// to be the one filled shape in the set, which read as heavier/blobbier
-// next to four thin outline glyphs and was the main thing breaking "one
-// cohesive icon style" (Jared, 2026-10-01).
-export type CatalystIconKey = "bolt" | "road" | "courthouse" | "house" | "shovel";
+// The catalyst marker icon family (Jared, 2026-10-01 redesign): one
+// cohesive set of architectural/industrial glyphs, deliberately drawn on
+// their own 24x24 grid rather than reusing PROJECT_ICON_PATHS. The Pipeline
+// icons are a different design language (document/hammer/clipboard --
+// paperwork and tools); these are structures and infrastructure, which is
+// what actually distinguishes a catalyst. Each glyph is 2-4 strokes max so
+// it stays legible at the ~13px the glyph actually renders at inside a
+// standard marker.
+//
+//   bolt       data centers        power, the core large-load signal
+//   road       infrastructure      corridors, sewer/water/road capacity
+//   courthouse schools / civic     institutional construction
+//   house      housing             residential development
+//   crane      major catalysts     employers, industrial, incentive zones
+//
+// `crane` replaces the old `shovel` -- a tower crane is the more
+// architectural read for the "something big is being built here" bucket,
+// and it holds its shape better at marker size than a shovel's thin handle.
+export type CatalystIconKey = "bolt" | "road" | "courthouse" | "house" | "crane";
 
+// Each of these was rendered at final marker size and adjusted until it
+// held its shape -- two earlier drafts failed that test and are worth
+// recording so they don't get reintroduced: a steeply-converging road
+// (edges ~2px apart at the top) merged into a solid blob, and a crane with
+// a diagonal counter-brace read as a pennant/flag rather than a crane.
+// Hence the near-parallel road edges with only two centre dashes, and the
+// brace-free crane with an explicit base.
 export const CATALYST_ICON_PATHS: Record<CatalystIconKey, string[]> = {
   bolt: ["M13 2L4 14h6l-1 8 10-13h-6l1-9z"],
-  road: PROJECT_ICON_PATHS.road,
-  courthouse: ["M3 9l9-6 9 6", "M5 9v9h14V9", "M9 18v-6M12 18v-6M15 18v-6", "M3 21h18"],
-  house: ["M3 11l9-8 9 8", "M5 10v10h14V10", "M10 20v-6h4v6"],
-  shovel: PROJECT_ICON_PATHS.shovel,
+  road: ["M7 21 9.5 3", "M17 21 14.5 3", "M12 7v3.5M12 14.5v3.5"],
+  courthouse: ["M2.5 9.5 12 3.5l9.5 6", "M6 10v8M12 10v8M18 10v8", "M3 21h18"],
+  house: ["M3.5 11 12 3.5l8.5 7.5", "M5.5 10v10h13V10"],
+  crane: ["M7 21V5", "M4 5h15", "M15 5v4.5", "M4.5 21h5"],
 };
 
-// Apple Maps / Bloomberg-style treatment (Jared, 2026-10-01): a flat solid
-// circle in the catalyst's own muted category color, with a thin white
-// glyph centered inside at a fixed inset ratio -- the same inset, stroke
-// width, linecap, and linejoin for all five icons, so visual weight and
-// padding are identical regardless of how many strokes a given glyph has.
-// No per-icon fill/scale overrides and no dashed ring -- one shared
-// constant set is the whole point (it's what "cohesive" and "standardized"
-// actually cash out to here). The existing `.roq-marker-pin` CSS applies a
-// plain dark drop-shadow, not a colored glow, so depth comes from that, not
-// from anything in this SVG.
-const CATALYST_ICON_INSET_SCALE = 0.46;
-const CATALYST_ICON_STROKE_WIDTH = 1.75;
+// Marker geometry (Jared, 2026-10-01): "remove the solid colored circular
+// backgrounds... restrained outlined geometric markers with category color
+// as an accent, white/light glyphs."
+//
+// So: a chamfered square container with a near-black translucent fill and a
+// category-colored 1.6px stroke, holding a white glyph. The color is an
+// accent on the outline, never a filled disc -- which is what makes this
+// read as instrument panel rather than consumer map pin. Every constant
+// below is shared across all five icons, so visual weight, padding, and
+// stroke are identical regardless of how many strokes a glyph has.
+//
+// Drawn on a 32-unit viewBox (not 24) so the container has room for the
+// corner brackets that mark a `major` catalyst without crowding the glyph.
+// The glyph's stroke-width is pre-divided by the glyph scale so the stroke
+// lands at exactly GLYPH_STROKE in 32-space -- otherwise scaling the group
+// would thin it out and break stroke consistency with the container.
+const CONTAINER = { x: 5, y: 5, size: 22, radius: 6.5 };
+const CONTAINER_FILL = "rgba(9,12,17,0.82)";
+const CONTAINER_STROKE = 1.6;
+const GLYPH_SCALE = 0.56;
+const GLYPH_STROKE = 1.9;
 
-export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string; icon?: CatalystIconKey }): string {
-  const { size = 16, fill = "#ffffff", icon } = opts ?? {};
+export type CatalystMarkerTier = "standard" | "major";
+
+export function catalystMarkerSvgMarkup(opts?: {
+  size?: number;
+  fill?: string;
+  icon?: CatalystIconKey;
+  tier?: CatalystMarkerTier;
+}): string {
+  const { size = 16, fill = "#ffffff", icon, tier = "standard" } = opts ?? {};
 
   if (!icon) {
     // Legacy fallback for call sites that predate the category-icon system
     // (the older single-market Pipeline/Opportunities map components) --
-    // unchanged plain ring, not the new filled-circle treatment below.
+    // unchanged plain ring, untouched by this redesign.
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="6" stroke="${fill}" stroke-width="1.5" opacity="0.9" />
     </svg>`;
   }
 
-  const glyph = `<g transform="translate(12,12) scale(${CATALYST_ICON_INSET_SCALE}) translate(-12,-12)" fill="none" stroke="#fff" stroke-width="${CATALYST_ICON_STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[
-    icon
-  ]
+  // Corner brackets: the size hierarchy needs to survive being 6px bigger,
+  // which raw scale alone doesn't do at these dimensions. A reticle frame
+  // reads as "major" instantly and at any zoom.
+  const brackets =
+    tier === "major"
+      ? `<g fill="none" stroke="${fill}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+      <path d="M2 8V2h6" /><path d="M24 2h6v6" /><path d="M30 24v6h-6" /><path d="M8 30H2v-6" />
+    </g>`
+      : "";
+
+  const glyph = `<g transform="translate(16,16) scale(${GLYPH_SCALE}) translate(-12,-12)" fill="none" stroke="#ffffff" stroke-opacity="0.92" stroke-width="${(
+    GLYPH_STROKE / GLYPH_SCALE
+  ).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[icon]
     .map((d) => `<path d="${d}" />`)
     .join("")}</g>`;
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="11" fill="${fill}" stroke="rgba(0,0,0,0.25)" stroke-width="0.75" />
+  return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" fill="none">
+    ${brackets}
+    <rect x="${CONTAINER.x}" y="${CONTAINER.y}" width="${CONTAINER.size}" height="${CONTAINER.size}" rx="${CONTAINER.radius}" fill="${CONTAINER_FILL}" stroke="${fill}" stroke-width="${CONTAINER_STROKE}" />
     ${glyph}
   </svg>`;
 }

@@ -1,5 +1,5 @@
 import type { Catalyst, CatalystStatus, CatalystType } from "@/lib/types";
-import type { CatalystIconKey } from "@/lib/markerIcons";
+import type { CatalystIconKey, CatalystMarkerTier } from "@/lib/markerIcons";
 
 // National map redesign (Jared, 2026-09-30): "use color primarily to
 // identify the type of development activity... intentionally limited and
@@ -65,7 +65,7 @@ export const CATALYST_COLOR_GROUP_ICON: Record<CatalystColorGroup, CatalystIconK
   infrastructure: "road",
   schools_civic: "courthouse",
   housing: "house",
-  other: "shovel",
+  other: "crane",
 };
 
 export function catalystIconKey(catalyst: Pick<Catalyst, "catalyst_type">): CatalystIconKey {
@@ -92,11 +92,38 @@ export function catalystSizeTier(catalyst: Pick<Catalyst, "catalyst_score" | "es
   return "small";
 }
 
+// Sized up across the board (2026-10-01): the marker is now an outlined
+// container holding a glyph rather than a solid dot, so it needs more room
+// to stay crisp -- a 14px outlined square with a glyph inside is mush. The
+// spread between tiers is deliberately modest because size alone is a weak
+// hierarchy signal at map scale; `catalystMarkerTier` below carries the
+// real "this one is major" weight via the corner-bracket reticle.
 export const CATALYST_SIZE_TIER_PX: Record<CatalystSizeTier, number> = {
-  small: 14,
-  medium: 20,
-  large: 28,
+  small: 22,
+  medium: 26,
+  large: 32,
 };
+
+// Two-step visual hierarchy on top of the three-step size scale: only the
+// top tier gets the bracketed "major" treatment, so a scan of the map
+// separates the handful of genuinely large catalysts from everything else
+// without having to compare marker diameters against each other.
+export function catalystMarkerTier(
+  catalyst: Pick<Catalyst, "catalyst_score" | "estimated_value">
+): CatalystMarkerTier {
+  return catalystSizeTier(catalyst) === "large" ? "major" : "standard";
+}
+
+// Declutter priority: when two markers would overlap on screen, the higher
+// number wins the spot and the loser collapses to a quiet dot. Score is the
+// real signal; size tier breaks ties so a big unscored project outranks a
+// small one. The map layer adds a large constant for the selected catalyst
+// so a selection can never be the one that gets collapsed.
+export function catalystMarkerPriority(
+  catalyst: Pick<Catalyst, "catalyst_score" | "estimated_value">
+): number {
+  return (catalyst.catalyst_score ?? 0) * 10 + CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+}
 
 // Stage filter (Jared's spec: Proposed/Approved/Funded/Under Construction/
 // Completed) grouping the 12-value pre-permit pipeline (types.ts

@@ -37,10 +37,55 @@ body {
   transform: scale(1.18);
 }
 
-/* Circle marker has no natural tip -- scale from its own center, not the
-   bottom-anchored origin the pin/bulb markers use. */
+/* ---------- Catalyst markers (2026-10-01 redesign) ----------
+   Outlined geometric containers, not solid colour-filled discs. The marker
+   has no natural tip, so it scales from its own centre rather than the
+   bottom-anchored origin the pin/bulb markers use. Depth comes from a plain
+   dark drop-shadow; colour is reserved for the outline and for a single
+   restrained selection glow below. */
 .roq-marker-catalyst .roq-marker-pin {
   transform-origin: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+/* Subtler than the 1.18 the pin/bulb markers use -- these are bigger and
+   squarer, so the same scale reads as a jump rather than a lift. */
+.roq-marker-catalyst:hover .roq-marker-pin,
+.roq-marker-catalyst.is-selected .roq-marker-pin {
+  transform: scale(1.12);
+}
+
+/* The only colour glow in the system, and only on an explicit selection --
+   never ambient. --marker-accent is set per-marker in NationalCatalystMap. */
+.roq-marker-catalyst.is-selected .roq-marker-pin {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 5px var(--marker-accent, rgba(255, 255, 255, 0.5)));
+}
+
+/* Collision handling: a marker that lost an overlap contest collapses to a
+   quiet dot instead of stacking on top of a more significant catalyst. It
+   stays interactive -- hovering restores it to full size with its label, so
+   dense clusters stay explorable rather than hiding data. */
+.roq-marker-catalyst.is-collapsed .roq-marker-pin {
+  transform: scale(0.4);
+  opacity: 0.5;
+}
+
+.roq-marker-catalyst.is-collapsed .roq-marker-card {
+  display: none;
+}
+
+.roq-marker-catalyst.is-collapsed:hover .roq-marker-pin {
+  transform: scale(1.12);
+  opacity: 1;
+}
+
+.roq-marker-catalyst.is-collapsed:hover .roq-marker-card {
+  display: flex;
 }
 
 .roq-marker-line {
