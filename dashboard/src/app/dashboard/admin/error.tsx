@@ -17,6 +17,9 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
     <div className="flex flex-col items-start rounded-lg border border-white/10 bg-white/5 p-6">
       <p className="text-sm font-medium text-white/70">Something went wrong loading this page.</p>
       <p className="mt-1 text-sm text-white/40">This is usually temporary -- try again in a moment.</p>
+      {error.digest && (
+        <p className="mt-2 font-mono text-[11px] text-white/25">Error ID: {error.digest}</p>
+      )}
       <button
         type="button"
         onClick={reset}
