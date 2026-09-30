@@ -1,4 +1,5 @@
 import type { Catalyst, CatalystStatus, CatalystType } from "@/lib/types";
+import type { CatalystIconKey } from "@/lib/markerIcons";
 
 // National map redesign (Jared, 2026-09-30): "use color primarily to
 // identify the type of development activity... intentionally limited and
@@ -48,6 +49,22 @@ export function catalystColorGroup(catalyst: Pick<Catalyst, "catalyst_type">): C
 
 export function catalystColorHex(catalyst: Pick<Catalyst, "catalyst_type">): string {
   return CATALYST_COLOR_GROUP_HEX[catalystColorGroup(catalyst)];
+}
+
+// Marker glyph per color group (Jared, 2026-10-01): "keep the coloring, but
+// change the icons." One glyph per group, not per catalyst_type -- types
+// sharing a color (e.g. institutional/public_facility both "schools_civic")
+// share the same icon too.
+export const CATALYST_COLOR_GROUP_ICON: Record<CatalystColorGroup, CatalystIconKey> = {
+  data_center: "bolt",
+  infrastructure: "road",
+  schools_civic: "courthouse",
+  housing: "house",
+  other: "shovel",
+};
+
+export function catalystIconKey(catalyst: Pick<Catalyst, "catalyst_type">): CatalystIconKey {
+  return CATALYST_COLOR_GROUP_ICON[catalystColorGroup(catalyst)];
 }
 
 // Marker size = potential geographic impact. catalyst_score (lib/catalysts/

@@ -233,15 +233,41 @@ export function bulbMarkerSvgMarkup(opts?: {
   </svg>`;
 }
 
+// One glyph per catalyst color group (Jared, 2026-10-01): "keep the
+// coloring, but change the icons" -- lightning bolt for data centers, road
+// for infrastructure, courthouse for schools/civic, house for housing,
+// shovel for everything else. Same hand-authored 24x24 stroke-path
+// convention as PROJECT_ICON_PATHS/SIGNAL_ICON_PATHS above; road and
+// shovel are literally the same paths already used there (one glyph, reused
+// rather than redrawn). The bolt is filled (not stroked) since an outlined
+// zigzag reads poorly at marker size -- everything else stays stroke-only.
+export type CatalystIconKey = "bolt" | "road" | "courthouse" | "house" | "shovel";
+
+export const CATALYST_ICON_PATHS: Record<CatalystIconKey, string[]> = {
+  bolt: ["M13 2L4 14h6l-1 8 10-13h-6l1-9z"],
+  road: PROJECT_ICON_PATHS.road,
+  courthouse: ["M3 9l9-6 9 6", "M5 9v9h14V9", "M9 18v-6M12 18v-6M15 18v-6", "M3 21h18"],
+  house: ["M3 11l9-8 9 8", "M5 10v10h14V10", "M10 20v-6h4v6"],
+  shovel: PROJECT_ICON_PATHS.shovel,
+};
+
 // Catalysts no longer render as a map pin -- they're an always-on white
 // "watch zone" area outline drawn as a map layer, not a Marker (see
-// DevelopmentMap.tsx). This glyph survives only as a small badge/legend
-// icon (e.g. the detail panel's type badge): a dashed outer ring around a
-// solid center, reading as "a zone of influence" rather than "a point."
-export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string }): string {
-  const { size = 16, fill = "#ffffff" } = opts ?? {};
+// DevelopmentMap.tsx). This glyph survives as the marker's own icon (dashed
+// outer ring around the category glyph, reading as "a zone of influence"
+// around a point) and as a small badge/legend icon (e.g. the detail panel's
+// type badge).
+export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string; icon?: CatalystIconKey }): string {
+  const { size = 16, fill = "#ffffff", icon } = opts ?? {};
+  const glyph = icon
+    ? icon === "bolt"
+      ? `<path d="${CATALYST_ICON_PATHS.bolt[0]}" fill="${fill}" transform="translate(12,12) scale(0.5) translate(-12,-12)" />`
+      : `<g transform="translate(12,12) scale(0.5) translate(-12,-12)" fill="none" stroke="${fill}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[icon]
+          .map((d) => `<path d="${d}" />`)
+          .join("")}</g>`
+    : `<circle cx="12" cy="12" r="4" stroke="${fill}" stroke-width="1.5" opacity="0.9" />`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="10" stroke="${fill}" stroke-width="1.5" opacity="0.5" stroke-dasharray="2 2" />
-    <circle cx="12" cy="12" r="4" stroke="${fill}" stroke-width="1.5" opacity="0.9" />
+    ${glyph}
   </svg>`;
 }

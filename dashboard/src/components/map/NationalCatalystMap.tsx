@@ -7,7 +7,7 @@ import type { CatalystWithSources } from "@/lib/types";
 import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
 import { applyPremiumMapStyling, addZoomAdaptiveSatellite, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
-import { CATALYST_SIZE_TIER_PX, catalystColorHex, catalystSizeTier } from "@/lib/catalystTypeColors";
+import { CATALYST_SIZE_TIER_PX, catalystColorHex, catalystIconKey, catalystSizeTier } from "@/lib/catalystTypeColors";
 
 const CATALYST_AREA_SOURCE_ID = "roq-national-catalyst-areas";
 
@@ -131,7 +131,7 @@ const NationalCatalystMap = forwardRef<
             <span class="roq-marker-card-sub">${escapeHtml(catalyst.address ?? "")}</span>
           </div>
           <div class="roq-marker-line" style="background:${color}"></div>
-          <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ size, fill: color })}</div>
+          <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ size, fill: color, icon: catalystIconKey(catalyst) })}</div>
         `;
         el.addEventListener("click", (event) => {
           event.stopPropagation();
