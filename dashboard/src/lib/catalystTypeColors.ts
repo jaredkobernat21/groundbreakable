@@ -27,12 +27,17 @@ export const CATALYST_TYPE_COLOR_GROUP: Record<CatalystType, CatalystColorGroup>
   other: "other",
 };
 
+// Softened from Tailwind-default hexes (Jared, 2026-10-01): the original
+// green/purple/yellow/blue read as bright/neon against the dark map for a
+// product meant to feel like premium development intelligence. Same hues,
+// desaturated and deepened -- still clearly distinct from each other at a
+// glance, just restrained instead of saturated.
 export const CATALYST_COLOR_GROUP_HEX: Record<CatalystColorGroup, string> = {
-  infrastructure: "#22c55e", // green
-  data_center: "#a855f7", // purple
-  schools_civic: "#eab308", // yellow
-  housing: "#3b82f6", // blue
-  other: "#94a3b8", // neutral gray -- not one of "the 4 categories," an honest catch-all
+  infrastructure: "#3f8f63", // muted emerald
+  data_center: "#8b6bb0", // muted plum/violet
+  schools_civic: "#c9a227", // muted amber/gold
+  housing: "#5b80a8", // muted slate blue
+  other: "#8b93a3", // quiet neutral gray
 };
 
 export const CATALYST_COLOR_GROUP_LABEL: Record<CatalystColorGroup, string> = {
