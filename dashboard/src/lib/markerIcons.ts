@@ -233,14 +233,15 @@ export function bulbMarkerSvgMarkup(opts?: {
   </svg>`;
 }
 
-// One glyph per catalyst color group (Jared, 2026-10-01): "keep the
-// coloring, but change the icons" -- lightning bolt for data centers, road
-// for infrastructure, courthouse for schools/civic, house for housing,
-// shovel for everything else. Same hand-authored 24x24 stroke-path
-// convention as PROJECT_ICON_PATHS/SIGNAL_ICON_PATHS above; road and
-// shovel are literally the same paths already used there (one glyph, reused
-// rather than redrawn). The bolt is filled (not stroked) since an outlined
-// zigzag reads poorly at marker size -- everything else stays stroke-only.
+// One glyph per catalyst color group -- lightning bolt for data centers,
+// road for infrastructure, courthouse for schools/civic, house for
+// housing, shovel for everything else. Same hand-authored 24x24 stroke-path
+// convention as PROJECT_ICON_PATHS/SIGNAL_ICON_PATHS above; road and shovel
+// are literally the same paths already used there. The bolt is a closed
+// zigzag path stroked the same as the other four (not filled) -- it used
+// to be the one filled shape in the set, which read as heavier/blobbier
+// next to four thin outline glyphs and was the main thing breaking "one
+// cohesive icon style" (Jared, 2026-10-01).
 export type CatalystIconKey = "bolt" | "road" | "courthouse" | "house" | "shovel";
 
 export const CATALYST_ICON_PATHS: Record<CatalystIconKey, string[]> = {
@@ -251,22 +252,39 @@ export const CATALYST_ICON_PATHS: Record<CatalystIconKey, string[]> = {
   shovel: PROJECT_ICON_PATHS.shovel,
 };
 
-// Catalysts no longer render as a map pin -- they're an always-on white
-// "watch zone" area outline drawn as a map layer, not a Marker (see
-// DevelopmentMap.tsx). This glyph survives as the marker's own icon and as
-// a small badge/legend icon (e.g. the detail panel's type badge). The
-// dashed outer ring was dropped (Jared, 2026-10-01) in favor of the bare
-// category glyph, sized up to fill the space the ring used to occupy.
+// Apple Maps / Bloomberg-style treatment (Jared, 2026-10-01): a flat solid
+// circle in the catalyst's own muted category color, with a thin white
+// glyph centered inside at a fixed inset ratio -- the same inset, stroke
+// width, linecap, and linejoin for all five icons, so visual weight and
+// padding are identical regardless of how many strokes a given glyph has.
+// No per-icon fill/scale overrides and no dashed ring -- one shared
+// constant set is the whole point (it's what "cohesive" and "standardized"
+// actually cash out to here). The existing `.roq-marker-pin` CSS applies a
+// plain dark drop-shadow, not a colored glow, so depth comes from that, not
+// from anything in this SVG.
+const CATALYST_ICON_INSET_SCALE = 0.46;
+const CATALYST_ICON_STROKE_WIDTH = 1.75;
+
 export function catalystMarkerSvgMarkup(opts?: { size?: number; fill?: string; icon?: CatalystIconKey }): string {
   const { size = 16, fill = "#ffffff", icon } = opts ?? {};
-  const glyph = icon
-    ? icon === "bolt"
-      ? `<path d="${CATALYST_ICON_PATHS.bolt[0]}" fill="${fill}" transform="translate(12,12) scale(0.8) translate(-12,-12)" />`
-      : `<g transform="translate(12,12) scale(0.8) translate(-12,-12)" fill="none" stroke="${fill}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[icon]
-          .map((d) => `<path d="${d}" />`)
-          .join("")}</g>`
-    : `<circle cx="12" cy="12" r="6" stroke="${fill}" stroke-width="1.5" opacity="0.9" />`;
+
+  if (!icon) {
+    // Legacy fallback for call sites that predate the category-icon system
+    // (the older single-market Pipeline/Opportunities map components) --
+    // unchanged plain ring, not the new filled-circle treatment below.
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="6" stroke="${fill}" stroke-width="1.5" opacity="0.9" />
+    </svg>`;
+  }
+
+  const glyph = `<g transform="translate(12,12) scale(${CATALYST_ICON_INSET_SCALE}) translate(-12,-12)" fill="none" stroke="#fff" stroke-width="${CATALYST_ICON_STROKE_WIDTH}" stroke-linecap="round" stroke-linejoin="round">${CATALYST_ICON_PATHS[
+    icon
+  ]
+    .map((d) => `<path d="${d}" />`)
+    .join("")}</g>`;
+
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="11" fill="${fill}" stroke="rgba(0,0,0,0.25)" stroke-width="0.75" />
     ${glyph}
   </svg>`;
 }
