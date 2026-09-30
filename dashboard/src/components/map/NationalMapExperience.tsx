@@ -126,9 +126,8 @@ export default function NationalMapExperience({
       {/* Top nav -- logo, search, filters, following, profile. No permanent
           sidebar; the map occupies the rest of the screen. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-4 p-4">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
-          <img src="/groundbreakable-icon.png" alt="" className="h-5 w-5" />
-          <span className="text-sm font-semibold text-white">Groundbreakable</span>
+        <div className="pointer-events-auto flex items-center rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
+          <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 brightness-0 invert" />
         </div>
 
         <div className="pointer-events-auto flex-1">
