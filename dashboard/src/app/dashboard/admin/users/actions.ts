@@ -13,9 +13,12 @@ function str(formData: FormData, key: string): string | null {
 
 async function requireAdmin() {
   const supabase = createClient();
+  // Same network-blip hardening as admin/users/page.tsx's getUser() call --
+  // a thrown network error here shouldn't crash differently than a real
+  // "not signed in"; both correctly deny below.
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   const { data: profile } = user
     ? await supabase.from("investor_profiles").select("role").eq("id", user.id).single()
     : { data: null };

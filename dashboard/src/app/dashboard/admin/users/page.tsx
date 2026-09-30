@@ -48,9 +48,13 @@ export default async function UsersPage({
   searchParams: { invite_link?: string; invite_email?: string };
 }) {
   const supabase = createClient();
+  // getUser() talks to Supabase's auth server over the network -- a
+  // transient blip there throws the same way listUsers() did below.
+  // Caught the same way: failure here just means "treat as signed out,"
+  // which already falls through to the existing non-admin redirect.
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
   const { data: profile } = user
     ? await supabase.from("investor_profiles").select("role").eq("id", user.id).single()
