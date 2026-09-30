@@ -127,13 +127,23 @@ export default function NationalMapExperience({
       </div>
 
       {/* Top nav -- logo, search, filters, following, profile. No permanent
-          sidebar; the map occupies the rest of the screen. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-4 p-4">
-        <div className="pointer-events-auto flex items-center rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
-          <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 brightness-0 invert" />
+          sidebar; the map occupies the rest of the screen.
+
+          Mobile layout (2026-09-30): below `sm`, the row wraps instead of
+          squeezing everything into one line -- the search bar (`order-3
+          w-full`) drops to its own full-width row below the logo/pills row,
+          and the pill group shrinks its padding/text and can itself wrap to
+          a second line on very narrow phones. `shrink-0` on the logo and
+          pill-group wrappers stops flexbox from compressing the logo image
+          or pill text when space is tight (the "smushed icon" bug). At
+          `sm:` and up this is byte-for-byte the original single-row,
+          flex-1-search layout -- unchanged on desktop. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-center gap-3 p-3 sm:flex-nowrap sm:gap-4 sm:p-4">
+        <div className="pointer-events-auto flex shrink-0 items-center rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
+          <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 shrink-0 brightness-0 invert" />
         </div>
 
-        <div className="pointer-events-auto flex-1">
+        <div className="pointer-events-auto order-3 w-full sm:order-none sm:w-auto sm:flex-1">
           <MapSearch
             catalysts={catalysts}
             markets={markets}
@@ -144,11 +154,11 @@ export default function NationalMapExperience({
           />
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-2">
+        <div className="pointer-events-auto ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:ml-0 sm:flex-nowrap sm:gap-2">
           {isAdmin && (
             <Link
               href="/dashboard/admin/users"
-              className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
+              className="whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-2 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white sm:px-3 sm:py-1.5 sm:text-xs"
             >
               Admin
             </Link>
@@ -156,18 +166,18 @@ export default function NationalMapExperience({
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
-            className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
+            className="whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-2 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white sm:px-3 sm:py-1.5 sm:text-xs"
           >
             Filters
           </button>
           <button
             type="button"
             onClick={() => setFollowingOpen(true)}
-            className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
+            className="whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-2 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white sm:px-3 sm:py-1.5 sm:text-xs"
           >
             Following
           </button>
-          <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs text-white/60 backdrop-blur-sm">
+          <div className="flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-2 py-1 text-[11px] text-white/60 backdrop-blur-sm sm:px-3 sm:py-1.5 sm:text-xs">
             <span className="hidden sm:inline">{userEmail}</span>
             <button type="button" onClick={handleSignOut} className="text-white/50 hover:text-white">
               Sign out
