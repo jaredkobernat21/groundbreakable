@@ -36,27 +36,27 @@ export default function FollowingPanel({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-[340px] overflow-y-auto border-l border-white/10 bg-black/90 p-5 shadow-2xl backdrop-blur-xl">
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed right-3 top-16 bottom-3 z-50 w-[340px] overflow-y-auto rounded-xl border border-white/[0.08] bg-[#0E0F12]/95 p-5 shadow-2xl backdrop-blur-2xl">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Following</h2>
-          <button type="button" onClick={onClose} className="text-white/40 hover:text-white">
+          <h2 className="font-serif text-[15px] font-medium text-[#EDECE8]">Following</h2>
+          <button type="button" onClick={onClose} className="text-[#7A7E87] hover:text-[#EDECE8]">
             ✕
           </button>
         </div>
 
         <section className="mb-6">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Markets ({followedMarkets.length})</p>
+          <p className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[#7A7E87]">Markets ({followedMarkets.length})</p>
           {followedMarkets.length === 0 ? (
-            <p className="text-sm text-white/40">No markets followed yet.</p>
+            <p className="text-[13px] text-[#6B6F78]">No markets followed yet.</p>
           ) : (
             <div className="space-y-1.5">
               {followedMarkets.map((m) => (
-                <div key={m.id} className="flex items-center justify-between rounded border border-white/10 px-3 py-2">
-                  <button type="button" onClick={() => onFlyToMarket(m)} className="text-left text-sm text-white/80 hover:text-white">
+                <div key={m.id} className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <button type="button" onClick={() => onFlyToMarket(m)} className="text-left text-[13px] text-[#C7C9CE] hover:text-[#EDECE8]">
                     {m.name}, {m.state}
                   </button>
-                  <button type="button" onClick={() => onUnfollowMarket(m.id)} className="text-xs text-white/30 hover:text-white/70">
+                  <button type="button" onClick={() => onUnfollowMarket(m.id)} className="text-[11px] text-[#6B6F78] hover:text-[#9096A0]">
                     Unfollow
                   </button>
                 </div>
@@ -66,17 +66,17 @@ export default function FollowingPanel({
         </section>
 
         <section>
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Projects ({followedCatalysts.length})</p>
+          <p className="mb-2 text-[10px] uppercase tracking-[0.08em] text-[#7A7E87]">Projects ({followedCatalysts.length})</p>
           {followedCatalysts.length === 0 ? (
-            <p className="text-sm text-white/40">No projects followed yet.</p>
+            <p className="text-[13px] text-[#6B6F78]">No projects followed yet.</p>
           ) : (
             <div className="space-y-1.5">
               {followedCatalysts.map((c) => (
-                <div key={c.id} className="flex items-center justify-between rounded border border-white/10 px-3 py-2">
-                  <button type="button" onClick={() => onSelectCatalyst(c.id)} className="text-left text-sm text-white/80 hover:text-white">
+                <div key={c.id} className="flex items-center justify-between rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <button type="button" onClick={() => onSelectCatalyst(c.id)} className="text-left text-[13px] text-[#C7C9CE] hover:text-[#EDECE8]">
                     {c.title}
                   </button>
-                  <button type="button" onClick={() => onUnfollowCatalyst(c.id)} className="text-xs text-white/30 hover:text-white/70">
+                  <button type="button" onClick={() => onUnfollowCatalyst(c.id)} className="text-[11px] text-[#6B6F78] hover:text-[#9096A0]">
                     Unfollow
                   </button>
                 </div>

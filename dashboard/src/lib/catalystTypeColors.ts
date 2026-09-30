@@ -1,15 +1,17 @@
 import type { Catalyst, CatalystStatus, CatalystType } from "@/lib/types";
 
-// National map redesign (Jared, 2026-09-30): "use color primarily to
-// identify the type of development activity... intentionally limited and
-// visually clean." 11 CatalystType values don't map 1:1 onto the 4 colors
-// Jared specified -- 6 types genuinely have no honest home in
-// infrastructure/data-center/schools/housing yet (industrial_logistics is
-// explicitly one of his own "may add later" categories). Rather than
-// force-fit one of those into an unrelated color, they get a 5th neutral
-// "Other" bucket, called out to Jared directly rather than silently
-// mis-colored.
-export type CatalystColorGroup = "infrastructure" | "data_center" | "schools_civic" | "housing" | "other";
+// Institutional redesign (Jared, 2026-09-30): "richer, muted tones... use
+// as accents, not dominant fills." No CatalystType distinguishes
+// transportation from general infrastructure (I-49 corridor, I-70
+// interchange, PSO transmission lines, and sewer/water projects all share
+// `infrastructure_project`) -- confirmed with Jared to keep these one
+// emerald color rather than adding a schema value and retroactively
+// reclassifying the ~80 catalysts already logged. incentive_district/
+// annexation_rezoning DO already exist as distinct types though, so they
+// get their own "Government / Incentives" group for free -- previously
+// lumped into the generic "other" bucket. major_employer/mixed_use_anchor/
+// industrial_logistics/other remain the honest neutral catch-all.
+export type CatalystColorGroup = "infrastructure" | "data_center" | "schools_civic" | "housing" | "government_incentives" | "other";
 
 export const CATALYST_TYPE_COLOR_GROUP: Record<CatalystType, CatalystColorGroup> = {
   infrastructure_project: "infrastructure",
@@ -18,27 +20,32 @@ export const CATALYST_TYPE_COLOR_GROUP: Record<CatalystType, CatalystColorGroup>
   institutional: "schools_civic",
   public_facility: "schools_civic",
   housing_development: "housing",
+  incentive_district: "government_incentives",
+  annexation_rezoning: "government_incentives",
   major_employer: "other",
   mixed_use_anchor: "other",
   industrial_logistics: "other",
-  incentive_district: "other",
-  annexation_rezoning: "other",
   other: "other",
 };
 
+// Hand-picked deep/desaturated jewel tones rather than raw Tailwind
+// defaults -- the brief explicitly asked for "muted," "restrained,"
+// institutional color, not bright SaaS accent colors.
 export const CATALYST_COLOR_GROUP_HEX: Record<CatalystColorGroup, string> = {
-  infrastructure: "#22c55e", // green
-  data_center: "#a855f7", // purple
-  schools_civic: "#eab308", // yellow
-  housing: "#3b82f6", // blue
-  other: "#94a3b8", // neutral gray -- not one of "the 4 categories," an honest catch-all
+  infrastructure: "#3E7B5F", // deep muted emerald
+  data_center: "#6B4C8A", // deep violet / plum
+  schools_civic: "#B8863B", // warm muted amber
+  housing: "#5A72A0", // slate blue
+  government_incentives: "#3F7A78", // muted teal
+  other: "#7A7E87", // quiet neutral gray -- not one of the named categories, an honest catch-all
 };
 
 export const CATALYST_COLOR_GROUP_LABEL: Record<CatalystColorGroup, string> = {
   infrastructure: "Infrastructure",
   data_center: "Data Centers",
-  schools_civic: "Schools / Civic",
+  schools_civic: "Schools / Institutions",
   housing: "Housing",
+  government_incentives: "Government / Incentives",
   other: "Other",
 };
 
@@ -74,6 +81,24 @@ export const CATALYST_SIZE_TIER_PX: Record<CatalystSizeTier, number> = {
   small: 14,
   medium: 20,
   large: 28,
+};
+
+// Impact Radius filter (institutional redesign, 2026-09-30) -- buckets
+// influence_radius_meters into the same Local/Submarket/Regional framing
+// the marker-size legend already uses, so "impact" reads consistently
+// whether a viewer is looking at marker size or filtering by it.
+export type ImpactRadiusTier = "local" | "submarket" | "regional";
+
+export function catalystImpactRadiusTier(catalyst: Pick<Catalyst, "influence_radius_meters">): ImpactRadiusTier {
+  if (catalyst.influence_radius_meters >= 8000) return "regional";
+  if (catalyst.influence_radius_meters >= 1600) return "submarket";
+  return "local";
+}
+
+export const IMPACT_RADIUS_TIER_LABEL: Record<ImpactRadiusTier, string> = {
+  local: "Local",
+  submarket: "Submarket",
+  regional: "Regional",
 };
 
 // Stage filter (Jared's spec: Proposed/Approved/Funded/Under Construction/

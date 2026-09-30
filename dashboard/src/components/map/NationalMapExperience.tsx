@@ -1,24 +1,28 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import type { LngLatBounds } from "mapbox-gl";
 import type { CatalystWithSources, Market } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows";
 import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
-import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
+import { CATALYST_STAGE_GROUP, catalystColorGroup, catalystImpactRadiusTier } from "@/lib/catalystTypeColors";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
+import TopFilterBar from "./TopFilterBar";
 import FiltersPanel, { defaultMapFilters, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
+import CatalystsInViewRail from "./CatalystsInViewRail";
 
-// National map redesign (Jared, 2026-09-30): "the map should be the
-// product." This is the fixed full-screen overlay that replaces the old
-// Plans/Opportunities/Catalysts tabbed dashboard for investors. Rendered
-// as `fixed inset-0` rather than making dashboard/layout.tsx pathname-aware
-// -- that layout also wraps /dashboard/admin/** and /dashboard/leads/**,
-// and there's no clean way to opt just this page out of it without risking
-// those routes. This approach needs zero changes to layout.tsx/admin/leads.
+// Institutional redesign (Jared, 2026-09-30): "the map should be the
+// product." Fixed full-screen overlay replacing the old Plans/
+// Opportunities/Catalysts tabbed dashboard for investors -- rendered as
+// `fixed inset-0` rather than making dashboard/layout.tsx pathname-aware
+// (that layout also wraps /dashboard/admin/** and /dashboard/leads/**).
+// Zero changes to layout.tsx/admin/leads. Background/text tokens below
+// (charcoal #0B0C0F, off-white #EDECE8, cool-gray #7A7E87/#9096A0) are the
+// shared palette for every surface in this experience.
 export default function NationalMapExperience({
   markets,
   catalysts,
@@ -41,6 +45,7 @@ export default function NationalMapExperience({
   const [filters, setFilters] = useState<MapFilters>(defaultMapFilters());
   const [followedCatalystIds, setFollowedCatalystIds] = useState(new Set(initialFollowedCatalystIds));
   const [followedMarketIds, setFollowedMarketIds] = useState(new Set(initialFollowedMarketIds));
+  const [viewportBounds, setViewportBounds] = useState<LngLatBounds | null>(null);
 
   const marketById = useMemo(() => new Map(markets.map((m) => [m.id, m])), [markets]);
 
@@ -53,6 +58,7 @@ export default function NationalMapExperience({
       if (!filters.types.has(catalystColorGroup(c))) return false;
       const stageGroup = CATALYST_STAGE_GROUP[c.status];
       if (!stageGroup || !filters.stages.has(stageGroup)) return false;
+      if (!filters.impactRadiusTiers.has(catalystImpactRadiusTier(c))) return false;
 
       if (filters.time === "new_week" && new Date(c.created_at).getTime() < weekAgo) return false;
       if (filters.time === "new_month" && new Date(c.created_at).getTime() < monthAgo) return false;
@@ -65,6 +71,11 @@ export default function NationalMapExperience({
       return true;
     });
   }, [catalysts, filters, marketById]);
+
+  const catalystsInView = useMemo(() => {
+    if (!viewportBounds) return filteredCatalysts;
+    return filteredCatalysts.filter((c) => viewportBounds.contains([c.longitude, c.latitude]));
+  }, [filteredCatalysts, viewportBounds]);
 
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
 
@@ -113,57 +124,66 @@ export default function NationalMapExperience({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-black">
+    <div className="fixed inset-0 z-40 bg-[#0B0C0F]">
       <div className="absolute inset-0">
         <NationalCatalystMap
           ref={mapRef}
           catalysts={filteredCatalysts}
           selectedCatalystId={selectedCatalystId}
           onSelectCatalyst={handleSelectCatalyst}
+          onViewportChange={setViewportBounds}
+          showImpactAreas={filters.showImpactAreas}
         />
       </div>
 
       {/* Top nav -- logo, search, filters, following, profile. No permanent
           sidebar; the map occupies the rest of the screen. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-4 p-4">
-        <div className="pointer-events-auto flex items-center rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
-          <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 brightness-0 invert" />
-        </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col gap-2.5 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0E0F12]/80 px-3 py-1.5 backdrop-blur-xl">
+            <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 brightness-0 invert" />
+          </div>
 
-        <div className="pointer-events-auto flex-1">
-          <MapSearch
-            catalysts={catalysts}
-            markets={markets}
-            followedMarketIds={followedMarketIds}
-            onFlyTo={(center, zoom) => mapRef.current?.flyTo(center, zoom)}
-            onSelectCatalyst={handleSelectCatalyst}
-            onToggleFollowMarket={toggleFollowMarket}
-          />
-        </div>
+          <div className="pointer-events-auto flex-1">
+            <MapSearch
+              catalysts={catalysts}
+              markets={markets}
+              followedMarketIds={followedMarketIds}
+              onFlyTo={(center, zoom) => mapRef.current?.flyTo(center, zoom)}
+              onSelectCatalyst={handleSelectCatalyst}
+              onToggleFollowMarket={toggleFollowMarket}
+            />
+          </div>
 
-        <div className="pointer-events-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
-          >
-            Filters
-          </button>
-          <button
-            type="button"
-            onClick={() => setFollowingOpen(true)}
-            className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm hover:border-white/30 hover:text-white"
-          >
-            Following
-          </button>
-          <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-xs text-white/60 backdrop-blur-sm">
-            <span className="hidden sm:inline">{userEmail}</span>
-            <button type="button" onClick={handleSignOut} className="text-white/50 hover:text-white">
-              Sign out
+          <div className="pointer-events-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFollowingOpen(true)}
+              className="rounded-full border border-white/[0.08] bg-[#0E0F12]/80 px-3 py-1.5 text-[12px] font-medium text-[#9096A0] backdrop-blur-xl transition hover:border-white/20 hover:text-[#EDECE8]"
+            >
+              Following
             </button>
+            <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-[#0E0F12]/80 px-3 py-1.5 text-[12px] text-[#7A7E87] backdrop-blur-xl">
+              <span className="hidden sm:inline">{userEmail}</span>
+              <button type="button" onClick={handleSignOut} className="text-[#7A7E87] hover:text-[#EDECE8]">
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
+
+        <TopFilterBar
+          activeTypes={filters.types}
+          onChangeTypes={(types) => setFilters({ ...filters, types })}
+          onOpenMoreFilters={() => setFiltersOpen(true)}
+        />
       </div>
+
+      {filters.showInViewRail && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 px-4">
+          <CatalystsInViewRail catalysts={catalystsInView} selectedCatalystId={selectedCatalystId} onSelectCatalyst={handleSelectCatalyst} />
+        </div>
+      )}
 
       {selectedCatalyst && (
         <CatalystIntelligencePanel
