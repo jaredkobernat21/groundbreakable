@@ -45,7 +45,7 @@ const labelClass = "mb-1 block text-[11px] uppercase tracking-wide text-white/40
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { invite_link?: string; invite_email?: string };
+  searchParams: { invite_link?: string; invite_email?: string; form_error?: string };
 }) {
   const supabase = createClient();
   // getUser() talks to Supabase's auth server over the network -- a
@@ -109,6 +109,12 @@ export default async function UsersPage({
           not a restriction.
         </p>
       </div>
+
+      {searchParams.form_error && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+          {searchParams.form_error}
+        </div>
+      )}
 
       {searchParams.invite_link && (
         <CopyLinkBanner email={searchParams.invite_email ?? ""} link={searchParams.invite_link} />

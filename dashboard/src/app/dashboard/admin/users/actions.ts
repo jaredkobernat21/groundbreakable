@@ -46,6 +46,20 @@ function appOrigin(): string {
 // this codebase's other admin actions (which trust the page-level redirect
 // + RLS write policy), so this re-checks admin explicitly, same as the
 // temp-password version did.
+// The Vercel error logs Jared pulled (2026-09-30) showed this whole route
+// crashing with a plain `Error: An account already exists for this email.`
+// -- not a bug, just this function's own validation guard doing its job,
+// but a `throw` here lands on the admin error boundary (a scary "something
+// went wrong" screen) instead of a normal, actionable form message. Every
+// expected-failure branch below now redirects back to the form with
+// `form_error` instead, same pattern as invite/[id]/actions.ts's acceptance
+// flow. Only genuinely unexpected failures (requireAdmin, revoke/update/
+// setMarkets below) still throw -- those don't have a form UI actively
+// waiting for a targeted inline message.
+function formErrorRedirect(message: string): never {
+  redirect(`/dashboard/admin/users?form_error=${encodeURIComponent(message)}`);
+}
+
 export async function createInvitation(formData: FormData) {
   await requireAdmin();
 
@@ -56,7 +70,7 @@ export async function createInvitation(formData: FormData) {
   const marketIds = formData.getAll("market_ids").filter((v): v is string => typeof v === "string");
 
   if (!firstName || !lastName || !email) {
-    throw new Error("First name, last name, and email are required.");
+    formErrorRedirect("First name, last name, and email are required.");
   }
 
   const admin = createAdminClient();
@@ -78,7 +92,7 @@ export async function createInvitation(formData: FormData) {
     .then(({ data }) => data.users)
     .catch(() => []);
   if (existingUsers.some((u) => u.email?.toLowerCase() === email.toLowerCase())) {
-    throw new Error("An account already exists for this email.");
+    formErrorRedirect("An account already exists for this email.");
   }
 
   const supabase = createClient();
@@ -98,7 +112,7 @@ export async function createInvitation(formData: FormData) {
     .select("id")
     .single();
   if (inviteError || !invitation) {
-    throw new Error(inviteError?.message ?? "Failed to create invitation.");
+    formErrorRedirect(inviteError?.message ?? "Failed to create invitation.");
   }
 
   if (marketIds.length > 0) {
@@ -106,7 +120,7 @@ export async function createInvitation(formData: FormData) {
       .from("invitation_markets")
       .insert(marketIds.map((marketId) => ({ invitation_id: invitation.id, market_id: marketId })));
     if (marketsError) {
-      throw new Error(`Invitation created, but failed to assign markets: ${marketsError.message}`);
+      formErrorRedirect(`Invitation created, but failed to assign markets: ${marketsError.message}`);
     }
   }
 
