@@ -12,7 +12,7 @@ export default async function InvitePage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { error?: string; form_error?: string };
+  searchParams: { form_error?: string };
 }) {
   const check = await getValidInvitation(params.id);
 
@@ -42,7 +42,6 @@ export default async function InvitePage({
       invitationId={check.invitation.id}
       firstName={check.invitation.first_name}
       email={check.invitation.email}
-      error={searchParams.error}
       formError={searchParams.form_error}
     />
   );

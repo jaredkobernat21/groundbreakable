@@ -51,6 +51,16 @@ export async function applyInvitation(
 
   const { invitation } = check;
 
+  // has_all_market_access: true -- "the invitation link should give access
+  // to all markets, even ones I add" (Jared, 2026-09-30). A snapshot of
+  // invitation_markets rows can't satisfy "even ones I add" on its own
+  // (a market created after this developer signs up would need someone to
+  // go back and grant it manually) -- this flag is checked live inside
+  // has_market_access() (supabase/migrations/20260930030000_all_market_
+  // access_flag.sql), so every future market clears automatically. Still
+  // copy invitation_markets -> investor_markets below for record-keeping/
+  // display (e.g. a "primary markets" badge later) -- it just no longer
+  // gates access on its own for invitation-created developers.
   const { error: profileError } = await admin.from("investor_profiles").upsert(
     {
       id: userId,
@@ -61,6 +71,7 @@ export async function applyInvitation(
       role: "developer",
       status: "active",
       must_change_password: false,
+      has_all_market_access: true,
     },
     { onConflict: "id" }
   );

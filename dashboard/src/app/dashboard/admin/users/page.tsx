@@ -14,6 +14,7 @@ type Profile = {
   company_name: string | null;
   role: string;
   status: string;
+  has_all_market_access: boolean;
   created_at: string;
   investor_markets: { market_id: string }[];
 };
@@ -62,7 +63,7 @@ export default async function UsersPage({
   const [{ data: profiles }, { data: markets }, { data: invitations }] = await Promise.all([
     supabase
       .from("investor_profiles")
-      .select("id, first_name, last_name, company_name, role, status, created_at, investor_markets(market_id)")
+      .select("id, first_name, last_name, company_name, role, status, has_all_market_access, created_at, investor_markets(market_id)")
       .order("created_at", { ascending: false })
       .returns<Profile[]>(),
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
@@ -92,8 +93,9 @@ export default async function UsersPage({
         <h1 className="text-2xl font-semibold text-white">Users — Admin</h1>
         <p className="text-sm text-white/40">
           Invite a developer, then copy the link and send it however you'd like — text, Slack, email.
-          It's single-use and expires after 7 days. They pick how to sign in; no password ever passes
-          through you.
+          It's single-use and expires after 7 days. Invited developers get access to every market by
+          default — including ones added later — so the market picker below is just for record-keeping,
+          not a restriction.
         </p>
       </div>
 
@@ -121,7 +123,7 @@ export default async function UsersPage({
             <input id="email" name="email" type="email" required className={inputClass} />
           </div>
           <div className="sm:col-span-2">
-            <label className={labelClass}>Assigned Markets</label>
+            <label className={labelClass}>Primary Markets (optional — access is already all-markets)</label>
             <div className="flex flex-wrap gap-3 rounded border border-white/10 bg-black/20 p-3">
               {(markets ?? []).map((m) => (
                 <label key={m.id} className="flex items-center gap-1.5 text-sm text-white/70">
@@ -215,7 +217,7 @@ export default async function UsersPage({
                   <td className="px-4 py-3 text-white/60">{p.company_name ?? "—"}</td>
                   <td className="px-4 py-3 text-white/60">{emailById.get(p.id) ?? "—"}</td>
                   <td className="px-4 py-3 text-white/60">
-                    {p.role === "admin"
+                    {p.role === "admin" || p.has_all_market_access
                       ? "All markets"
                       : p.investor_markets.length === 0
                         ? "None"
