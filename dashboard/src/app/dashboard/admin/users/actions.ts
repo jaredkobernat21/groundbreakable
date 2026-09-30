@@ -61,9 +61,19 @@ export async function createInvitation(formData: FormData) {
   // auth.users isn't reachable through the regular RLS-aware client --
   // listUsers() is the only way to check for a pre-existing account before
   // minting an invitation that could never be redeemed.
-  const {
-    data: { users: existingUsers },
-  } = await admin.auth.admin.listUsers();
+  //
+  // Caught (2026-09-30): this is the same admin-API call that crashed
+  // admin/users/page.tsx's GET request, just in the Server Action that
+  // runs on "Create Invitation" -- which is why the crash kept recurring
+  // specifically when creating invitations. A transient failure here is a
+  // missed duplicate-email check, not a reason to fail the whole request;
+  // worst case an invite goes out for an email that already has an
+  // account, which just fails harmlessly at acceptance time instead of
+  // crashing the admin panel now.
+  const existingUsers = await admin.auth.admin
+    .listUsers()
+    .then(({ data }) => data.users)
+    .catch(() => []);
   if (existingUsers.some((u) => u.email?.toLowerCase() === email.toLowerCase())) {
     throw new Error("An account already exists for this email.");
   }

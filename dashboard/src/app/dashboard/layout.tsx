@@ -18,9 +18,17 @@ export default async function DashboardLayout({
   // RLS scopes this to markets the signed-in investor has access to
   // (admins see every market). Fetched alongside the admin check so this
   // stays one round trip instead of two sequential ones.
+  //
+  // isAdmin() only controls whether the "Admin" pill shows below -- caught
+  // (2026-09-30) for the same reason as dashboard/page.tsx's own isAdmin()
+  // call: this layout wraps every /dashboard/* route (admin/**, leads/**
+  // included), and since a *layout* throwing escapes its own segment's
+  // error.tsx (Next only catches layout errors in the PARENT segment's
+  // boundary), a failure here had no scoped error.tsx to land in at all --
+  // worse than the page-level version of this bug.
   const [{ data: markets }, admin] = await Promise.all([
     supabase.from("markets").select("*").order("name").returns<Market[]>(),
-    isAdmin(supabase, user?.id),
+    isAdmin(supabase, user?.id).catch(() => false),
   ]);
 
   return (
