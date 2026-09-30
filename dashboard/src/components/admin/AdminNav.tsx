@@ -94,6 +94,16 @@ export default function AdminNav() {
         <Link href="/dashboard/admin/opportunities" className="mb-6 px-3 text-sm font-semibold tracking-tight text-white">
           Groundbreakable Admin
         </Link>
+        {/* Admin pages keep the old light dashboard/layout.tsx header
+            wrapping them (see NationalMapExperience.tsx's comment on why),
+            which has no link back to the new map -- only its own stale
+            "Admin" link. This is the way back out. */}
+        <Link
+          href="/dashboard"
+          className="mb-5 flex items-center gap-1.5 px-3 text-sm font-medium text-white/50 transition hover:text-white"
+        >
+          ← Back to map
+        </Link>
         <nav>
           <NavLinks />
         </nav>
@@ -102,6 +112,12 @@ export default function AdminNav() {
       {/* Mobile: flattened horizontal scrollable pill row -- no room for a
           two-level accordion at this width. */}
       <nav className="mb-4 flex gap-1.5 overflow-x-auto pb-1 lg:hidden">
+        <Link
+          href="/dashboard"
+          className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-white/50 hover:border-white/20 hover:text-white"
+        >
+          ← Map
+        </Link>
         {GROUPS.flatMap((g) => g.items).map((item) => (
           <MobilePill key={item.href} item={item} />
         ))}
