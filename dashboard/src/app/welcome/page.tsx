@@ -16,13 +16,20 @@ export default async function WelcomePage() {
 
   const { data: profile } = await supabase
     .from("investor_profiles")
-    .select("first_name, role, investor_markets(market_id)")
+    .select("first_name, role, has_all_market_access, investor_markets(market_id)")
     .eq("id", user.id)
     .single();
 
+  // has_all_market_access (2026-09-30): invited developers get every market
+  // by default, including ones added later -- a per-user flag, not a
+  // snapshot of investor_markets rows. Without this check, an invite sent
+  // with no market boxes checked (now explicitly encouraged as optional on
+  // the invite form) would silently show an empty "Your Markets" section
+  // here despite the developer actually having full access.
+  const hasAllMarketAccess = profile?.role === "admin" || profile?.has_all_market_access === true;
   const marketIds = (profile?.investor_markets ?? []).map((im: { market_id: string }) => im.market_id);
   const { data: markets } =
-    profile?.role === "admin"
+    hasAllMarketAccess
       ? await supabase.from("markets").select("*").order("name").returns<Market[]>()
       : marketIds.length > 0
         ? await supabase.from("markets").select("*").in("id", marketIds).order("name").returns<Market[]>()
@@ -52,7 +59,14 @@ export default async function WelcomePage() {
           Welcome to Groundbreakable{profile?.first_name ? `, ${profile.first_name}` : ""}.
         </h1>
 
-        {(markets ?? []).length > 0 && (
+        {hasAllMarketAccess ? (
+          <div className="mb-6">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#1c1c1c]/40">Your Markets</p>
+            <span className="rounded-full bg-[#1c1c1c]/5 px-3 py-1 text-sm text-[#1c1c1c]">
+              Every market — including new ones as they're added
+            </span>
+          </div>
+        ) : (markets ?? []).length > 0 && (
           <div className="mb-6">
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#1c1c1c]/40">Your Markets</p>
             <div className="flex flex-wrap justify-center gap-1.5">
