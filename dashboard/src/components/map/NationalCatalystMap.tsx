@@ -2,10 +2,11 @@
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
-import type { GeoJSONSource, LngLatBounds, LngLatBoundsLike, Map as MapboxMap, Marker } from "mapbox-gl";
+import type { GeoJSONSource, LngLatBoundsLike, Map as MapboxMap, Marker } from "mapbox-gl";
 import type { CatalystWithSources } from "@/lib/types";
-import { circlePolygon } from "@/lib/geo";
-import { applyInstitutionalMapStyling } from "@/lib/mapPremium";
+import { catalystAffectedAreaPolygon } from "@/lib/catalystRules";
+import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
+import { applyPremiumMapStyling, PREMIUM_MAP_PITCH } from "@/lib/mapPremium";
 import { CATALYST_SIZE_TIER_PX, catalystColorHex, catalystSizeTier } from "@/lib/catalystTypeColors";
 
 const CATALYST_AREA_SOURCE_ID = "roq-national-catalyst-areas";
@@ -23,31 +24,28 @@ export type NationalCatalystMapHandle = {
   flyTo: (center: [number, number], zoom?: number) => void;
 };
 
-// Institutional redesign (Jared, 2026-09-30). Markers are now "intelligence
-// signals" (lib/catalystTypeColors.ts colors + globals.css .gb-signal-*
-// classes) instead of the card+pin treatment CatalystMap.tsx uses -- no
-// hover card, a thin ring (solid confirmed / dashed unconfirmed) around a
-// solid dot, with a soft glow that strengthens on selection. Impact areas
-// are now 2-3 concentric, decreasing-opacity rings instead of one flat
-// polygon, approximating a "feathered" edge without custom shaders (Mapbox
-// GL doesn't expose blur on vector fills from application code).
+// National map redesign (Jared, 2026-09-30). Forked from
+// components/catalysts/CatalystMap.tsx's proven pattern (DOM markers, same
+// dim/focus toggle, same affected-area polygon layer) rather than switching
+// to native GL layers/clustering -- catalyst volume is small and curated
+// (10 rows today), so flat DOM markers stay correct at national scale; see
+// the plan's "no clustering for V1" note. Two differences from the
+// single-market original: (1) US-wide fitBounds default instead of one
+// market's center/zoom, no per-market re-init; (2) marker color/size vary
+// by catalyst_type/catalyst_score instead of one flat purple dot.
 const NationalCatalystMap = forwardRef<
   NationalCatalystMapHandle,
   {
     catalysts: CatalystWithSources[];
     selectedCatalystId: string | null;
     onSelectCatalyst: (id: string | null) => void;
-    onViewportChange?: (bounds: LngLatBounds) => void;
-    showImpactAreas?: boolean;
   }
->(function NationalCatalystMap({ catalysts, selectedCatalystId, onSelectCatalyst, onViewportChange, showImpactAreas = true }, ref) {
+>(function NationalCatalystMap({ catalysts, selectedCatalystId, onSelectCatalyst }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<Map<string, Marker>>(new Map());
   const readyRef = useRef(false);
   const [ready, setReady] = useState(false);
-  const onViewportChangeRef = useRef(onViewportChange);
-  onViewportChangeRef.current = onViewportChange;
 
   useImperativeHandle(ref, () => ({
     flyTo: (center, zoom = 10) => {
@@ -70,40 +68,33 @@ const NationalCatalystMap = forwardRef<
         style: "mapbox://styles/mapbox/dark-v11",
         bounds: US_BOUNDS,
         fitBoundsOptions: { padding: 40 },
-        pitch: 0, // flat at national zoom -- 3D tilt is for city-scale buildings
+        pitch: 0, // flat at national zoom -- PREMIUM_MAP_PITCH's tilt is for city-scale 3D buildings
       });
       mapRef.current = map;
 
       map.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), "top-right");
-
-      const reportViewport = () => onViewportChangeRef.current?.(map.getBounds()!);
 
       map.on("load", () => {
         if (cancelled) return;
         readyRef.current = true;
         setReady(true);
 
-        applyInstitutionalMapStyling(map);
+        applyPremiumMapStyling(map);
 
         map.addSource(CATALYST_AREA_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
         map.addLayer({
           id: `${CATALYST_AREA_SOURCE_ID}-fill`,
           type: "fill",
           source: CATALYST_AREA_SOURCE_ID,
-          paint: { "fill-color": ["get", "color"], "fill-opacity": ["get", "opacity"] },
+          paint: { "fill-color": ["get", "color"], "fill-opacity": 0.1 },
         });
         map.addLayer({
           id: `${CATALYST_AREA_SOURCE_ID}-line`,
           type: "line",
           source: CATALYST_AREA_SOURCE_ID,
-          paint: { "line-color": ["get", "color"], "line-width": 1, "line-opacity": ["get", "lineOpacity"] },
+          paint: { "line-color": ["get", "color"], "line-width": 1.5, "line-opacity": 0.7, "line-dasharray": [2, 2] },
         });
-
-        reportViewport();
       });
-
-      map.on("moveend", reportViewport);
-      map.on("zoomend", reportViewport);
     });
 
     return () => {
@@ -127,24 +118,19 @@ const NationalCatalystMap = forwardRef<
     import("mapbox-gl").then((mapboxgl) => {
       catalysts.forEach((catalyst) => {
         const color = catalystColorHex(catalyst);
-        const diameter = CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
-        const isSelected = catalyst.id === selectedCatalystId;
-        const isUnconfirmed = catalyst.confidence === "unconfirmed" || catalyst.catalyst_type === "potential_data_center";
-        const ringSize = diameter + 10;
-        const dotSize = Math.round(diameter * 0.4);
+        const size = CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
 
         const el = document.createElement("div");
-        el.className = "gb-signal";
-        el.style.setProperty("--gb-signal-color", color);
-        el.style.opacity = !selectedCatalystId || isSelected ? "1" : "0.45";
-        el.classList.toggle("is-selected", isSelected);
-        el.style.width = `${ringSize}px`;
-        el.style.height = `${ringSize}px`;
+        el.className = "roq-marker roq-marker-catalyst";
+        el.style.opacity = !selectedCatalystId || catalyst.id === selectedCatalystId ? "1" : "0.4";
+        el.classList.toggle("is-selected", catalyst.id === selectedCatalystId);
         el.innerHTML = `
-          <div class="gb-signal-glow" style="width:${ringSize}px;height:${ringSize}px;background:${color}"></div>
-          <div class="gb-signal-ring ${isUnconfirmed ? "is-unconfirmed" : "is-confirmed"}" style="width:${ringSize}px;height:${ringSize}px">
-            <div class="gb-signal-dot" style="width:${dotSize}px;height:${dotSize}px"></div>
+          <div class="roq-marker-card">
+            <span class="roq-marker-card-title">${escapeHtml(catalyst.title)}</span>
+            <span class="roq-marker-card-sub">${escapeHtml(catalyst.address ?? "")}</span>
           </div>
+          <div class="roq-marker-line" style="background:${color}"></div>
+          <div class="roq-marker-pin">${catalystMarkerSvgMarkup({ size, fill: color })}</div>
         `;
         el.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -158,31 +144,23 @@ const NationalCatalystMap = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, catalysts, selectedCatalystId]);
 
-  // Concentric, decreasing-opacity rings around the selected catalyst --
-  // innermost ring uses a real traced boundary when one exists, falling
-  // back to circlePolygon (lib/geo.ts) like every other influence-radius
-  // display in this app.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     if (!map.getSource(CATALYST_AREA_SOURCE_ID)) return;
 
-    const selected = showImpactAreas ? catalysts.find((c) => c.id === selectedCatalystId) : undefined;
-    const features = selected
-      ? [0, 1, 2].map((ring) => {
-          const radius = selected.influence_radius_meters * [1, 1.7, 2.5][ring];
-          const geometry = ring === 0 && selected.boundary ? selected.boundary : circlePolygon(selected.longitude, selected.latitude, radius);
-          return {
-            type: "Feature" as const,
-            properties: { color: catalystColorHex(selected), opacity: [0.14, 0.07, 0.03][ring], lineOpacity: [0.55, 0.3, 0.12][ring] },
-            geometry,
-          };
-        })
-      : [];
-
-    (map.getSource(CATALYST_AREA_SOURCE_ID) as GeoJSONSource).setData({ type: "FeatureCollection", features });
+    (map.getSource(CATALYST_AREA_SOURCE_ID) as GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features: catalysts
+        .filter((c) => c.id === selectedCatalystId)
+        .map((catalyst) => ({
+          type: "Feature" as const,
+          properties: { id: catalyst.id, color: catalystColorHex(catalyst) },
+          geometry: catalystAffectedAreaPolygon(catalyst),
+        })),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, catalysts, selectedCatalystId, showImpactAreas]);
+  }, [ready, catalysts, selectedCatalystId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -206,3 +184,9 @@ const NationalCatalystMap = forwardRef<
 });
 
 export default NationalCatalystMap;
+
+function escapeHtml(value: string): string {
+  const div = document.createElement("div");
+  div.textContent = value;
+  return div.innerHTML;
+}

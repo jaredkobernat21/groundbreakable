@@ -119,19 +119,19 @@ export default function MapSearch({
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
         placeholder="Search city, market, project, or address"
-        className="w-full rounded-full border border-white/[0.08] bg-[#0E0F12]/80 px-4 py-2 text-[13px] text-[#EDECE8] placeholder:text-[#6B6F78] outline-none backdrop-blur-xl focus:border-white/20"
+        className="w-full rounded-full border border-white/15 bg-black/40 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none backdrop-blur-sm focus:border-white/30"
       />
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-white/[0.08] bg-[#0E0F12]/95 py-1 shadow-2xl backdrop-blur-2xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border border-white/10 bg-black/90 py-1 shadow-2xl backdrop-blur-xl">
           {results.map((result, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 px-1 hover:bg-white/[0.05]">
+            <div key={i} className="flex items-center justify-between gap-2 px-1 hover:bg-white/10">
               <button
                 type="button"
                 onClick={() => selectResult(result)}
-                className="flex-1 px-3 py-2 text-left text-[13px] text-[#C7C9CE] hover:text-[#EDECE8]"
+                className="flex-1 px-3 py-2 text-left text-sm text-white/80 hover:text-white"
               >
                 <span className="font-medium">{result.label}</span>
-                {result.kind === "catalyst" && result.sub && <span className="ml-2 text-[11px] text-[#6B6F78]">{result.sub}</span>}
+                {result.kind === "catalyst" && result.sub && <span className="ml-2 text-xs text-white/40">{result.sub}</span>}
               </button>
               {result.kind === "market" && (
                 <button
@@ -140,7 +140,7 @@ export default function MapSearch({
                     e.stopPropagation();
                     onToggleFollowMarket(result.id);
                   }}
-                  className="mr-2 shrink-0 rounded-full border border-white/[0.08] px-2 py-1 text-[11px] text-[#7A7E87] hover:border-white/20 hover:text-[#EDECE8]"
+                  className="mr-2 shrink-0 rounded-full border border-white/15 px-2 py-1 text-[11px] text-white/60 hover:border-white/30 hover:text-white"
                 >
                   {followedMarketIds.has(result.id) ? "Following" : "Follow"}
                 </button>
