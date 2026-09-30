@@ -307,6 +307,10 @@ export type CatalystType =
   | "public_facility"
   | "mixed_use_anchor"
   | "data_center"
+  // Deliberately distinct from 'data_center' -- an unconfirmed investigation
+  // in progress (see lib/catalysts/dataCenterSignal.ts), never conflated
+  // with a confirmed project. See CATALYST_SIGNAL_BIBLE.md.
+  | "potential_data_center"
   | "housing_development"
   | "industrial_logistics"
   | "incentive_district"
@@ -319,7 +323,8 @@ export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
   institutional: "Institutional",
   public_facility: "Public Facility",
   mixed_use_anchor: "Mixed-Use Anchor",
-  data_center: "Data Center",
+  data_center: "Data Center (confirmed)",
+  potential_data_center: "Potential Data Center (unconfirmed)",
   housing_development: "Housing Development",
   industrial_logistics: "Industrial / Logistics",
   incentive_district: "Incentive / TIF District",
@@ -327,16 +332,53 @@ export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
   other: "Other",
 };
 
-export type CatalystStatus = "proposed" | "planned" | "under_construction" | "operating" | "completed" | "cancelled";
+// Granular pre-permit pipeline (Jared's spec, 2026-09-30) -- replaces the
+// earlier 6-value status list. The whole point of Catalysts is detecting
+// something before permits/announcements, so the vocabulary needs stages
+// that exist well before "under_construction" ever applies.
+export type CatalystStatus =
+  | "rumored"
+  | "under_study"
+  | "site_selection"
+  | "funding_incentives"
+  | "land_acquired"
+  | "planning_entitlement"
+  | "approved"
+  | "construction_pending"
+  | "under_construction"
+  | "operating"
+  | "completed"
+  | "cancelled";
 
 export const CATALYST_STATUS_LABEL: Record<CatalystStatus, string> = {
-  proposed: "Proposed",
-  planned: "Planned",
+  rumored: "Rumored / Early Signal",
+  under_study: "Under Study",
+  site_selection: "Site Selection",
+  funding_incentives: "Funding / Incentives",
+  land_acquired: "Land Acquired",
+  planning_entitlement: "Planning / Entitlement",
+  approved: "Approved",
+  construction_pending: "Construction Pending",
   under_construction: "Under Construction",
   operating: "Operating",
   completed: "Completed",
   cancelled: "Cancelled",
 };
+
+export type DataCenterSignalCategory =
+  | "power"
+  | "land_assembly"
+  | "vague_terminology"
+  | "government_incentives"
+  | "fiber"
+  | "water"
+  | "natural_gas"
+  | "rezoning"
+  | "engineering_consultant"
+  | "infrastructure_anomaly"
+  | "known_developer_entity";
+
+export type DataCenterSignalConfidence = "low" | "medium" | "high" | "very_high";
 
 export type Catalyst = {
   id: string;
@@ -373,9 +415,37 @@ export type Catalyst = {
   confidence: Confidence;
   last_verified_at: string;
   created_at: string;
+  // Explainable score (lib/catalysts/score.ts) -- a human-curated final
+  // call, computed at admin-entry time as a starting suggestion, same
+  // convention as is_spotlight. Null until an admin has scored it.
+  catalyst_score: number | null;
+  reason_for_catalyst_classification: string | null;
+  // Potential-data-center investigation fields -- meaningful only when
+  // catalyst_type === 'potential_data_center'; empty/null otherwise.
+  signal_categories: DataCenterSignalCategory[];
+  signal_confidence: DataCenterSignalConfidence | null;
+  // Quantified power/load figure (MW) from a utility/RTO/regulator source,
+  // when publicly stated -- drives the MW-threshold confidence tiers.
+  power_load_mw: number | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
+
+// Stage/signal history (docs/DATA_INTELLIGENCE_PIPELINE.md §11) -- gives a
+// catalyst's "date first detected" (earliest row here, or the catalyst's
+// own created_at if none) and "latest update" (most recent row) real
+// history instead of a single overwritten status column.
+export type CatalystEvent = {
+  id: string;
+  catalyst_id: string;
+  event_type: "stage_change" | "signal_added" | "source_added" | "note";
+  from_status: CatalystStatus | null;
+  to_status: CatalystStatus | null;
+  note: string | null;
+  source_id: string | null;
+  occurred_on: string;
+  created_at: string;
+};
 
 // The live Plans/Opportunities dashboard's shape -- also resolves
 // additional_source_ids into full Source rows (same "fetch sources

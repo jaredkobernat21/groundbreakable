@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CATALYST_STATUS_LABEL, CATALYST_TYPE_LABEL, type CatalystWithSource, type Market } from "@/lib/types";
-import { clearCatalystSpotlight, createCatalyst, setCatalystSpotlight } from "./actions";
+import { clearCatalystSpotlight, createCatalyst, setCatalystSpotlight, updateCatalystStatus } from "./actions";
+import { findCompoundCatalystClusters } from "@/lib/catalysts/clusters";
+import { DATA_CENTER_SIGNAL_LABEL } from "@/lib/catalysts/dataCenterSignal";
 
 export const dynamic = "force-dynamic";
 
 const TYPES = Object.entries(CATALYST_TYPE_LABEL) as [string, string][];
 const STATUSES = Object.entries(CATALYST_STATUS_LABEL) as [string, string][];
+const SIGNAL_CATEGORIES = Object.entries(DATA_CENTER_SIGNAL_LABEL) as [string, string][];
 
 const inputClass =
   "w-full rounded border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-white/30";
@@ -35,15 +38,47 @@ export default async function AdminCatalystsPage() {
       .returns<CatalystWithSource[]>(),
   ]);
 
+  const clustersByMarket = new Map<string, ReturnType<typeof findCompoundCatalystClusters>>();
+  for (const catalyst of catalysts ?? []) {
+    if (!clustersByMarket.has(catalyst.market_id)) {
+      clustersByMarket.set(
+        catalyst.market_id,
+        findCompoundCatalystClusters((catalysts ?? []).filter((c) => c.market_id === catalyst.market_id))
+      );
+    }
+  }
+  const allClusters = Array.from(clustersByMarket.values()).flat();
+  const marketById = new Map((markets ?? []).map((m) => [m.id, m]));
+
   return (
     <div className="space-y-10">
       <div>
         <h1 className="text-2xl font-semibold text-white">Catalysts — Admin</h1>
         <p className="text-sm text-white/40">
-          Add major projects or decisions that could materially influence nearby development.
-          Nothing appears on the map without a source agency and URL.
+          Add major projects or decisions that could materially influence nearby development,
+          as early in the pipeline as possible -- ideally before permits. Nothing appears on the
+          map without a source agency and URL.
         </p>
       </div>
+
+      {allClusters.length > 0 && (
+        <div className="space-y-3">
+          {allClusters.map((cluster, i) => {
+            const market = marketById.get(cluster.catalysts[0].market_id);
+            return (
+              <div key={i} className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+                <p className="text-sm font-semibold text-amber-300">
+                  High-Impact Growth Cluster{market ? ` — ${market.name}, ${market.state}` : ""}
+                </p>
+                <p className="mt-1 text-xs text-white/50">
+                  {cluster.catalysts.length} catalysts within ~2 miles of each other:{" "}
+                  {cluster.catalysts.map((c) => c.title).join(", ")}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <section className="rounded-lg border border-white/10 bg-white/5 p-6">
         <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-white/60">Add a Catalyst</h2>
@@ -70,8 +105,8 @@ export default async function AdminCatalystsPage() {
             </select>
           </div>
           <div>
-            <label className={labelClass} htmlFor="status">Status</label>
-            <select id="status" name="status" defaultValue="planned" className={inputClass}>
+            <label className={labelClass} htmlFor="status">Stage</label>
+            <select id="status" name="status" defaultValue="rumored" className={inputClass}>
               {STATUSES.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
@@ -171,6 +206,54 @@ export default async function AdminCatalystsPage() {
             </select>
           </div>
 
+          <div>
+            <label className={labelClass} htmlFor="catalyst_score">Catalyst Score (optional)</label>
+            <input id="catalyst_score" name="catalyst_score" type="number" className={inputClass} placeholder="Leave blank to auto-suggest" />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="reason_for_catalyst_classification">Reason for Classification (optional)</label>
+            <input
+              id="reason_for_catalyst_classification"
+              name="reason_for_catalyst_classification"
+              className={inputClass}
+              placeholder="Leave blank to auto-fill from scoring evidence"
+            />
+          </div>
+
+          <div className="col-span-2 border-t border-white/10 pt-4">
+            <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-white/40">
+              Potential Data Center Investigation
+            </h3>
+            <p className="mb-3 text-xs text-white/30">
+              Only relevant when Catalyst Type above is "Potential Data Center (unconfirmed)". A single
+              checked category is never enough to assign a confidence level — see CATALYST_SIGNAL_BIBLE.md.
+              Power is Priority #1 — detect large load before the project is named.
+            </p>
+            <div className="mb-3">
+              <label className={labelClass} htmlFor="power_load_mw">Power / Load Figure (MW, optional)</label>
+              <input
+                id="power_load_mw"
+                name="power_load_mw"
+                type="number"
+                step="any"
+                className={inputClass}
+                placeholder="e.g. 300 — from a utility/RTO/regulator source, not an estimate"
+              />
+              <p className="mt-1 text-[11px] text-white/30">
+                20–50 = investigate · 50–100 = strong industrial signal · 100–300 = very strong data-center
+                signal · 300+ = extremely high priority. Thresholds for investigation, not proof.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {SIGNAL_CATEGORIES.map(([value, label]) => (
+                <label key={value} className="flex items-start gap-1.5 text-xs text-white/70">
+                  <input type="checkbox" name="signal_categories" value={value} className="mt-0.5 accent-purple-500" />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="col-span-2 border-t border-white/10 pt-4">
             <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-white/40">Source</h3>
           </div>
@@ -233,7 +316,21 @@ export default async function AdminCatalystsPage() {
                   <div className="font-medium text-white">{catalyst.title}</div>
                   <div className="text-sm text-white/50">
                     {CATALYST_STATUS_LABEL[catalyst.status]} · {catalyst.address ?? "no address on file"}
+                    {catalyst.catalyst_score != null && ` · Score ${catalyst.catalyst_score}`}
+                    {catalyst.power_load_mw != null && ` · ${catalyst.power_load_mw} MW`}
+                    {catalyst.signal_confidence && ` · Signal confidence: ${catalyst.signal_confidence}`}
                   </div>
+                  <form action={updateCatalystStatus} className="mt-2 flex items-center gap-2">
+                    <input type="hidden" name="catalyst_id" value={catalyst.id} />
+                    <select name="status" defaultValue={catalyst.status} className="rounded border border-white/10 bg-black/30 px-2 py-1 text-xs text-white">
+                      {STATUSES.map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                    <button type="submit" className="rounded border border-white/10 px-2 py-1 text-xs text-white/60 hover:bg-white/10 hover:text-white">
+                      Update Stage
+                    </button>
+                  </form>
                   {catalyst.source && (
                     <a
                       href={catalyst.source.url}

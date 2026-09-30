@@ -87,11 +87,21 @@ Each row: what's needed → what exists → the real gap.
 
 ### CATALYSTS
 
-`catalysts` table — solid foundation, extended this session (`why_it_matters`, `development_impact`,
-`expected_timeline`, `related_context`, links to `shifts`/`entitlement_cases`), 5 real rows,
-admin-curated via `/dashboard/admin/catalysts`. Missing: `catalyst_score`, `impact_radius_meters`
-(close — `influence_radius_meters` already exists and mostly serves this purpose),
-`reason_for_catalyst_classification`. See §9.
+`catalysts` table — refined 2026-09-30 (`supabase/migrations/20260930010000_refine_catalysts.sql`):
+`catalyst_score`/`reason_for_catalyst_classification` now real columns (§9), `status` replaced with
+a 12-stage pre-permit pipeline (`rumored` → ... → `cancelled`, see `CATALYST_STATUS_LABEL` in
+`dashboard/src/lib/types.ts`) so the category can represent something caught well before permits,
+a `potential_data_center` catalyst_type plus `signal_categories`/`signal_confidence` columns hold
+the unconfirmed-investigation sub-model (`lib/catalysts/dataCenterSignal.ts`,
+`dashboard/scripts/CATALYST_SIGNAL_BIBLE.md`), a generated `geog geography(Point,4326)` column
+with a GiST index exists for future PostGIS-scale queries, and a new `catalyst_events` table
+(mirroring `entitlement_case_events`) gives stage changes real history instead of overwriting one
+column silently. Compound-catalyst clustering (3+ catalysts within ~2 miles) is computed
+client-side (`lib/catalysts/clusters.ts`, `findCompoundCatalystClusters`) rather than via a PostGIS
+RPC — catalyst volume per market is small, same precedent as `lib/catalystRules.ts`'s existing
+live proximity checks; the `geog` column stays available for a PostGIS-based version if/when
+volume or cross-category (Catalyst↔Opportunity) queries need it. Still admin-curated, no automated
+ingestion — see §1/§4/§5 above for what that would actually require.
 
 ---
 
@@ -167,8 +177,9 @@ Additive only, no renames/drops. In rough build order:
 5. **`zoning_land_use`**: no column changes — just start writing rows with `layer_type IN
    ('city_limit', 'annexation_boundary', 'future_land_use', 'urban_growth_boundary')`. The table
    was already built generic enough for this.
-6. **`catalysts`**: add `catalyst_score int`, `reason_for_catalyst_classification text` (
-   `influence_radius_meters` already serves as `impact_radius`, no new column needed there).
+6. **`catalysts`**: ~~add `catalyst_score int`, `reason_for_catalyst_classification text`~~ **done**
+   2026-09-30, along with the stage pipeline, data-center investigation columns, `geog`, and
+   `catalyst_events` — see §3 CATALYSTS above.
 7. **`entitlement_cases`/`shifts`/`development_opportunities`**: no changes — already rich enough
    for what's asked.
 
@@ -223,23 +234,32 @@ dimension with no evidence gets a documented neutral default, never a confident 
 
 ## 9. Catalyst Scoring Logic
 
-Same explainable-component pattern, new `catalyst_score`/`reason_for_catalyst_classification`
-columns (§6). Starting weights, directly from Jared's spec:
+**Built** 2026-09-30 — `computeCatalystScore` (`dashboard/src/lib/catalysts/score.ts`), same
+explainable-component shape as `computeEntitlementRealityScore`. Scored only against fields that
+actually exist on a catalyst (no `jobs_created`/`geographic_scope` columns were added — those
+parts of the original weighting are approximated from the closest real field instead):
 
 ```
-major_employer type              +3
-investment_amount > $100M        +3
-jobs_created > 500                +3
-major infrastructure dependency  +2
-regional-scale (geographic_scope
-  = citywide, or investment
-  linked via `relationships`)    +2
+catalyst_type in (major_employer, data_center,
+  potential_data_center, industrial_logistics)      +3   (else infrastructure_project/
+                                                            annexation_rezoning/incentive_district +2,
+                                                            else +1)
+estimated_value >= $100M                             +3   ($10M-$100M: +1)
+reinforcing signals (related_context.length, or
+  signal_categories.length for a potential-data-
+  center row) >= 3                                    +2   (1-2: +1)
+traced boundary present                               +2   (else influence_radius >= 2mi: +1)
 ```
 
-Threshold configurable per market (a `markets` column or a config constant, not hardcoded) — a
-$100M project is catalyst-scale in Topeka/Lawrence, not necessarily in a much larger metro.
-Computed at admin-entry time (mirrors the existing `is_spotlight` pattern — a human-curated
-decision with a computed score as a starting recommendation, not a fully automated classifier).
+The $100M threshold is still a fixed constant, not per-market config — flagged as a real follow-up
+if a much larger metro market gets added and the threshold needs to flex. Computed at admin-entry
+time inside `createCatalyst` (`dashboard/src/app/dashboard/admin/catalysts/actions.ts`) as a
+pre-filled suggestion the admin can override — same `is_spotlight` convention as before.
+
+**Also built**: `computeDataCenterSignalConfidence` (`lib/catalysts/dataCenterSignal.ts`) — a
+separate, purpose-built tiering function for the `potential_data_center` sub-type (low/medium/
+high/very_high, never triggered by a single signal category), independent of `catalyst_score`.
+See `dashboard/scripts/CATALYST_SIGNAL_BIBLE.md` for the full signal taxonomy this scores against.
 
 ---
 
@@ -267,12 +287,15 @@ On a match: update the existing record, append a new `sources` row, append a new
 Already exists and is exactly the right shape — no new table needed. `entitlement_case_events`
 (hearing-by-hearing history), `project_events` (status timeline), `development_friction_timeline_events`,
 and `growth_area_snapshots`/`entitlement_reality_score_snapshots` (point-in-time score history) already
-give every category a real timeline. The only gap: **Catalysts and Investments don't have their own
-event/history child table today** — a catalyst's status changes (`proposed` → `under_construction` →
-`operating`) currently just overwrite the one `status` column with no history kept. If catalyst
-timelines matter (Jared's PLAT-25-0029 example applies equally well to a catalyst's own lifecycle),
-add a small `catalyst_events` table mirroring `entitlement_case_events`'s shape rather than inventing
-a different pattern.
+give every category a real timeline. **Catalysts**: `catalyst_events` now exists (built 2026-09-30,
+mirrors `entitlement_case_events`'s shape exactly), and `updateCatalystStatus`
+(`dashboard/src/app/dashboard/admin/catalysts/actions.ts`) is the one writer — every stage
+transition through the admin UI logs a row rather than silently overwriting `status`. Not yet
+surfaced in `CatalystDetailPanel.tsx` (it currently falls back to the catalyst's own `created_at`/
+`last_verified_at` for "first detected"/"latest update" rather than querying real event history) --
+a reasonable next step once/if a catalyst accumulates enough stage changes for that to matter more
+than the two existing timestamp columns. **Investments**: still no event/history table — same gap,
+not addressed this pass.
 
 ---
 

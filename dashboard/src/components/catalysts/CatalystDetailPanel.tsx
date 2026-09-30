@@ -3,6 +3,14 @@ import { CATALYST_STATUS_LABEL, CATALYST_TYPE_LABEL, CATALYSTS_COLOR } from "@/l
 import { formatCurrency, formatDate, formatRelativeVerified } from "@/lib/format";
 import { catalystMarkerSvgMarkup } from "@/lib/markerIcons";
 import { planItemKey, planItemSubtitle, planItemTitle, type PlanItem } from "@/lib/planItems";
+import { DATA_CENTER_SIGNAL_LABEL } from "@/lib/catalysts/dataCenterSignal";
+
+const SIGNAL_CONFIDENCE_LABEL: Record<string, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+  very_high: "Very High",
+};
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
@@ -88,6 +96,40 @@ export default function CatalystDetailPanel({
         </div>
       )}
 
+      {catalyst.catalyst_type === "potential_data_center" && catalyst.signal_categories.length > 0 && (
+        <div className="mt-4 rounded-lg border border-purple-400/30 bg-purple-400/10 p-3">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-purple-300">
+            Unconfirmed — Under Investigation
+            {catalyst.signal_confidence && ` · ${SIGNAL_CONFIDENCE_LABEL[catalyst.signal_confidence]} Confidence`}
+          </p>
+          <p className="mb-2 text-xs text-white/60">
+            Signal pattern is consistent with a potential large-load technology or data center campus.
+            Not a confirmed project.
+          </p>
+          {catalyst.power_load_mw != null && (
+            <p className="mb-2 text-xs font-medium text-purple-200">{catalyst.power_load_mw} MW power/load signal on file</p>
+          )}
+          <ul className="space-y-1">
+            {catalyst.signal_categories.map((c) => (
+              <li key={c} className="flex gap-2 text-xs text-white/70">
+                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-purple-300" />
+                {DATA_CENTER_SIGNAL_LABEL[c] ?? c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {catalyst.catalyst_score != null && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Catalyst Score</p>
+          <p className="text-sm font-medium text-white">{catalyst.catalyst_score}</p>
+          {catalyst.reason_for_catalyst_classification && (
+            <p className="mt-1 text-sm leading-relaxed text-white/70">{catalyst.reason_for_catalyst_classification}</p>
+          )}
+        </div>
+      )}
+
       {catalyst.related_context.length > 0 && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Related Infrastructure / Zoning / Incentives</p>
@@ -156,6 +198,7 @@ export default function CatalystDetailPanel({
 
       <div className="mt-4 space-y-1.5 border-t border-white/10 pt-4 text-xs text-white/40">
         <div>{CONFIDENCE_LABEL[catalyst.confidence]}</div>
+        <div>First detected {formatDate(catalyst.created_at)}</div>
         <div>Last verified {formatRelativeVerified(catalyst.last_verified_at)}</div>
       </div>
     </div>
