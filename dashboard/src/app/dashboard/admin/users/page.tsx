@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Market } from "@/lib/types";
-import { createInvitation, revokeInvitation, setUserMarkets, updateUser } from "./actions";
+import { createInvitation, generatePasswordResetLink, revokeInvitation, setUserMarkets, updateUser } from "./actions";
 import CopyLinkBanner from "./CopyLinkBanner";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,13 @@ const labelClass = "mb-1 block text-[11px] uppercase tracking-wide text-white/40
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { invite_link?: string; invite_email?: string; form_error?: string };
+  searchParams: {
+    invite_link?: string;
+    invite_email?: string;
+    reset_link?: string;
+    reset_email?: string;
+    form_error?: string;
+  };
 }) {
   const supabase = createClient();
   // getUser() talks to Supabase's auth server over the network -- a
@@ -118,6 +124,15 @@ export default async function UsersPage({
 
       {searchParams.invite_link && (
         <CopyLinkBanner email={searchParams.invite_email ?? ""} link={searchParams.invite_link} />
+      )}
+
+      {searchParams.reset_link && (
+        <CopyLinkBanner
+          email={searchParams.reset_email ?? ""}
+          link={searchParams.reset_link}
+          heading={`Password reset link for ${searchParams.reset_email ?? ""}`}
+          caption="Copy this link and send it to them directly. It's single-use and expires in about an hour."
+        />
       )}
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-5">
@@ -250,6 +265,13 @@ export default async function UsersPage({
                     </span>
                   </td>
                   <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <form action={generatePasswordResetLink}>
+                        <input type="hidden" name="user_id" value={p.id} />
+                        <button type="submit" className="text-white/50 hover:text-white">
+                          Reset Password
+                        </button>
+                      </form>
                     <details className="relative">
                       <summary className="cursor-pointer text-white/50 hover:text-white">Edit</summary>
                       <div className="mt-3 w-80 space-y-4 rounded border border-white/10 bg-[#12161f] p-4">
@@ -303,6 +325,7 @@ export default async function UsersPage({
                         )}
                       </div>
                     </details>
+                    </div>
                   </td>
                 </tr>
               );

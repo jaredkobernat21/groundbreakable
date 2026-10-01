@@ -146,6 +146,42 @@ export async function revokeInvitation(formData: FormData) {
   revalidatePath("/dashboard/admin/users");
 }
 
+// Admin-triggered password reset (2026-10-01). Deliberately mirrors the
+// invitation flow's "generate a one-time link, show it once, admin sends it
+// however they want" UX instead of calling supabase.auth.resetPasswordForEmail
+// (which would depend on this project's own Auth email sending actually
+// being deliverable -- unverified, and the same class of problem that made
+// the notify-submission webhook's Resend sends only land in Jared's own
+// inbox until groundbreakable.com is a verified sending domain). A link
+// Jared copies and sends himself has no such dependency. The link resolves
+// through the already-working /auth/confirm -> /set-password pages.
+export async function generatePasswordResetLink(formData: FormData) {
+  await requireAdmin();
+
+  const userId = str(formData, "user_id");
+  if (!userId) throw new Error("Missing user id.");
+
+  const admin = createAdminClient();
+  const { data: userRes, error: userError } = await admin.auth.admin.getUserById(userId);
+  if (userError || !userRes.user?.email) {
+    formErrorRedirect(userError?.message ?? "Could not find that user's email.");
+  }
+  const email = userRes.user.email;
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: { redirectTo: `${appOrigin()}/auth/confirm` },
+  });
+  if (error || !data.properties?.action_link) {
+    formErrorRedirect(error?.message ?? "Failed to generate reset link.");
+  }
+
+  redirect(
+    `/dashboard/admin/users?reset_link=${encodeURIComponent(data.properties.action_link)}&reset_email=${encodeURIComponent(email)}`
+  );
+}
+
 export async function updateUser(formData: FormData) {
   const userId = str(formData, "user_id");
   const companyName = str(formData, "company_name");

@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 
-// Shown once right after Invite Developer succeeds. A plain select-all
-// text field would work too, but a real Copy button is the whole point --
-// the link is meant to be pasted into a text/Slack message immediately.
-export default function CopyLinkBanner({ email, link }: { email: string; link: string }) {
+// Shown once right after Invite Developer (or Reset Password) succeeds. A
+// plain select-all text field would work too, but a real Copy button is the
+// whole point -- the link is meant to be pasted into a text/Slack message
+// immediately. Reused for both flows (2026-10-01) since they're the same
+// "here's a one-time link, go send it" UX; only the heading/caption differ.
+export default function CopyLinkBanner({
+  email,
+  link,
+  heading,
+  caption,
+}: {
+  email: string;
+  link: string;
+  heading?: string;
+  caption?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -21,9 +33,9 @@ export default function CopyLinkBanner({ email, link }: { email: string; link: s
 
   return (
     <div className="rounded-lg border border-[#eab308]/40 bg-[#eab308]/10 p-5">
-      <p className="text-sm font-semibold text-[#eab308]">Invitation created for {email}</p>
+      <p className="text-sm font-semibold text-[#eab308]">{heading ?? `Invitation created for ${email}`}</p>
       <p className="mt-1 text-xs text-white/50">
-        Copy this link and send it however you'd like. It's single-use and expires in 7 days.
+        {caption ?? "Copy this link and send it however you'd like. It's single-use and expires in 7 days."}
       </p>
       <div className="mt-3 flex items-center gap-2">
         <p className="flex-1 select-all truncate rounded border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white">
