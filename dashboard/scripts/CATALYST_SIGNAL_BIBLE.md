@@ -77,6 +77,62 @@ Favor primary public sources first (agendas, board minutes, utility filings, sta
 documents, corporate registrations, deed records), then reputable secondary sources (local
 business journals, development news) for confirmation.
 
+## "Possible" Data Center Criteria
+
+This is the baseline bar for the dashboard's "Possible" stage (`lib/catalysts/dcStage.ts`) — it
+applies to a catalyst of *any* `catalyst_type`, not just `potential_data_center`. It's a different,
+broader question than the "Potential Data Center" investigation below: not "is a specific project
+forming here," but
+
+> "Based on existing power, land, utility, connectivity, and entitlement conditions, this area
+> appears capable of supporting future data-center development."
+
+**Possible does NOT mean a data center is coming.** Identify sites or areas that are already
+capable of supporting a large data center, or have infrastructure that makes one realistically
+feasible, even if there is no current data center proposal or active infrastructure project.
+
+Conditions to weigh:
+
+- Access to major high-voltage transmission lines
+- Nearby substations with meaningful large-load potential
+- Sufficient regional power generation and grid capacity
+- Large contiguous developable land
+- Industrial or data-center-compatible zoning
+- Strong fiber connectivity / multiple fiber routes
+- Adequate water and sewer capacity where required
+- Reasonable access to major roads and construction infrastructure
+- Utility territory capable of serving large commercial/industrial loads
+- Limited major environmental, flood, topographic, or land-use constraints
+- Local government/economic-development environment reasonably supportive of large industrial
+  investment
+
+When writing up a site, weigh **several** of these together rather than resting the case on one —
+a credible Possible write-up should name the strongest supporting factors, especially power
+availability, not just check one box. (The two constraint-style items — environmental/flood/
+topographic limits, and the local-government posture — aren't things you "find a source for" the
+way a substation or a land purchase is; note them as due-diligence context in `why_it_matters` or
+`related_context` rather than trying to force them into a `signal_categories` tag.)
+
+**Existing infrastructure alone can qualify an area** — do not require a new infrastructure
+project or an active development signal. A substation that's been there for fifteen years with
+unused large-load capacity, or zoning that's simply been industrial for a decade, is just as valid
+a "Possible" factor as something newly announced. That's the key difference from the "Potential
+Data Center" investigation below, which is specifically about *detecting active, forming*
+signals — this is about *standing capacity*, whether or not anything is currently happening there.
+
+**Scope to specific sites, corridors, or service areas** — a utility's service territory, a named
+industrial corridor, a specific parcel or assemblage, a substation's realistic service radius.
+Never label an entire city "Possible" on the strength of one fact about it somewhere.
+
+Most of the signal categories in the table below already cover these conditions (`power` for
+transmission/substations/grid capacity, `land_assembly` for developable land, `rezoning` for
+zoning, `fiber`, `water` for water/sewer, `government_incentives` for a supportive
+economic-development posture) plus `transportation_access` for road/highway/construction access.
+Tag whichever apply on the catalyst, the same controlled vocabulary used for the Potential Data
+Center investigation — a single tagged category is enough for the catalyst to render as "Possible"
+on the live dashboard (Jared's call, 2026-10-02: don't require multiple before it's visible), but
+the write-up itself should still make the multi-factor case, not lean on one tag alone.
+
 ## Potential Data Center — Priority #1 is power
 
 **Detect large power demand before the project is named.** Power is now the single highest-priority
@@ -132,10 +188,12 @@ announced corresponding development). Log this under the `infrastructure_anomaly
 the MW figure recorded in `power_load_mw`, and once flagged, automatically check the same geography
 for land acquisitions, zoning, incentives, other utilities, fiber, and engineering activity.
 
-## Potential Data Center — signal categories (controlled vocabulary)
+## Signal categories (controlled vocabulary)
 
-These map directly to the `signal_categories` field on a `potential_data_center` catalyst
-(`lib/catalysts/dataCenterSignal.ts`).
+These map directly to the `signal_categories` field on any catalyst
+(`lib/catalysts/dataCenterSignal.ts`) — tag them on a `potential_data_center` catalyst for the
+converging-evidence investigation below, or on a catalyst of any other type for the baseline
+"Possible" criteria above.
 
 | Category | What it is | Weight |
 |---|---|---|
@@ -147,9 +205,10 @@ These map directly to the `signal_categories` field on a `potential_data_center`
 | `vague_terminology` | "technology campus," "mission critical," "advanced technology facility," "large-load customer," "Project [code name]" — use semantic judgment, not exact-string matching | High |
 | `infrastructure_anomaly` | A rural/undeveloped corridor receiving major new power, fiber, water, and road investment with no announced project to explain it | High |
 | `rezoning` | Agricultural → industrial rezoning, heavy-industrial zoning, generator/noise standards, campus-scale industrial standards, with no end user named | Medium |
-| `water` | Large water-service request, new main extension into undeveloped industrial land, treatment/pump-station capacity expansion | Medium |
+| `water` | Large water/sewer-service request or capacity, new main extension into undeveloped industrial land, treatment/pump-station capacity expansion | Medium |
 | `natural_gas` | New gas pipeline capacity, large service request, proposed on-site generation (turbines, fuel cells, microgrid, battery storage) | Medium |
 | `engineering_consultant` | Surveying, geotechnical, environmental, wetland delineation, traffic, transmission/substation engineering contracts — especially from a firm with a mission-critical track record | Medium |
+| `transportation_access` | Major road/highway access, a new interchange, rail spur, or a site otherwise construction- and logistics-ready | Medium |
 
 **Confidence tiering** (`computeDataCenterSignalConfidence` — never triggers off one category, and
 power alone, however large the MW figure, is never sufficient by itself):

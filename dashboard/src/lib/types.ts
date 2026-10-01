@@ -376,7 +376,8 @@ export type DataCenterSignalCategory =
   | "rezoning"
   | "engineering_consultant"
   | "infrastructure_anomaly"
-  | "known_developer_entity";
+  | "known_developer_entity"
+  | "transportation_access";
 
 export type DataCenterSignalConfidence = "low" | "medium" | "high" | "very_high";
 

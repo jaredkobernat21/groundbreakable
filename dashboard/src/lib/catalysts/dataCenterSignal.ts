@@ -24,7 +24,8 @@ export type DataCenterSignalCategory =
   | "rezoning"
   | "engineering_consultant"
   | "infrastructure_anomaly"
-  | "known_developer_entity";
+  | "known_developer_entity"
+  | "transportation_access";
 
 export const DATA_CENTER_SIGNAL_LABEL: Record<DataCenterSignalCategory, string> = {
   power: "Power / electrical (new substation, transmission upgrade, large-load request)",
@@ -32,12 +33,17 @@ export const DATA_CENTER_SIGNAL_LABEL: Record<DataCenterSignalCategory, string> 
   vague_terminology: "Vague project terminology (\"technology campus\", \"mission critical\", code-named project)",
   government_incentives: "Government incentives (tax abatement, PILOT, confidential prospect)",
   fiber: "Fiber / telecom (new long-haul routes, multiple carriers, dark fiber)",
-  water: "Water capacity (large service request, main extension to undeveloped land)",
+  water: "Water / sewer capacity (large service request, main extension to undeveloped land, treatment/pump-station expansion)",
   natural_gas: "Natural gas / on-site generation (pipeline capacity, turbines, microgrid)",
   rezoning: "Rezoning / entitlement (ag-to-industrial, unidentified end user)",
   engineering_consultant: "Engineering / consultant activity (surveying, geotechnical, transmission studies)",
   infrastructure_anomaly: "Infrastructure anomaly (investment disproportionate to known local demand)",
   known_developer_entity: "Known data-center developer / entity connection (LLC tracing, registered agent)",
+  // Added for the "Possible" existing-infrastructure-capacity criteria
+  // (Jared, 2026-10-02): reasonable access to major roads/highways and
+  // construction infrastructure -- a site-readiness factor, not itself
+  // evidence of an active project.
+  transportation_access: "Transportation / access (major road or highway access, new interchange, rail spur, construction-ready site access)",
 };
 
 // Power-signal investigation thresholds (not proof of anything on their

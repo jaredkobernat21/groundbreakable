@@ -226,11 +226,13 @@ export default async function AdminCatalystsPage() {
             </h3>
             <p className="mb-3 text-xs text-white/30">
               Works on any Catalyst Type. One checked category here marks this catalyst "Possible" on the
-              dashboard (an early, isolated signal — e.g. a substation or fiber expansion). A single category
-              is never enough to assign a confidence level on its own; that requires Catalyst Type
-              "Potential Data Center (unconfirmed)" with multiple converging categories, which still shows as
-              "Possible" but with a Confidence tier and signal count displayed on the card — see
-              CATALYST_SIGNAL_BIBLE.md. Power is Priority #1 — detect large load before the project is named.
+              dashboard — existing infrastructure capacity qualifies just as well as something newly
+              announced (a substation that's had unused large-load capacity for years is a fine "Possible"
+              factor on its own). A single category is never enough to assign a confidence level on its own;
+              that requires Catalyst Type "Potential Data Center (unconfirmed)" with multiple converging
+              categories, which still shows as "Possible" but with a Confidence tier and signal count
+              displayed on the card — see CATALYST_SIGNAL_BIBLE.md. Power is Priority #1 — detect large load
+              before the project is named.
             </p>
             <div className="mb-3">
               <label className={labelClass} htmlFor="power_load_mw">Power / Load Figure (MW, optional)</label>
