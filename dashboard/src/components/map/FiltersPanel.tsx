@@ -8,15 +8,27 @@ export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
 const DC_STAGES: DcStage[] = ["possible", "predicted", "planned"];
 
+// "all" sits outside CatalystColorGroup (that type stays a strict
+// CatalystType->color mapping used for marker styling) -- it's a filter-only
+// concept meaning "every category at once," not a color group of its own.
+export type CategoryFilterValue = CatalystColorGroup | "all";
+
 // Category tab order -- Data Centers first/default, per Jared's "Data
-// Centers should be the clear primary product."
-const CATEGORY_ORDER: CatalystColorGroup[] = ["data_center", "infrastructure", "schools_civic", "housing", "other"];
+// Centers should be the clear primary product." "All" sits last, an
+// explicit opt-in to see every category together rather than the default.
+const CATEGORY_ORDER: CategoryFilterValue[] = ["data_center", "infrastructure", "schools_civic", "housing", "other", "all"];
+
+const CATEGORY_LABEL: Record<CategoryFilterValue, string> = {
+  ...CATALYST_COLOR_GROUP_LABEL,
+  all: "All",
+};
 
 export type MapFilters = {
   // Primary: exactly one category renders at a time -- Data Centers is the
   // product's default lens; Infrastructure/Schools/Housing/Other are
-  // alternate views you switch to, not layers added on top.
-  category: CatalystColorGroup;
+  // alternate views you switch to, not layers added on top; "All" shows
+  // every category together.
+  category: CategoryFilterValue;
   // Sub-filter of the Data Centers category only -- meaningless for any
   // other category.
   dcStages: Set<DcStage>;
@@ -99,7 +111,7 @@ export default function FiltersPanel({
                   onChange={() => onChange({ ...filters, category: value })}
                   className="accent-white"
                 />
-                {CATALYST_COLOR_GROUP_LABEL[value]}
+                {CATEGORY_LABEL[value]}
               </label>
             ))}
           </div>

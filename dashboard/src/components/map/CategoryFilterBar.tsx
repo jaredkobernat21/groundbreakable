@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CATALYST_COLOR_GROUP_LABEL, type CatalystColorGroup } from "@/lib/catalystTypeColors";
+import { CATALYST_COLOR_GROUP_LABEL } from "@/lib/catalystTypeColors";
 import { DC_STAGE_COLOR_HEX, DC_STAGE_LABEL, type DcStage } from "@/lib/catalysts/dcStage";
+import type { CategoryFilterValue } from "./FiltersPanel";
 
-const CATEGORY_ORDER: CatalystColorGroup[] = ["data_center", "infrastructure", "schools_civic", "housing", "other"];
+// "All" sits last -- an explicit opt-in to see every category together,
+// not the default view.
+const CATEGORY_ORDER: CategoryFilterValue[] = ["data_center", "infrastructure", "schools_civic", "housing", "other", "all"];
+const CATEGORY_LABEL: Record<CategoryFilterValue, string> = {
+  ...CATALYST_COLOR_GROUP_LABEL,
+  all: "All",
+};
 const DC_STAGES: DcStage[] = ["possible", "predicted", "planned"];
 
 // Data Center Refocus (Jared, 2026-10-02): "The filter at the top should
@@ -23,8 +30,8 @@ export default function CategoryFilterBar({
   activeDcStages,
   onToggleDcStage,
 }: {
-  category: CatalystColorGroup;
-  onCategoryChange: (category: CatalystColorGroup) => void;
+  category: CategoryFilterValue;
+  onCategoryChange: (category: CategoryFilterValue) => void;
   categoryCount: number;
   dcStageCounts: Record<DcStage, number>;
   activeDcStages: Set<DcStage>;
@@ -50,7 +57,7 @@ export default function CategoryFilterBar({
           className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/15 bg-black/50 px-2.5 py-1.5 text-[11px] font-medium text-white backdrop-blur-sm hover:border-white/30 sm:text-xs"
         >
           <span className="font-semibold">{categoryCount}</span>
-          {CATALYST_COLOR_GROUP_LABEL[category]}
+          {CATEGORY_LABEL[category]}
           <span className="text-white/40">{menuOpen ? "▲" : "▼"}</span>
         </button>
 
@@ -68,7 +75,7 @@ export default function CategoryFilterBar({
                   value === category ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                {CATALYST_COLOR_GROUP_LABEL[value]}
+                {CATEGORY_LABEL[value]}
               </button>
             ))}
           </div>

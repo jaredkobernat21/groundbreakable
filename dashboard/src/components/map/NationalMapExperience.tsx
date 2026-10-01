@@ -6,12 +6,12 @@ import type { CatalystWithSources, Market } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows";
 import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
-import { CATALYST_STAGE_GROUP, catalystColorGroup, type CatalystColorGroup } from "@/lib/catalystTypeColors";
+import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
 import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
-import FiltersPanel, { defaultMapFilters, type MapFilters } from "./FiltersPanel";
+import FiltersPanel, { defaultMapFilters, type CategoryFilterValue, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
 import CategoryFilterBar from "./CategoryFilterBar";
 
@@ -72,15 +72,18 @@ export default function NationalMapExperience({
     });
   }, [catalysts, filters, marketById]);
 
-  // Data Center Refocus: exactly one category renders at a time. A staged
-  // (Possible/Predicted/Planned) catalyst lives exclusively under the Data
-  // Centers category, gated by the DC Stage filter (plus, for Planned, the
-  // construction-pipeline sub-filter). Every other category shows only
-  // unstaged catalysts matching that category's color group -- a catalyst
-  // never appears under two tabs at once.
+  // Data Center Refocus: exactly one category renders at a time, except
+  // "All" (an explicit opt-in, last in the dropdown) which shows every
+  // category together. A staged (Possible/Predicted/Planned) catalyst lives
+  // exclusively under the Data Centers category, gated by the DC Stage
+  // filter (plus, for Planned, the construction-pipeline sub-filter).
+  // Every other category shows only unstaged catalysts matching that
+  // category's color group -- a catalyst never appears under two tabs at
+  // once (outside of "All").
   const filteredCatalysts = useMemo(() => {
     return baseFilteredCatalysts.filter((c) => {
       const dcStage = computeDcStage(c);
+      if (filters.category === "all") return true;
       if (filters.category === "data_center") {
         if (!dcStage) return false;
         if (!filters.dcStages.has(dcStage)) return false;
@@ -117,7 +120,7 @@ export default function NationalMapExperience({
     setFilters({ ...filters, dcStages: next });
   }
 
-  function changeCategory(category: CatalystColorGroup) {
+  function changeCategory(category: CategoryFilterValue) {
     setFilters({ ...filters, category });
   }
 
