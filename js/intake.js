@@ -39,16 +39,17 @@ if (form) {
       return;
     }
 
-    const developTypes = getChecked("developTypes");
-    const currentMarkets = form.elements["currentMarkets"].value.trim();
-    const openToNewMarkets = form.elements["openToNewMarkets"].checked;
-    const areaAttractive = form.elements["areaAttractive"].value.trim();
-    const siteCriteria = form.elements["siteCriteria"].value.trim();
-    const uncoverPriorities = getChecked("uncoverPriorities");
+    // Field names reflect the current data-center/infrastructure-focused copy;
+    // they still map onto the original `development_profiles` columns so the
+    // existing table, RLS policy, and notify-submission trigger keep working
+    // unchanged. See get-started.html for the question text each maps to.
+    const interests = getChecked("interests");
+    const locationFocus = form.elements["locationFocus"].value.trim();
+    const understandGoals = getChecked("understandGoals");
+    const aboutProject = form.elements["aboutProject"].value.trim();
     const fullName = form.elements["fullName"].value.trim();
     const companyName = form.elements["companyName"].value.trim();
     const email = form.elements["email"].value.trim();
-    const phone = form.elements["phone"].value.trim();
 
     let firstInvalid = null;
     const flagInvalid = (name) => {
@@ -56,11 +57,9 @@ if (form) {
       if (!firstInvalid) firstInvalid = name;
     };
 
-    if (developTypes.length === 0) flagInvalid("developTypes");
-    if (!currentMarkets && !openToNewMarkets) flagInvalid("currentMarkets");
-    if (!areaAttractive) flagInvalid("areaAttractive");
-    if (!siteCriteria) flagInvalid("siteCriteria");
-    if (uncoverPriorities.length === 0) flagInvalid("uncoverPriorities");
+    if (interests.length === 0) flagInvalid("interests");
+    if (!locationFocus) flagInvalid("locationFocus");
+    if (understandGoals.length === 0) flagInvalid("understandGoals");
     if (!fullName) flagInvalid("fullName");
     if (!companyName) flagInvalid("companyName");
     if (!email || !isValidEmail(email)) flagInvalid("email");
@@ -77,16 +76,16 @@ if (form) {
     submitBtn.classList.add("is-loading");
 
     const { error } = await supabase.from("development_profiles").insert({
-      develop_types: developTypes,
-      current_markets: currentMarkets || null,
-      open_to_new_markets: openToNewMarkets,
-      area_attractive: areaAttractive,
-      site_criteria: siteCriteria,
-      uncover_priorities: uncoverPriorities,
+      develop_types: interests,
+      current_markets: locationFocus,
+      open_to_new_markets: false,
+      area_attractive: aboutProject,
+      site_criteria: "",
+      uncover_priorities: understandGoals,
       full_name: fullName,
       company: companyName,
       work_email: email,
-      phone: phone || null,
+      phone: null,
     });
 
     submitBtn.disabled = false;
