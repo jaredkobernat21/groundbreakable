@@ -95,6 +95,18 @@ export async function applyInvitation(
   // copy invitation_markets -> investor_markets below for record-keeping/
   // display (e.g. a "primary markets" badge later) -- it just no longer
   // gates access on its own for invitation-created developers.
+  // welcomed_at set immediately (2026-10-01) -- leaving it null sent every
+  // brand-new invited developer through middleware's unannounced /welcome
+  // detour right after "Create Account," instead of straight into
+  // /dashboard. Confirmed as the real cause behind Joey Locker and Dan Lynch
+  // both independently hitting "this invitation has already been used":
+  // landing on an unexplained extra screen right after setting a password
+  // for the first time is exactly the kind of moment where hitting the
+  // browser back button is a natural reflex (especially on mobile, where
+  // it's often just a swipe) -- which lands back on the now-already-
+  // accepted /invite/<id> link. The invite link already told them what
+  // they're getting; there's nothing /welcome needs to re-explain for this
+  // path, so skip it rather than try to make the detour less confusing.
   const { error: profileError } = await admin.from("investor_profiles").upsert(
     {
       id: userId,
@@ -106,6 +118,7 @@ export async function applyInvitation(
       status: "active",
       must_change_password: false,
       has_all_market_access: true,
+      welcomed_at: new Date().toISOString(),
     },
     { onConflict: "id" }
   );
