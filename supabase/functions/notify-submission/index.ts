@@ -50,6 +50,17 @@ function formatEmail(table: string, record: Record<string, unknown>): { subject:
     };
   }
 
+  if (table === "password_reset_requests") {
+    const rows = [
+      row("Email", record.email),
+      row("Reset link", record.reset_link),
+    ].join("");
+    return {
+      subject: `Password reset requested: ${String(record.email ?? "Unknown")}`,
+      html: `<table style="font-family:sans-serif;font-size:14px">${rows}</table><p style="font-family:sans-serif;font-size:13px;color:#666">Single-use, expires in 7 days. Copy this link and send it to them directly.</p>`,
+    };
+  }
+
   return null;
 }
 

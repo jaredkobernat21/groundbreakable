@@ -19,10 +19,12 @@ export default async function InvitePage({
   if (!check.ok) {
     const message =
       check.reason === "used"
-        ? "This invitation has already been used."
-        : check.reason === "expired"
-          ? "This invitation has expired. Ask your Groundbreakable contact to send a new one."
-          : "This invitation link isn't valid.";
+        ? "This link has already been used."
+        : check.reason === "revoked"
+          ? "This link was revoked. Ask your Groundbreakable contact to send a new one."
+          : check.reason === "expired"
+            ? "This link has expired. Ask your Groundbreakable contact to send a new one."
+            : "This link isn't valid.";
 
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f4f2ee] px-4">
@@ -42,6 +44,7 @@ export default async function InvitePage({
       invitationId={check.invitation.id}
       firstName={check.invitation.first_name}
       email={check.invitation.email}
+      isReset={Boolean(check.invitation.user_id)}
       formError={searchParams.form_error}
     />
   );

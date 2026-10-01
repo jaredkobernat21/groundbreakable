@@ -146,15 +146,16 @@ export async function revokeInvitation(formData: FormData) {
   revalidatePath("/dashboard/admin/users");
 }
 
-// Admin-triggered password reset (2026-10-01). Deliberately mirrors the
-// invitation flow's "generate a one-time link, show it once, admin sends it
-// however they want" UX instead of calling supabase.auth.resetPasswordForEmail
-// (which would depend on this project's own Auth email sending actually
-// being deliverable -- unverified, and the same class of problem that made
-// the notify-submission webhook's Resend sends only land in Jared's own
-// inbox until groundbreakable.com is a verified sending domain). A link
-// Jared copies and sends himself has no such dependency. The link resolves
-// through the already-working /auth/confirm -> /set-password pages.
+// Admin-triggered password reset (2026-10-01, revised 2026-10-01). Originally
+// called supabase.auth.admin.generateLink({ type: "recovery" }), but that
+// link's expiry is a fixed ~1 hour (project Auth setting, not something this
+// app controls) and depends on Supabase's implicit-flow/URL-fragment
+// handoff that /login's own code has to specifically work around -- too
+// fragile and too short a window for a hand-delivered link (Jared, 2026-
+// 10-01). This now mints the same kind of user_invitations row the
+// invitation flow already uses -- same 7-day expiry, same single page, no
+// Supabase Auth email/OTP involved -- just with user_id set so accepting it
+// updates a password instead of creating an account. See inviteFlow.ts.
 export async function generatePasswordResetLink(formData: FormData) {
   await requireAdmin();
 
@@ -168,17 +169,29 @@ export async function generatePasswordResetLink(formData: FormData) {
   }
   const email = userRes.user.email;
 
-  const { data, error } = await admin.auth.admin.generateLink({
-    type: "recovery",
-    email,
-    options: { redirectTo: `${appOrigin()}/auth/confirm` },
-  });
-  if (error || !data.properties?.action_link) {
-    formErrorRedirect(error?.message ?? "Failed to generate reset link.");
+  const { data: profile } = await admin
+    .from("investor_profiles")
+    .select("first_name, last_name, company_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const { data: invitation, error: insertError } = await admin
+    .from("user_invitations")
+    .insert({
+      email,
+      first_name: profile?.first_name ?? "",
+      last_name: profile?.last_name ?? "",
+      company_name: profile?.company_name ?? null,
+      user_id: userId,
+    })
+    .select("id")
+    .single();
+  if (insertError || !invitation) {
+    formErrorRedirect(insertError?.message ?? "Failed to generate reset link.");
   }
 
   redirect(
-    `/dashboard/admin/users?reset_link=${encodeURIComponent(data.properties.action_link)}&reset_email=${encodeURIComponent(email)}`
+    `/dashboard/admin/users?reset_link=${encodeURIComponent(`${appOrigin()}/invite/${invitation.id}`)}&reset_email=${encodeURIComponent(email)}`
   );
 }
 

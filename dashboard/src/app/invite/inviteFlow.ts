@@ -13,10 +13,17 @@ export type InvitationRecord = {
   company_name: string | null;
   status: string;
   expires_at: string;
+  // Set = "reset this existing account's password" instead of "create a
+  // new account." See 20261001190000_invitation_password_reset.sql.
+  user_id: string | null;
   invitation_markets: { market_id: string }[];
 };
 
-export type InvalidReason = "not_found" | "expired" | "used";
+// "used" and "revoked" are now distinguished (they weren't before, 2026-
+// 10-01) -- revoked was previously reported to the visitor as "already been
+// used," which doesn't describe what actually happened if Jared sent out a
+// stale/wrong link after revoking an earlier duplicate.
+export type InvalidReason = "not_found" | "expired" | "used" | "revoked";
 
 export async function getValidInvitation(
   id: string
@@ -24,14 +31,41 @@ export async function getValidInvitation(
   const admin = createAdminClient();
   const { data } = await admin
     .from("user_invitations")
-    .select("id, email, first_name, last_name, company_name, status, expires_at, invitation_markets(market_id)")
+    .select("id, email, first_name, last_name, company_name, status, expires_at, user_id, invitation_markets(market_id)")
     .eq("id", id)
     .maybeSingle();
 
   if (!data) return { ok: false, reason: "not_found" };
+  if (data.status === "revoked") return { ok: false, reason: "revoked" };
   if (data.status !== "pending") return { ok: false, reason: "used" };
   if (new Date(data.expires_at as string) < new Date()) return { ok: false, reason: "expired" };
   return { ok: true, invitation: data as unknown as InvitationRecord };
+}
+
+// Password-reset counterpart to applyInvitation, for a link whose user_id is
+// set. Deliberately doesn't touch investor_profiles/investor_markets at all
+// (unlike applyInvitation) -- that upsert hardcodes role: "developer", which
+// would silently demote an admin resetting their own password, and there's
+// no reason to touch an existing, already-correct profile anyway.
+export async function applyPasswordReset(
+  invitationId: string,
+  userId: string,
+  password: string
+): Promise<{ ok: true } | { ok: false; reason: InvalidReason | "error"; message?: string }> {
+  const admin = createAdminClient();
+  const check = await getValidInvitation(invitationId);
+  if (!check.ok) return check;
+  if (check.invitation.user_id !== userId) return { ok: false, reason: "not_found" };
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(userId, { password });
+  if (updateError) return { ok: false, reason: "error", message: updateError.message };
+
+  await admin
+    .from("user_invitations")
+    .update({ status: "accepted", accepted_at: new Date().toISOString() })
+    .eq("id", invitationId);
+
+  return { ok: true };
 }
 
 // Turns a validated invitation into real access: profile row, assigned

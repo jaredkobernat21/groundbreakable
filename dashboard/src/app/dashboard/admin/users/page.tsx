@@ -131,7 +131,7 @@ export default async function UsersPage({
           email={searchParams.reset_email ?? ""}
           link={searchParams.reset_link}
           heading={`Password reset link for ${searchParams.reset_email ?? ""}`}
-          caption="Copy this link and send it to them directly. It's single-use and expires in about an hour."
+          caption="Copy this link and send it to them directly. It's single-use and expires in 7 days."
         />
       )}
 

@@ -20,11 +20,13 @@ export default function InviteCard({
   invitationId,
   firstName,
   email,
+  isReset = false,
   formError,
 }: {
   invitationId: string;
   firstName: string;
   email: string;
+  isReset?: boolean;
   formError?: string;
 }) {
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +40,9 @@ export default function InviteCard({
         </div>
 
         <h1 className="mb-1 text-xl font-semibold tracking-tight text-[#1c1c1c]">
-          You've been invited{firstName ? `, ${firstName}` : ""}.
+          {isReset
+            ? `Reset your password${firstName ? `, ${firstName}` : ""}.`
+            : `You've been invited${firstName ? `, ${firstName}` : ""}.`}
         </h1>
         <p className="mb-6 text-sm text-[#1c1c1c]/50">{email}</p>
 
@@ -82,7 +86,13 @@ export default function InviteCard({
             disabled={submitting}
             className="w-full rounded bg-[#1c1c1c] py-2 text-sm font-medium text-white transition hover:bg-[#1c1c1c]/85 disabled:opacity-50"
           >
-            {submitting ? "Creating account…" : "Create Account"}
+            {isReset
+              ? submitting
+                ? "Updating…"
+                : "Update Password"
+              : submitting
+                ? "Creating account…"
+                : "Create Account"}
           </button>
         </form>
       </div>

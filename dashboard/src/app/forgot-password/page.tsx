@@ -1,40 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { requestPasswordReset } from "./actions";
 
-// Self-service companion to the admin-triggered reset link in
-// /dashboard/admin/users (2026-10-01). That admin tool exists specifically
-// because this page's delivery depends on Supabase Auth's own email sending
-// for this project actually being configured/deliverable, which nothing in
-// this repo can confirm -- if a user's email never arrives, Jared still has
-// a guaranteed way to hand them a working link directly. Both paths land on
-// the same already-working /auth/confirm -> /login (fragment fallback) ->
-// /set-password pages.
+// Self-service companion to the admin-triggered "Reset Password" button in
+// /dashboard/admin/users (2026-10-01, revised 2026-10-01). Submits to the
+// requestPasswordReset Server Action rather than calling Supabase's own
+// resetPasswordForEmail -- see actions.ts for why (email deliverability for
+// this project is unverified, so this notifies Jared with a ready-to-send
+// link instead of emailing the requester directly).
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/confirm`,
-    });
-
+    await requestPasswordReset(new FormData(e.currentTarget));
     setLoading(false);
-    // Always show the same confirmation regardless of whether the email
-    // matches an account -- a different message for "no account" would let
-    // someone enumerate who has access.
-    if (error) {
-      setError("Something went wrong. Please try again in a moment.");
-      return;
-    }
     setSent(true);
   }
 
@@ -46,10 +30,10 @@ export default function ForgotPasswordPage() {
             <img src="/groundbreakable-icon.png" alt="" className="h-7 w-7" />
             <span className="text-sm font-semibold tracking-tight text-[#1c1c1c]">Groundbreakable</span>
           </div>
-          <h1 className="mb-2 text-xl font-semibold tracking-tight text-[#1c1c1c]">Check your email</h1>
+          <h1 className="mb-2 text-xl font-semibold tracking-tight text-[#1c1c1c]">Thanks — we're on it</h1>
           <p className="text-sm text-[#1c1c1c]/50">
-            If an account exists for {email}, we&apos;ve sent a link to reset your password. It&apos;s
-            single-use and expires in about an hour.
+            If an account exists for {email}, someone from the Groundbreakable team will send you a link
+            to reset your password shortly.
           </p>
           <a href="/login" className="mt-6 inline-block text-sm text-[#1c1c1c]/70 underline hover:text-[#1c1c1c]">
             Back to sign in
@@ -72,7 +56,7 @@ export default function ForgotPasswordPage() {
 
         <h1 className="mb-1 text-xl font-semibold tracking-tight text-[#1c1c1c]">Reset your password</h1>
         <p className="mb-6 text-sm text-[#1c1c1c]/50">
-          Enter your email and we&apos;ll send you a link to set a new password.
+          Enter your email and the Groundbreakable team will send you a link to set a new password.
         </p>
 
         <label className="mb-1 block text-sm text-[#1c1c1c]/70" htmlFor="email">
@@ -80,14 +64,13 @@ export default function ForgotPasswordPage() {
         </label>
         <input
           id="email"
+          name="email"
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mb-4 w-full rounded border border-[#1c1c1c]/15 bg-white px-3 py-2 text-sm text-[#1c1c1c] outline-none focus:border-[#1c1c1c]/40"
         />
-
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"

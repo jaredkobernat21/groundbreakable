@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getValidInvitation, applyInvitation } from "../inviteFlow";
+import { getValidInvitation, applyInvitation, applyPasswordReset } from "../inviteFlow";
 
 // Secondary path off the invite page (Google is primary). The account's
 // email is fixed to the invitation's -- there's no email input on this
@@ -23,6 +23,19 @@ export async function acceptInvitationWithPassword(invitationId: string, formDat
   const check = await getValidInvitation(invitationId);
   if (!check.ok) {
     redirect(`/invite/${invitationId}`);
+  }
+
+  // Password-reset link (user_id set) -- update the existing account's
+  // password instead of creating a new one. See inviteFlow.ts.
+  if (check.invitation.user_id) {
+    const applied = await applyPasswordReset(invitationId, check.invitation.user_id, password);
+    if (!applied.ok) {
+      redirect(`/invite/${invitationId}?form_error=${encodeURIComponent(applied.message ?? "Something went wrong.")}`);
+    }
+
+    const supabase = createClient();
+    await supabase.auth.signInWithPassword({ email: check.invitation.email, password });
+    redirect("/dashboard");
   }
 
   const admin = createAdminClient();
