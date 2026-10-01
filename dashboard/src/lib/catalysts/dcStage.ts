@@ -1,33 +1,40 @@
 import type { Catalyst, DataCenterSignalConfidence } from "@/lib/types";
 import { filterWithinRadius } from "@/lib/geo";
 
-// Data Center Refocus (Jared, 2026-10-01): the dashboard's primary product
-// is now a 3-stage data-center early-warning model -- Possible / Predicted /
-// Planned -- derived entirely from columns that already exist on `catalysts`
-// (catalyst_type, signal_categories, signal_confidence). No migration, no
-// new column: see the plan this session worked from for the full rationale.
-// This file is the single source of truth for "is this catalyst DC-relevant,
-// and at what stage" -- every map/filter/panel component imports from here
-// instead of re-deriving the logic.
-export type DcStage = "possible" | "predicted" | "planned";
+// Data Center Refocus (Jared, 2026-10-01; collapsed to 2 stages 2026-10-02):
+// the dashboard's primary product is a data-center early-warning model --
+// Possible / Planned -- derived entirely from columns that already exist on
+// `catalysts` (catalyst_type, signal_categories, signal_confidence). No
+// migration, no new column. This file is the single source of truth for
+// "is this catalyst DC-relevant, and at what stage" -- every map/filter/
+// panel component imports from here instead of re-deriving the logic.
+//
+// Possible and the former "Predicted" stage were merged into one Possible
+// bucket per Jared's instruction -- a catalyst can still carry richer
+// evidence (signal_confidence, a converging multi-signal investigation) and
+// the detail panel still surfaces that when it's present (see
+// CatalystIntelligencePanel.tsx), it just no longer gets its own top-level
+// stage/filter.
+export type DcStage = "possible" | "planned";
 
-// Planned = catalyst_type already confirmed 'data_center'. Predicted =
-// catalyst_type 'potential_data_center' -- multiple converging signals, per
-// lib/catalysts/dataCenterSignal.ts's own 2+-category requirement for ever
-// assigning a signal_confidence at all. Possible = any other catalyst with
-// at least one tagged signal_category -- a single early, isolated signal
-// (a substation expansion, a fiber build, a water-capacity project) that
-// hasn't converged into a dedicated data-center investigation yet.
+// Planned = catalyst_type already confirmed 'data_center'. Possible =
+// everything else that's DC-relevant at all: a `potential_data_center`
+// investigation (multiple converging signals, per lib/catalysts/
+// dataCenterSignal.ts's own 2+-category requirement for ever assigning a
+// signal_confidence) and a catalyst of any other type with at least one
+// tagged signal_category (a single early, isolated signal -- a substation
+// expansion, a fiber build, a water-capacity project) are both "Possible";
+// the former carries a confidence tier, the latter doesn't, but neither is
+// publicly confirmed, so both live under the same stage.
 export function computeDcStage(catalyst: Pick<Catalyst, "catalyst_type" | "signal_categories">): DcStage | null {
   if (catalyst.catalyst_type === "data_center") return "planned";
-  if (catalyst.catalyst_type === "potential_data_center") return "predicted";
+  if (catalyst.catalyst_type === "potential_data_center") return "possible";
   if (catalyst.signal_categories.length >= 1) return "possible";
   return null;
 }
 
 export const DC_STAGE_LABEL: Record<DcStage, string> = {
   possible: "Possible",
-  predicted: "Predicted",
   planned: "Planned",
 };
 
@@ -35,19 +42,17 @@ export const DC_STAGE_LABEL: Record<DcStage, string> = {
 // immediately communicate this, not a vaguer paraphrase.
 export const DC_STAGE_HEADLINE: Record<DcStage, string> = {
   possible: "This area is becoming capable of supporting a data center.",
-  predicted: "Evidence suggests a data center may be forming here.",
   planned: "A data center is now publicly confirmed or formally planned.",
 };
 
 // Planned reuses the existing confirmed-data-center plum
 // (catalystTypeColors.ts's CATALYST_COLOR_GROUP_HEX.data_center) so a
-// catalyst's color never jumps when it graduates from Predicted to Planned
-// in an admin's hands. Possible/Predicted sit on a warm amber ramp, deliberately
-// distinct from the cooler secondary-layer palette (emerald/gold/slate/gray)
-// so the two systems never visually collide.
+// catalyst's color never jumps when it graduates from Possible to Planned
+// in an admin's hands. Possible sits on a warm amber, deliberately distinct
+// from the cooler secondary-layer palette (emerald/gold/slate/gray) so the
+// two systems never visually collide.
 export const DC_STAGE_COLOR_HEX: Record<DcStage, string> = {
-  possible: "#9c7a44", // dim bronze -- quiet, early signal
-  predicted: "#d9923f", // brighter amber -- converging evidence
+  possible: "#d9923f", // amber -- early/converging signal
   planned: "#8b6bb0", // existing confirmed-data-center plum
 };
 
@@ -67,8 +72,8 @@ export function dcSignalCount(catalyst: Pick<Catalyst, "signal_categories">): nu
 }
 
 // "Why Groundbreakable is watching" -- supporting (dcStage === null)
-// catalysts within watch radius of a Possible/Predicted/Planned catalyst,
-// per the brief's worked example. Same 2-mile radius
+// catalysts within watch radius of a Possible/Planned catalyst, per the
+// brief's worked example. Same 2-mile radius
 // lib/catalysts/clusters.ts uses for compound-catalyst clustering, applied
 // directly via the shared lib/geo.ts radius filter rather than that file's
 // multi-catalyst transitive-grouping logic, which solves a different

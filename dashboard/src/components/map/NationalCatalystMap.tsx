@@ -187,7 +187,7 @@ const NationalCatalystMap = forwardRef<
         // is a full-prominence member of whichever category is active --
         // no more "dim supporting layer shown alongside the primary one."
         // A staged catalyst's color comes from the DC Stage ramp
-        // (possible/predicted/planned) instead of the flat type-group
+        // (possible/planned) instead of the flat type-group
         // palette; Possible renders slightly smaller/softer than
         // Predicted/Planned since it's the earliest, least-certain signal.
         const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
@@ -212,7 +212,7 @@ const NationalCatalystMap = forwardRef<
           <div class="roq-marker-pin">${catalystMarkerSvgMarkup({
             size,
             fill: color,
-            // Every staged (Possible/Predicted/Planned) catalyst shares one
+            // Every staged (Possible/Planned) catalyst shares one
             // glyph -- the bolt already associated with confirmed data
             // centers -- so the DC-stage ramp reads as one consistent
             // story regardless of the underlying catalyst_type (a

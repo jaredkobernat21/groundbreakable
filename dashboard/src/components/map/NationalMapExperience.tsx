@@ -74,7 +74,7 @@ export default function NationalMapExperience({
 
   // Data Center Refocus: exactly one category renders at a time, except
   // "All" (an explicit opt-in, last in the dropdown) which shows every
-  // category together. A staged (Possible/Predicted/Planned) catalyst lives
+  // category together. A staged (Possible/Planned) catalyst lives
   // exclusively under the Data Centers category, gated by the DC Stage
   // filter (plus, for Planned, the construction-pipeline sub-filter).
   // Every other category shows only unstaged catalysts matching that
@@ -99,7 +99,7 @@ export default function NationalMapExperience({
   }, [baseFilteredCatalysts, filters]);
 
   const dcStageCounts = useMemo(() => {
-    const counts: Record<DcStage, number> = { possible: 0, predicted: 0, planned: 0 };
+    const counts: Record<DcStage, number> = { possible: 0, planned: 0 };
     for (const c of baseFilteredCatalysts) {
       const stage = computeDcStage(c);
       if (stage) counts[stage] += 1;

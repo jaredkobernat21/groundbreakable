@@ -6,7 +6,7 @@ import { DC_STAGE_LABEL, type DcStage } from "@/lib/catalysts/dcStage";
 
 export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
-const DC_STAGES: DcStage[] = ["possible", "predicted", "planned"];
+const DC_STAGES: DcStage[] = ["possible", "planned"];
 
 // "all" sits outside CatalystColorGroup (that type stays a strict
 // CatalystType->color mapping used for marker styling) -- it's a filter-only
@@ -68,7 +68,7 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
 // Data Center Refocus (Jared, 2026-10-02): the top-level lens is now a
 // single-select Category (Data Centers default, switchable to
 // Infrastructure/Schools/Housing/Other -- see CategoryFilterBar.tsx for the
-// matching top-nav control), with Possible/Predicted/Planned demoted to a
+// matching top-nav control), with Possible/Planned demoted to a
 // sub-filter that only applies -- and only shows -- while the Data Centers
 // category is active.
 export default function FiltersPanel({

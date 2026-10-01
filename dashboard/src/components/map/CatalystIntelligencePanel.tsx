@@ -29,13 +29,16 @@ function formatShortDate(value: string): string {
   return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-// Data Center Refocus (Jared, 2026-10-01) -- this panel now branches on the
-// catalyst's DC stage (lib/catalysts/dcStage.ts) and leads with the exact
-// UI-goal headline from the brief for that stage, instead of treating every
-// catalyst_type identically. A catalyst with no DC stage (a pure supporting-
-// layer item, only reachable via the "show supporting layers" toggle or the
-// "why we're watching" list below) falls back to the original type-group
-// framing.
+// Data Center Refocus (Jared, 2026-10-01; collapsed to 2 stages 2026-10-02)
+// -- this panel branches on the catalyst's DC stage (lib/catalysts/
+// dcStage.ts) and leads with the exact UI-goal headline from the brief for
+// that stage, instead of treating every catalyst_type identically. A
+// catalyst with no DC stage (a pure supporting-layer item, only reachable
+// via a non-Data-Centers category tab or the "why we're watching" list
+// below) falls back to the original type-group framing. Possible now covers
+// both a single isolated signal and a converging multi-signal
+// `potential_data_center` investigation -- the richer confidence/signal-
+// count detail only renders when signal_confidence is actually on file.
 export default function CatalystIntelligencePanel({
   catalyst,
   allCatalysts,
@@ -52,7 +55,7 @@ export default function CatalystIntelligencePanel({
   const dcStage = computeDcStage(catalyst);
   const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
   const sources = [catalyst.source, ...catalyst.additionalSources].filter((s): s is NonNullable<typeof s> => s != null);
-  const confidenceLabel = dcStage === "predicted" ? dcConfidenceLabel(catalyst.signal_confidence) : null;
+  const confidenceLabel = dcConfidenceLabel(catalyst.signal_confidence);
   const flaggedEarly =
     dcStage === "planned" && catalyst.date_announced != null && new Date(catalyst.date_announced).getTime() > new Date(catalyst.created_at).getTime();
   const watching = dcStage ? nearbySupportingCatalysts(catalyst, allCatalysts) : [];
@@ -79,33 +82,24 @@ export default function CatalystIntelligencePanel({
 
       {dcStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{DC_STAGE_HEADLINE[dcStage]}</p>}
 
-      {dcStage === "possible" && catalyst.signal_categories.length > 0 && (
+      {dcStage === "possible" && (
         <div className="mt-4 border-t border-white/10 pt-4">
-          <p className="mb-1.5 text-[11px] uppercase tracking-wide text-white/35">Infrastructure Signals Observed</p>
-          <ul className="space-y-1 text-sm text-white/70">
-            {catalyst.signal_categories.map((category) => (
-              <li key={category} className="flex gap-2">
-                <span className="text-white/30">—</span>
-                {DATA_CENTER_SIGNAL_LABEL[category]}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {dcStage === "predicted" && (
-        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
-          <div>
-            <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Confidence</p>
-            <p className="text-sm font-medium text-white">{confidenceLabel ?? "Low"}</p>
-          </div>
-          <div>
-            <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Supporting Signals</p>
-            <p className="text-sm font-medium text-white">{dcSignalCount(catalyst)}</p>
-          </div>
+          {confidenceLabel && (
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <div>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Confidence</p>
+                <p className="text-sm font-medium text-white">{confidenceLabel}</p>
+              </div>
+              <div>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Supporting Signals</p>
+                <p className="text-sm font-medium text-white">{dcSignalCount(catalyst)}</p>
+              </div>
+            </div>
+          )}
           {catalyst.signal_categories.length > 0 && (
-            <div className="col-span-2">
-              <ul className="mt-1 space-y-1 text-sm text-white/70">
+            <>
+              <p className="mb-1.5 text-[11px] uppercase tracking-wide text-white/35">Infrastructure Signals Observed</p>
+              <ul className="space-y-1 text-sm text-white/70">
                 {catalyst.signal_categories.map((category) => (
                   <li key={category} className="flex gap-2">
                     <span className="text-white/30">—</span>
@@ -113,9 +107,9 @@ export default function CatalystIntelligencePanel({
                   </li>
                 ))}
               </ul>
-            </div>
+            </>
           )}
-          <p className="col-span-2 text-xs text-white/40">No data center is publicly confirmed at this location yet.</p>
+          <p className="mt-3 text-xs text-white/40">No data center is publicly confirmed at this location yet.</p>
         </div>
       )}
 

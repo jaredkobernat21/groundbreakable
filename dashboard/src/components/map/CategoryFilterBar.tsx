@@ -12,14 +12,14 @@ const CATEGORY_LABEL: Record<CategoryFilterValue, string> = {
   ...CATALYST_COLOR_GROUP_LABEL,
   all: "All",
 };
-const DC_STAGES: DcStage[] = ["possible", "predicted", "planned"];
+const DC_STAGES: DcStage[] = ["possible", "planned"];
 
 // Data Center Refocus (Jared, 2026-10-02): "The filter at the top should
 // have 'data centers' as the default and then when you click on it you can
 // switch between data centers, infrastructure, schools, housing." This is
 // the map's top-nav anchor -- a single-select category dropdown (Data
 // Centers by default) plus, only while Data Centers is selected, the
-// Possible/Predicted/Planned sub-filter pills with live counts. Replaces
+// Possible/Planned sub-filter pills with live counts. Replaces
 // the old DcStageSummaryBar, which always showed all three stages as
 // equally-primary pills regardless of category.
 export default function CategoryFilterBar({
