@@ -15,6 +15,7 @@ import {
   catalystMarkerTier,
   catalystSizeTier,
 } from "@/lib/catalystTypeColors";
+import { computeDcStage, DC_STAGE_COLOR_HEX } from "@/lib/catalysts/dcStage";
 
 const CATALYST_AREA_SOURCE_ID = "roq-national-catalyst-areas";
 
@@ -180,13 +181,20 @@ const NationalCatalystMap = forwardRef<
       const entries: DeclutterEntry[] = [];
 
       catalysts.forEach((catalyst) => {
-        const color = catalystColorHex(catalyst);
-        const size = CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+        const dcStage = computeDcStage(catalyst);
+        // Data Center Refocus: a staged catalyst's color comes from the DC
+        // Stage ramp (possible/predicted/planned), not the old flat
+        // type-group palette -- that palette is now reserved for
+        // unstaged supporting-layer dots, rendered smaller and dimmer so
+        // they read as context, not peers.
+        const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
+        const size = dcStage === "possible" ? 18 : CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+        const baseOpacity = dcStage ? (dcStage === "possible" ? 0.85 : 1) : 0.45;
         const isSelected = catalyst.id === selectedCatalystId;
 
         const el = document.createElement("div");
         el.className = "roq-marker roq-marker-catalyst";
-        el.style.opacity = !selectedCatalystId || isSelected ? "1" : "0.4";
+        el.style.opacity = !selectedCatalystId || isSelected ? String(baseOpacity) : "0.4";
         // Drives the category-tinted selection glow in globals.css -- kept
         // as a CSS variable so the glow colour follows the marker without
         // the stylesheet needing to know anything about catalyst types.
@@ -201,8 +209,15 @@ const NationalCatalystMap = forwardRef<
           <div class="roq-marker-pin">${catalystMarkerSvgMarkup({
             size,
             fill: color,
-            icon: catalystIconKey(catalyst),
-            tier: catalystMarkerTier(catalyst),
+            // Every staged (Possible/Predicted/Planned) catalyst shares one
+            // glyph -- the bolt already associated with confirmed data
+            // centers -- so the DC-stage ramp reads as one consistent
+            // story regardless of the underlying catalyst_type (a
+            // "Possible" signal might be an infrastructure_project, a
+            // water-capacity project, etc.). Only unstaged supporting-layer
+            // markers keep the type-specific icon.
+            icon: dcStage ? "bolt" : catalystIconKey(catalyst),
+            tier: dcStage === "planned" ? catalystMarkerTier(catalyst) : "standard",
           })}</div>
         `;
         el.addEventListener("click", (event) => {
@@ -255,11 +270,14 @@ const NationalCatalystMap = forwardRef<
       type: "FeatureCollection",
       features: catalysts
         .filter((c) => c.id === selectedCatalystId)
-        .map((catalyst) => ({
-          type: "Feature" as const,
-          properties: { id: catalyst.id, color: catalystColorHex(catalyst) },
-          geometry: catalystAffectedAreaPolygon(catalyst),
-        })),
+        .map((catalyst) => {
+          const dcStage = computeDcStage(catalyst);
+          return {
+            type: "Feature" as const,
+            properties: { id: catalyst.id, color: dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst) },
+            geometry: catalystAffectedAreaPolygon(catalyst),
+          };
+        }),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, catalysts, selectedCatalystId]);

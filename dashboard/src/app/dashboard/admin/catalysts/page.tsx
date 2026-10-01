@@ -222,12 +222,14 @@ export default async function AdminCatalystsPage() {
 
           <div className="col-span-2 border-t border-white/10 pt-4">
             <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-white/40">
-              Potential Data Center Investigation
+              Data Center Signals
             </h3>
             <p className="mb-3 text-xs text-white/30">
-              Only relevant when Catalyst Type above is "Potential Data Center (unconfirmed)". A single
-              checked category is never enough to assign a confidence level — see CATALYST_SIGNAL_BIBLE.md.
-              Power is Priority #1 — detect large load before the project is named.
+              Works on any Catalyst Type. One checked category here marks this catalyst "Possible" on the
+              dashboard (an early, isolated signal — e.g. a substation or fiber expansion). A single category
+              is never enough to assign a confidence level on its own; that requires Catalyst Type
+              "Potential Data Center (unconfirmed)" with multiple converging categories — see
+              CATALYST_SIGNAL_BIBLE.md. Power is Priority #1 — detect large load before the project is named.
             </p>
             <div className="mb-3">
               <label className={labelClass} htmlFor="power_load_mw">Power / Load Figure (MW, optional)</label>

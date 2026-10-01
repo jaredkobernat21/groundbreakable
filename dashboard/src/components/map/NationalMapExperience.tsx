@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows";
 import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
 import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
+import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
 import FiltersPanel, { defaultMapFilters, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
+import DcStageSummaryBar from "./DcStageSummaryBar";
 
 // National map redesign (Jared, 2026-09-30): "the map should be the
 // product." This is the fixed full-screen overlay that replaces the old
@@ -47,16 +49,17 @@ export default function NationalMapExperience({
 
   const marketById = useMemo(() => new Map(markets.map((m) => [m.id, m])), [markets]);
 
-  const filteredCatalysts = useMemo(() => {
+  // Non-stage filters (time/state/market) apply to every catalyst
+  // regardless of DC stage -- factored out so the live stage counts in
+  // DcStageSummaryBar reflect those narrowing filters without also being
+  // narrowed by the DC-stage checkboxes themselves (a stage pill shouldn't
+  // disappear just because a user unchecked it).
+  const baseFilteredCatalysts = useMemo(() => {
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
     const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
 
     return catalysts.filter((c) => {
-      if (!filters.types.has(catalystColorGroup(c))) return false;
-      const stageGroup = CATALYST_STAGE_GROUP[c.status];
-      if (!stageGroup || !filters.stages.has(stageGroup)) return false;
-
       if (filters.time === "new_week" && new Date(c.created_at).getTime() < weekAgo) return false;
       if (filters.time === "new_month" && new Date(c.created_at).getTime() < monthAgo) return false;
       if (filters.time === "active" && (c.status === "completed" || c.status === "cancelled")) return false;
@@ -68,6 +71,43 @@ export default function NationalMapExperience({
       return true;
     });
   }, [catalysts, filters, marketById]);
+
+  // Data Center Refocus: a staged (Possible/Predicted/Planned) catalyst is
+  // primary and gated only by the DC Stage filter (plus, for Planned, the
+  // construction-pipeline sub-filter). An unstaged catalyst is secondary --
+  // hidden entirely unless "Show supporting layers" is on, then gated by
+  // the Supporting Layers type filter.
+  const filteredCatalysts = useMemo(() => {
+    return baseFilteredCatalysts.filter((c) => {
+      const dcStage = computeDcStage(c);
+      if (dcStage) {
+        if (!filters.dcStages.has(dcStage)) return false;
+        if (dcStage === "planned") {
+          const stageGroup = CATALYST_STAGE_GROUP[c.status];
+          if (!stageGroup || !filters.stages.has(stageGroup)) return false;
+        }
+        return true;
+      }
+      if (!filters.showSupporting) return false;
+      return filters.types.has(catalystColorGroup(c));
+    });
+  }, [baseFilteredCatalysts, filters]);
+
+  const dcStageCounts = useMemo(() => {
+    const counts: Record<DcStage, number> = { possible: 0, predicted: 0, planned: 0 };
+    for (const c of baseFilteredCatalysts) {
+      const stage = computeDcStage(c);
+      if (stage) counts[stage] += 1;
+    }
+    return counts;
+  }, [baseFilteredCatalysts]);
+
+  function toggleDcStage(stage: DcStage) {
+    const next = new Set(filters.dcStages);
+    if (next.has(stage)) next.delete(stage);
+    else next.add(stage);
+    setFilters({ ...filters, dcStages: next });
+  }
 
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
 
@@ -143,6 +183,8 @@ export default function NationalMapExperience({
           <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 shrink-0 brightness-0 invert" />
         </div>
 
+        <DcStageSummaryBar counts={dcStageCounts} activeStages={filters.dcStages} onToggleStage={toggleDcStage} />
+
         <div className="pointer-events-auto order-3 w-full sm:order-none sm:w-auto sm:flex-1">
           <MapSearch
             catalysts={catalysts}
@@ -189,6 +231,7 @@ export default function NationalMapExperience({
       {selectedCatalyst && (
         <CatalystIntelligencePanel
           catalyst={selectedCatalyst}
+          allCatalysts={catalysts}
           isFollowing={followedCatalystIds.has(selectedCatalyst.id)}
           onToggleFollow={() => toggleFollowCatalystId(selectedCatalyst.id)}
           onClose={() => handleSelectCatalyst(null)}

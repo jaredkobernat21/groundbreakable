@@ -2,8 +2,18 @@
 
 import type { CatalystWithSources } from "@/lib/types";
 import { CATALYST_STATUS_LABEL, CATALYST_TYPE_LABEL } from "@/lib/types";
+import { DATA_CENTER_SIGNAL_LABEL } from "@/lib/catalysts/dataCenterSignal";
 import { formatCurrency, formatRelativeVerified } from "@/lib/format";
 import { catalystColorHex, CATALYST_COLOR_GROUP_LABEL, catalystColorGroup } from "@/lib/catalystTypeColors";
+import {
+  computeDcStage,
+  dcConfidenceLabel,
+  dcSignalCount,
+  DC_STAGE_COLOR_HEX,
+  DC_STAGE_HEADLINE,
+  DC_STAGE_LABEL,
+  nearbySupportingCatalysts,
+} from "@/lib/catalysts/dcStage";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
@@ -11,26 +21,41 @@ const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   unconfirmed: "Unconfirmed — treat as preliminary",
 };
 
-// National map redesign (Jared, 2026-09-30) -- new, purpose-built panel
-// matching Jared's example card exactly (title/type/stage/investment/why-it-
-// matters/status/timeline/impact-area/sources/last-verified/Follow/View
-// Source). Deliberately not an edit of components/catalysts/
-// CatalystDetailPanel.tsx, which stays serving the old orphaned tabbed view
-// and is tightly coupled to nearby-Plans/Opportunities props that don't
-// apply here. Same premium dark-glass convention as that panel, trimmed.
+function daysBetween(a: string, b: string): number {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / (24 * 60 * 60 * 1000));
+}
+
+function formatShortDate(value: string): string {
+  return new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+// Data Center Refocus (Jared, 2026-10-01) -- this panel now branches on the
+// catalyst's DC stage (lib/catalysts/dcStage.ts) and leads with the exact
+// UI-goal headline from the brief for that stage, instead of treating every
+// catalyst_type identically. A catalyst with no DC stage (a pure supporting-
+// layer item, only reachable via the "show supporting layers" toggle or the
+// "why we're watching" list below) falls back to the original type-group
+// framing.
 export default function CatalystIntelligencePanel({
   catalyst,
+  allCatalysts,
   isFollowing,
   onToggleFollow,
   onClose,
 }: {
   catalyst: CatalystWithSources;
+  allCatalysts: CatalystWithSources[];
   isFollowing: boolean;
   onToggleFollow: () => void;
   onClose: () => void;
 }) {
-  const color = catalystColorHex(catalyst);
+  const dcStage = computeDcStage(catalyst);
+  const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
   const sources = [catalyst.source, ...catalyst.additionalSources].filter((s): s is NonNullable<typeof s> => s != null);
+  const confidenceLabel = dcStage === "predicted" ? dcConfidenceLabel(catalyst.signal_confidence) : null;
+  const flaggedEarly =
+    dcStage === "planned" && catalyst.date_announced != null && new Date(catalyst.date_announced).getTime() > new Date(catalyst.created_at).getTime();
+  const watching = dcStage ? nearbySupportingCatalysts(catalyst, allCatalysts) : [];
 
   return (
     <div className="absolute right-3 top-3 bottom-3 z-30 w-[380px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-5 shadow-2xl backdrop-blur-xl">
@@ -43,7 +68,7 @@ export default function CatalystIntelligencePanel({
         style={{ borderColor: `${color}55`, color, backgroundColor: `${color}1a` }}
       >
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-        {CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
+        {dcStage ? `${DC_STAGE_LABEL[dcStage]} Data Center` : CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
       </div>
 
       <h2 className="pr-6 text-lg font-semibold leading-snug text-white">{catalyst.title}</h2>
@@ -52,10 +77,66 @@ export default function CatalystIntelligencePanel({
       </div>
       {catalyst.address && <div className="mt-1 text-sm text-white/40">{catalyst.address}</div>}
 
+      {dcStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{DC_STAGE_HEADLINE[dcStage]}</p>}
+
+      {dcStage === "possible" && catalyst.signal_categories.length > 0 && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-1.5 text-[11px] uppercase tracking-wide text-white/35">Infrastructure Signals Observed</p>
+          <ul className="space-y-1 text-sm text-white/70">
+            {catalyst.signal_categories.map((category) => (
+              <li key={category} className="flex gap-2">
+                <span className="text-white/30">—</span>
+                {DATA_CENTER_SIGNAL_LABEL[category]}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {dcStage === "predicted" && (
+        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+          <div>
+            <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Confidence</p>
+            <p className="text-sm font-medium text-white">{confidenceLabel ?? "Low"}</p>
+          </div>
+          <div>
+            <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Supporting Signals</p>
+            <p className="text-sm font-medium text-white">{dcSignalCount(catalyst)}</p>
+          </div>
+          {catalyst.signal_categories.length > 0 && (
+            <div className="col-span-2">
+              <ul className="mt-1 space-y-1 text-sm text-white/70">
+                {catalyst.signal_categories.map((category) => (
+                  <li key={category} className="flex gap-2">
+                    <span className="text-white/30">—</span>
+                    {DATA_CENTER_SIGNAL_LABEL[category]}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="col-span-2 text-xs text-white/40">No data center is publicly confirmed at this location yet.</p>
+        </div>
+      )}
+
+      {dcStage === "planned" && flaggedEarly && catalyst.date_announced && (
+        <div className="mt-4 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+          Groundbreakable flagged this site {daysBetween(catalyst.created_at, catalyst.date_announced)} days before public
+          confirmation ({formatShortDate(catalyst.created_at)} → {formatShortDate(catalyst.date_announced)}).
+        </div>
+      )}
+
       {catalyst.estimated_value != null && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Investment</p>
           <p className="text-sm font-medium text-white">{formatCurrency(catalyst.estimated_value)}</p>
+        </div>
+      )}
+
+      {catalyst.estimated_scale_note && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Scale</p>
+          <p className="text-sm font-medium text-white">{catalyst.estimated_scale_note}</p>
         </div>
       )}
 
@@ -70,6 +151,25 @@ export default function CatalystIntelligencePanel({
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Timeline</p>
           <p className="text-sm font-medium text-white">{catalyst.expected_timeline}</p>
+        </div>
+      )}
+
+      {watching.length > 0 && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Why Groundbreakable Is Watching</p>
+          <ul className="space-y-1 text-sm text-white/70">
+            {watching.map((w) => (
+              <li key={w.id} className="flex gap-2">
+                <span className="text-white/30">—</span>
+                <span>
+                  {w.title}
+                  {w.signal_categories.length > 0 && (
+                    <span className="text-white/40"> ({w.signal_categories.map((c) => DATA_CENTER_SIGNAL_LABEL[c]).join(", ")})</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -113,7 +213,7 @@ export default function CatalystIntelligencePanel({
         {/* created_at/last_verified_at are timestamptz, not the plain `date`
             columns formatDate() expects (it appends "T00:00:00" to the raw
             value) -- format directly instead. */}
-        <div>First detected {new Date(catalyst.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</div>
+        <div>First detected {formatShortDate(catalyst.created_at)}</div>
         <div>Last verified {formatRelativeVerified(catalyst.last_verified_at)}</div>
       </div>
     </div>

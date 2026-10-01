@@ -1,5 +1,6 @@
 import type { Catalyst, CatalystStatus, CatalystType } from "@/lib/types";
 import type { CatalystIconKey, CatalystMarkerTier } from "@/lib/markerIcons";
+import { computeDcStage } from "@/lib/catalysts/dcStage";
 
 // National map redesign (Jared, 2026-09-30): "use color primarily to
 // identify the type of development activity... intentionally limited and
@@ -40,6 +41,14 @@ export const CATALYST_COLOR_GROUP_HEX: Record<CatalystColorGroup, string> = {
   other: "#8b93a3", // quiet neutral gray
 };
 
+// Data Center Refocus (2026-10-01): this grouping now drives the map's
+// *secondary* "Supporting Layers" filter (FiltersPanel.tsx) rather than a
+// primary peer-category legend -- lib/catalysts/dcStage.ts's Possible/
+// Predicted/Planned model is primary. data_center is kept here only because
+// catalystColorHex/catalystIconKey below are still called for every
+// catalyst regardless of DC stage (a supporting, non-DC catalyst still
+// needs a color/icon); the DC-stage components never read this label for a
+// staged catalyst.
 export const CATALYST_COLOR_GROUP_LABEL: Record<CatalystColorGroup, string> = {
   infrastructure: "Infrastructure",
   data_center: "Data Centers",
@@ -119,10 +128,18 @@ export function catalystMarkerTier(
 // real signal; size tier breaks ties so a big unscored project outranks a
 // small one. The map layer adds a large constant for the selected catalyst
 // so a selection can never be the one that gets collapsed.
+//
+// Data Center Refocus: a Possible/Predicted/Planned catalyst gets a tier
+// bonus above every ordinary score/size contribution (but below the
+// selected-catalyst bonus) so a staged DC pin never loses the declutter
+// contest to a supporting-layer dot once both are visible on screen.
+const DC_STAGE_PRIORITY_BONUS = 100_000;
+
 export function catalystMarkerPriority(
-  catalyst: Pick<Catalyst, "catalyst_score" | "estimated_value">
+  catalyst: Pick<Catalyst, "catalyst_score" | "estimated_value" | "catalyst_type" | "signal_categories">
 ): number {
-  return (catalyst.catalyst_score ?? 0) * 10 + CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+  const stageBonus = computeDcStage(catalyst) != null ? DC_STAGE_PRIORITY_BONUS : 0;
+  return stageBonus + (catalyst.catalyst_score ?? 0) * 10 + CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
 }
 
 // Stage filter (Jared's spec: Proposed/Approved/Funded/Under Construction/
