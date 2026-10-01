@@ -34,6 +34,17 @@
 
   .fw-sample{ padding:clamp(56px,8vw,96px) 32px; }
   .fw-sample-inner{ max-width:1500px; margin:0 auto; }
+  .fw-sample-head{ text-align:center; margin:0 0 clamp(36px,5vw,56px); }
+  .fw-sample-title{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(34px,5vw,60px);
+    line-height:1.12;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+    margin:0 0 14px;
+  }
+  .fw-sample-subtitle{ font-size:clamp(15px,1.6vw,18px); color:var(--ink-55); margin:0; }
   .fw-sample-figure{ margin:0 0 clamp(32px,5vw,56px); }
   .fw-sample-figure:last-child{ margin-bottom:0; }
   .fw-sample-figure img{ width:100%; height:auto; border-radius:var(--radius-sm); display:block; }
@@ -79,8 +90,12 @@
   <!-- FRAMEWORK SAMPLE -->
   <section class="fw-sample">
     <div class="fw-sample-inner">
+      <div class="fw-sample-head reveal">
+        <h1 class="fw-sample-title">Framework</h1>
+        <p class="fw-sample-subtitle">Engineer ready plans</p>
+      </div>
       <figure class="fw-sample-figure reveal">
-        <img src="images/framework/framework-1.webp" width="1086" height="1448" loading="eager" decoding="async" alt="Sample Groundbreakable Framework page: a data center development concept overview with target capacity, site area, utility service, and a preliminary campus plan">
+        <img src="images/framework/framework-1.webp" width="1086" height="1350" loading="eager" decoding="async" alt="Sample Groundbreakable Framework page: a data center development concept overview with target capacity, site area, utility service, and a preliminary campus plan">
       </figure>
       <figure class="fw-sample-figure reveal">
         <img src="images/framework/framework-2.webp" width="1182" height="1330" loading="lazy" decoding="async" alt="Sample Groundbreakable Framework page: key elements and details including data hall plan, site section, material palette, campus context, key considerations, and next steps for engineer handoff">
