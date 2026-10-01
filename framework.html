@@ -33,20 +33,13 @@
      (particularly .hero, which the homepage already owns). */
 
   .fw-sample{ padding:clamp(56px,8vw,96px) 32px; }
-  .fw-sample-inner{ max-width:900px; margin:0 auto; }
-  .fw-sample-title{
-    font-family:var(--serif);
-    font-weight:600;
-    font-size:clamp(28px,3.4vw,40px);
-    line-height:1.2;
-    letter-spacing:-0.01em;
-    color:var(--ink);
-    text-align:center;
-    margin:0 0 clamp(32px,5vw,56px);
-  }
+  .fw-sample-inner{ max-width:1500px; margin:0 auto; }
   .fw-sample-figure{ margin:0 0 clamp(32px,5vw,56px); }
   .fw-sample-figure:last-child{ margin-bottom:0; }
   .fw-sample-figure img{ width:100%; height:auto; border-radius:var(--radius-sm); display:block; }
+
+  .btn--white{ background:#FFFFFF; color:var(--ink); border-color:var(--ink-12); box-shadow:none; }
+  .btn--white:hover{ background:var(--paper-soft); }
 </style>
 </head>
 <body>
@@ -66,7 +59,7 @@
 
     <div class="nav__cta">
       <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
-      <a href="get-started.html" class="btn btn--gold btn--sm">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a href="get-started.html" class="btn btn--white btn--sm">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
 
     <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
@@ -78,7 +71,7 @@
     <a href="framework.html">Framework</a>
     <a href="intelligence.html">Intelligence</a>
     <a href="https://app.groundbreakable.com/login" class="btn btn--line" target="_blank" rel="noopener">Sign in</a>
-    <a href="get-started.html" class="btn btn--gold">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    <a href="get-started.html" class="btn btn--white">Start With a Site <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
   </div>
 </header>
 
@@ -87,7 +80,6 @@
   <!-- FRAMEWORK SAMPLE -->
   <section class="fw-sample">
     <div class="fw-sample-inner">
-      <h1 class="fw-sample-title reveal">Groundbreakable Framework</h1>
       <figure class="fw-sample-figure reveal">
         <img src="images/framework/framework-1.webp" width="1086" height="1448" loading="eager" decoding="async" alt="Sample Groundbreakable Framework page: a data center development concept overview with target capacity, site area, utility service, and a preliminary campus plan">
       </figure>
