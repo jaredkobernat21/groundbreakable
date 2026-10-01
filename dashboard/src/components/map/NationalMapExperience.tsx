@@ -6,14 +6,14 @@ import type { CatalystWithSources, Market } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows";
 import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
-import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
+import { CATALYST_STAGE_GROUP, catalystColorGroup, type CatalystColorGroup } from "@/lib/catalystTypeColors";
 import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
 import FiltersPanel, { defaultMapFilters, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
-import DcStageSummaryBar from "./DcStageSummaryBar";
+import CategoryFilterBar from "./CategoryFilterBar";
 
 // National map redesign (Jared, 2026-09-30): "the map should be the
 // product." This is the fixed full-screen overlay that replaces the old
@@ -49,11 +49,11 @@ export default function NationalMapExperience({
 
   const marketById = useMemo(() => new Map(markets.map((m) => [m.id, m])), [markets]);
 
-  // Non-stage filters (time/state/market) apply to every catalyst
-  // regardless of DC stage -- factored out so the live stage counts in
-  // DcStageSummaryBar reflect those narrowing filters without also being
-  // narrowed by the DC-stage checkboxes themselves (a stage pill shouldn't
-  // disappear just because a user unchecked it).
+  // Non-category filters (time/state/market) apply to every catalyst
+  // regardless of category -- factored out so the live category/stage
+  // counts in CategoryFilterBar reflect those narrowing filters without
+  // also being narrowed by the category/stage selection itself (a count
+  // shouldn't change just because a user switched tabs).
   const baseFilteredCatalysts = useMemo(() => {
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -72,15 +72,17 @@ export default function NationalMapExperience({
     });
   }, [catalysts, filters, marketById]);
 
-  // Data Center Refocus: a staged (Possible/Predicted/Planned) catalyst is
-  // primary and gated only by the DC Stage filter (plus, for Planned, the
-  // construction-pipeline sub-filter). An unstaged catalyst is secondary --
-  // hidden entirely unless "Show supporting layers" is on, then gated by
-  // the Supporting Layers type filter.
+  // Data Center Refocus: exactly one category renders at a time. A staged
+  // (Possible/Predicted/Planned) catalyst lives exclusively under the Data
+  // Centers category, gated by the DC Stage filter (plus, for Planned, the
+  // construction-pipeline sub-filter). Every other category shows only
+  // unstaged catalysts matching that category's color group -- a catalyst
+  // never appears under two tabs at once.
   const filteredCatalysts = useMemo(() => {
     return baseFilteredCatalysts.filter((c) => {
       const dcStage = computeDcStage(c);
-      if (dcStage) {
+      if (filters.category === "data_center") {
+        if (!dcStage) return false;
         if (!filters.dcStages.has(dcStage)) return false;
         if (dcStage === "planned") {
           const stageGroup = CATALYST_STAGE_GROUP[c.status];
@@ -88,8 +90,8 @@ export default function NationalMapExperience({
         }
         return true;
       }
-      if (!filters.showSupporting) return false;
-      return filters.types.has(catalystColorGroup(c));
+      if (dcStage) return false;
+      return catalystColorGroup(c) === filters.category;
     });
   }, [baseFilteredCatalysts, filters]);
 
@@ -102,11 +104,21 @@ export default function NationalMapExperience({
     return counts;
   }, [baseFilteredCatalysts]);
 
+  // The active category's own count, for the dropdown button -- counts
+  // every catalyst that would render under the *current* category/stage/
+  // planned-stage selection (time/state/market-filtered), matching
+  // filteredCatalysts.length exactly without recomputing it twice.
+  const categoryCount = filteredCatalysts.length;
+
   function toggleDcStage(stage: DcStage) {
     const next = new Set(filters.dcStages);
     if (next.has(stage)) next.delete(stage);
     else next.add(stage);
     setFilters({ ...filters, dcStages: next });
+  }
+
+  function changeCategory(category: CatalystColorGroup) {
+    setFilters({ ...filters, category });
   }
 
   const selectedCatalyst = catalysts.find((c) => c.id === selectedCatalystId) ?? null;
@@ -183,7 +195,14 @@ export default function NationalMapExperience({
           <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 shrink-0 brightness-0 invert" />
         </div>
 
-        <DcStageSummaryBar counts={dcStageCounts} activeStages={filters.dcStages} onToggleStage={toggleDcStage} />
+        <CategoryFilterBar
+          category={filters.category}
+          onCategoryChange={changeCategory}
+          categoryCount={categoryCount}
+          dcStageCounts={dcStageCounts}
+          activeDcStages={filters.dcStages}
+          onToggleDcStage={toggleDcStage}
+        />
 
         <div className="pointer-events-auto order-3 w-full sm:order-none sm:w-auto sm:flex-1">
           <MapSearch

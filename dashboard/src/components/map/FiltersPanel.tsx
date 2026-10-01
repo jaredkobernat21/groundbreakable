@@ -8,17 +8,20 @@ export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
 const DC_STAGES: DcStage[] = ["possible", "predicted", "planned"];
 
+// Category tab order -- Data Centers first/default, per Jared's "Data
+// Centers should be the clear primary product."
+const CATEGORY_ORDER: CatalystColorGroup[] = ["data_center", "infrastructure", "schools_civic", "housing", "other"];
+
 export type MapFilters = {
-  // Primary: which data-center stages render at all.
+  // Primary: exactly one category renders at a time -- Data Centers is the
+  // product's default lens; Infrastructure/Schools/Housing/Other are
+  // alternate views you switch to, not layers added on top.
+  category: CatalystColorGroup;
+  // Sub-filter of the Data Centers category only -- meaningless for any
+  // other category.
   dcStages: Set<DcStage>;
-  // Secondary: non-DC ("supporting") catalysts are hidden entirely unless
-  // this is on, per Jared's "don't let secondary data dominate by default."
-  showSupporting: boolean;
-  // Sub-filter of the supporting layer only -- meaningless while
-  // showSupporting is false.
-  types: Set<CatalystColorGroup>;
   // Construction-pipeline stage -- only meaningful for Planned (confirmed
-  // data_center) catalysts; everything else ignores it.
+  // data_center) catalysts within the Data Centers category.
   stages: Set<CatalystStageGroup>;
   time: TimeFilter;
   states: Set<string>;
@@ -27,9 +30,8 @@ export type MapFilters = {
 
 export function defaultMapFilters(): MapFilters {
   return {
+    category: "data_center",
     dcStages: new Set(DC_STAGES),
-    showSupporting: false,
-    types: new Set(Object.keys(CATALYST_COLOR_GROUP_LABEL) as CatalystColorGroup[]),
     stages: new Set(Object.keys(CATALYST_STAGE_GROUP_LABEL) as CatalystStageGroup[]),
     time: "all",
     states: new Set(),
@@ -51,12 +53,12 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
   return next;
 }
 
-// Data Center Refocus (Jared, 2026-10-01): "Make these 3 data-center stages
-// the main focus... Primary map filters: Possible, Predicted, Planned.
-// Secondary filters/layers: Power, Land, Fiber, Water, Government, Other
-// major development." This panel is restructured around that split -- DC
-// Stage first and large, everything else collapsed under a single
-// "Show supporting layers" gate so it can't dominate by default.
+// Data Center Refocus (Jared, 2026-10-02): the top-level lens is now a
+// single-select Category (Data Centers default, switchable to
+// Infrastructure/Schools/Housing/Other -- see CategoryFilterBar.tsx for the
+// matching top-nav control), with Possible/Predicted/Planned demoted to a
+// sub-filter that only applies -- and only shows -- while the Data Centers
+// category is active.
 export default function FiltersPanel({
   open,
   onClose,
@@ -86,78 +88,63 @@ export default function FiltersPanel({
         </div>
 
         <section className="mb-6">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Data Center Stage</p>
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Category</p>
           <div className="space-y-1.5">
-            {DC_STAGES.map((stage) => (
-              <label key={stage} className="flex items-center gap-2 text-sm text-white/80">
+            {CATEGORY_ORDER.map((value) => (
+              <label key={value} className="flex items-center gap-2 text-sm text-white/80">
                 <input
-                  type="checkbox"
-                  checked={filters.dcStages.has(stage)}
-                  onChange={() => onChange({ ...filters, dcStages: toggle(filters.dcStages, stage) })}
+                  type="radio"
+                  name="category"
+                  checked={filters.category === value}
+                  onChange={() => onChange({ ...filters, category: value })}
                   className="accent-white"
                 />
-                {DC_STAGE_LABEL[stage]}
+                {CATALYST_COLOR_GROUP_LABEL[value]}
               </label>
             ))}
           </div>
         </section>
 
-        <section className="mb-6 border-t border-white/10 pt-4">
-          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Planned Stage</p>
-          <p className="mb-2 text-[11px] text-white/30">Construction progress, applies only to confirmed Planned data centers.</p>
-          <div className="space-y-1.5">
-            {(Object.entries(CATALYST_STAGE_GROUP_LABEL) as [CatalystStageGroup, string][]).map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 text-sm text-white/70">
-                <input
-                  type="checkbox"
-                  checked={filters.stages.has(value)}
-                  onChange={() => onChange({ ...filters, stages: toggle(filters.stages, value) })}
-                  className="accent-white"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </section>
+        {filters.category === "data_center" && (
+          <>
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Data Center Stage</p>
+              <div className="space-y-1.5">
+                {DC_STAGES.map((stage) => (
+                  <label key={stage} className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.dcStages.has(stage)}
+                      onChange={() => onChange({ ...filters, dcStages: toggle(filters.dcStages, stage) })}
+                      className="accent-white"
+                    />
+                    {DC_STAGE_LABEL[stage]}
+                  </label>
+                ))}
+              </div>
+            </section>
 
-        <section className="mb-6 border-t border-white/10 pt-4">
-          <label className="flex items-center gap-2 text-sm font-medium text-white">
-            <input
-              type="checkbox"
-              checked={filters.showSupporting}
-              onChange={() => onChange({ ...filters, showSupporting: !filters.showSupporting })}
-              className="accent-white"
-            />
-            Show supporting infrastructure &amp; other development
-          </label>
-          <p className="mt-1 text-[11px] text-white/30">
-            Power, land, fiber, water, schools, housing, and other context data that helps explain why a location
-            is Possible, Predicted, or Planned.
-          </p>
-        </section>
-
-        {filters.showSupporting && (
-          <section className="mb-6">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Supporting Layers</p>
-            <div className="space-y-1.5">
-              {(Object.entries(CATALYST_COLOR_GROUP_LABEL) as [CatalystColorGroup, string][])
-                .filter(([value]) => value !== "data_center")
-                .map(([value, label]) => (
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Planned Stage</p>
+              <p className="mb-2 text-[11px] text-white/30">Construction progress, applies only to confirmed Planned data centers.</p>
+              <div className="space-y-1.5">
+                {(Object.entries(CATALYST_STAGE_GROUP_LABEL) as [CatalystStageGroup, string][]).map(([value, label]) => (
                   <label key={value} className="flex items-center gap-2 text-sm text-white/70">
                     <input
                       type="checkbox"
-                      checked={filters.types.has(value)}
-                      onChange={() => onChange({ ...filters, types: toggle(filters.types, value) })}
+                      checked={filters.stages.has(value)}
+                      onChange={() => onChange({ ...filters, stages: toggle(filters.stages, value) })}
                       className="accent-white"
                     />
                     {label}
                   </label>
                 ))}
-            </div>
-          </section>
+              </div>
+            </section>
+          </>
         )}
 
-        <section className="mb-6">
+        <section className="mb-6 border-t border-white/10 pt-4">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Time</p>
           <div className="space-y-1.5">
             {TIME_OPTIONS.map((opt) => (

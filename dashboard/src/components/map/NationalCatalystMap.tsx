@@ -182,14 +182,17 @@ const NationalCatalystMap = forwardRef<
 
       catalysts.forEach((catalyst) => {
         const dcStage = computeDcStage(catalyst);
-        // Data Center Refocus: a staged catalyst's color comes from the DC
-        // Stage ramp (possible/predicted/planned), not the old flat
-        // type-group palette -- that palette is now reserved for
-        // unstaged supporting-layer dots, rendered smaller and dimmer so
-        // they read as context, not peers.
+        // Data Center Refocus: exactly one category renders at a time (see
+        // NationalMapExperience's filteredCatalysts), so every marker here
+        // is a full-prominence member of whichever category is active --
+        // no more "dim supporting layer shown alongside the primary one."
+        // A staged catalyst's color comes from the DC Stage ramp
+        // (possible/predicted/planned) instead of the flat type-group
+        // palette; Possible renders slightly smaller/softer than
+        // Predicted/Planned since it's the earliest, least-certain signal.
         const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
         const size = dcStage === "possible" ? 18 : CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
-        const baseOpacity = dcStage ? (dcStage === "possible" ? 0.85 : 1) : 0.45;
+        const baseOpacity = dcStage === "possible" ? 0.85 : 1;
         const isSelected = catalyst.id === selectedCatalystId;
 
         const el = document.createElement("div");
