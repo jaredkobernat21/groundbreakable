@@ -1,0 +1,82 @@
+-- Columbus, OH "Potential Data Center Site" research pass (2026-10-02),
+-- same exercise as the Kansas City (20261002090000) and Nashville
+-- (20261002100000) passes. NO STATEMENTS IN THIS FILE -- this is a
+-- documentation-only record of a pass that found zero qualifying
+-- candidates, kept as a migration file purely so the research and its
+-- reasoning survive in the same place every other pass's findings do.
+-- Safe to apply (a no-op) or to simply never run.
+--
+-- THE FINDING: unlike Kansas City (3 conversions) and even Nashville (1
+-- conversion, honestly conservative), Columbus/central Ohio produced
+-- ZERO new Potential candidates. This is not a weaker research effort --
+-- it's the correct, honest outcome. Ohio is in the middle of the most
+-- intense, most saturated data-center boom-and-backlash cycle of any
+-- market checked this session: as of September 2026, at least 136-138
+-- Ohio municipalities and townships have active data-center moratoriums,
+-- 23+ have enacted outright bans, and 23+ more across 7 counties are
+-- actively considering one (Ohio Capital Journal, 2026-09-18:
+-- https://ohiocapitaljournal.com/2026/09/18/ohio-now-has-over-125-active-moratoriums-on-data-centers-see-where-they-are/).
+-- Every single county checked in the broader Columbus MSA beyond the
+-- already-logged New Albany/Licking County cluster turned out to be
+-- disqualified by one of exactly two things -- confirmed activity, or a
+-- moratorium that itself exists BECAUSE of a real, named local project --
+-- never a clean "strong fundamentals, zero known activity" site:
+--
+--   - FAIRFIELD COUNTY: Vantage Data Centers' $2.1B, ~500-acre, up-to-
+--     800MW Millersport campus (SR 204 & SR 37) is already under
+--     construction (NBC4i, 2026, "$2.1 billion Vantage data center
+--     announced for Fairfield County"); a second project (Patmos) is
+--     separately converting a former Walmart into a 20MW AI data center
+--     in the same county. Fairfield Township (a different township in the
+--     same county) separately passed its own 6-month moratorium
+--     specifically to get ahead of pressure like this (Journal-News,
+--     "Fairfield Twp. imposes 6-month moratorium on data centers").
+--     Confirmed activity -- not Potential.
+--   - DELAWARE COUNTY: Cologix is spending $1.1B+ on new campuses in
+--     Delaware and Licking counties (Orange Township and Johnstown,
+--     announced June 2026), on top of 4 already-operating facilities
+--     (Centersquare Columbus CMH1, Expedient Lewis Center CMH3, plus
+--     others) -- source: columbusregion.com's Cologix press release and
+--     the Delaware Source's coverage of an Orange Township project
+--     approved "before Ohio's tax-break pause." Confirmed activity -- not
+--     Potential.
+--   - UNION COUNTY: passed its own emergency data-center moratorium
+--     through July 2027 in June 2026; Jerome Township's earlier (Sept.
+--     2025) moratorium already expired, and data centers are now in
+--     active development there under new land-use restrictions passed
+--     March 2026. Active, named pursuits already underway -- not
+--     Potential.
+--   - PICKAWAY COUNTY: real, mounting speculation over a rumored
+--     400-acre "tech-ready" site near Rickenbacker International Airport
+--     tied to potential data-center expansion (Scioto Post, "Mystery
+--     Over 400-Acre 'Tech-Ready' Site in Pickaway County Deepens"); a
+--     village in the county separately enacted its own 180-day
+--     data-center pause after public pushback (NBC4i). Either a named,
+--     real candidate project or an active local backlash -- neither is
+--     Potential's "zero known activity" bar.
+--   - MADISON COUNTY: a Sentinel Data Centers project in West Jefferson
+--     was proposed and then cancelled, and the county reportedly has
+--     other parcels "under quiet review" for similar use -- real,
+--     specific prior/ongoing activity, not an activity-free site.
+--   - FRANKLIN COUNTY (outside the already-logged New Albany cluster):
+--     Grove City passed a 12-month data-center moratorium in June 2026 --
+--     triggered directly by a real, named 310-acre proposal from
+--     Headwaters Site Development (working with Stream Data Centers)
+--     (Spectrum News 1, NBC4i, citizenportal.ai coverage). Neighboring
+--     Jackson Township and Pleasant Township (both unincorporated
+--     southwestern Franklin County, around Grove City) each separately
+--     passed their own moratoriums the same year. A real, named project
+--     triggered all three -- not a clean Potential site.
+--
+-- No market-area in the Columbus MSA was found with the combination
+-- Potential requires: genuinely strong power/land/fiber/approval
+-- fundamentals AND a verified absence of any data-center-specific
+-- activity or reaction. Every candidate was disqualified by real,
+-- sourced evidence, not by assumption -- consistent with "quality over
+-- quantity" and the instruction to say so plainly rather than force a
+-- weak pin into an already fully-mapped, fully-contested region.
+--
+-- No changes made to any existing columbus-oh catalyst in this pass --
+-- unlike Kansas City and Nashville, Columbus had no pre-existing
+-- `rumored`+`signal_categories`-tagged rows to evaluate for
+-- reclassification, so this was pure fresh-candidate research only.
