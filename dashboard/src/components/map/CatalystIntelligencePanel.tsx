@@ -14,7 +14,19 @@ import {
   DC_STAGE_LABEL,
   nearbySupportingCatalysts,
 } from "@/lib/catalysts/dcStage";
-import { POTENTIAL_SITE_FACTOR_LABEL, POTENTIAL_SITE_FACTOR_WEIGHT } from "@/lib/catalysts/potentialSiteCriteria";
+import {
+  APPROVAL_PILLAR_LABEL,
+  CITY_RECEPTIVENESS_LABEL,
+  COMMUNITY_FRICTION_LABEL,
+  ENTITLEMENT_VELOCITY_LABEL,
+  PILLAR_STRENGTH_LABEL,
+  POTENTIAL_SITE_FACTOR_LABEL,
+  POTENTIAL_SITE_FACTOR_WEIGHT,
+  POTENTIAL_SITE_PILLAR_FACTORS,
+  UTILITY_TIMELINE_LABEL,
+  type PotentialSitePillar,
+} from "@/lib/catalysts/potentialSiteCriteria";
+import type { PotentialScoreComponent } from "@/lib/types";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
@@ -66,6 +78,21 @@ export function CatalystDetails({
     dcStage === "planned" && catalyst.date_announced != null && new Date(catalyst.date_announced).getTime() > new Date(catalyst.created_at).getTime();
   const watching = dcStage ? nearbySupportingCatalysts(catalyst, allCatalysts) : [];
 
+  // Groups the underlying 8-factor score breakdown under each of the 4
+  // card-level pillars, purely for the "expand into supporting details"
+  // view -- POTENTIAL_SITE_PILLAR_FACTORS is the single source of truth
+  // for which factor belongs under which pillar.
+  const potentialComponentsByPillar: Record<PotentialSitePillar, PotentialScoreComponent[]> = { power: [], site: [], approval: [], infrastructure: [] };
+  if (catalyst.potential_score_components) {
+    for (const component of catalyst.potential_score_components) {
+      for (const pillar of Object.keys(POTENTIAL_SITE_PILLAR_FACTORS) as PotentialSitePillar[]) {
+        if (POTENTIAL_SITE_PILLAR_FACTORS[pillar].includes(component.key)) {
+          potentialComponentsByPillar[pillar].push(component);
+        }
+      }
+    }
+  }
+
   return (
     <>
       <div
@@ -87,47 +114,132 @@ export function CatalystDetails({
       {dcStage === "potential" && (
         <div className="mt-4 border-t border-white/10 pt-4">
           {catalyst.potential_score != null && (
-            <div className="mb-3">
+            <div className="mb-4">
               <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Potential Score</p>
-              <p className="text-sm font-medium text-white">{catalyst.potential_score} / 100</p>
+              <p className="text-lg font-semibold text-white">{catalyst.potential_score} / 100</p>
             </div>
           )}
-          {catalyst.potential_score_components && catalyst.potential_score_components.length > 0 && (
-            <ul className="mb-3 space-y-1 text-xs text-white/60">
-              {catalyst.potential_score_components.map((c) => (
-                <li key={c.key} className="flex justify-between gap-2">
-                  <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
-                  <span className="shrink-0 text-white/40">
-                    {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
           {catalyst.opportunity_area && (
-            <div className="mb-3">
+            <div className="mb-4">
               <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Opportunity Area</p>
               <p className="text-sm text-white/70">{catalyst.opportunity_area}</p>
             </div>
           )}
-          {([
-            ["Power", catalyst.power_notes],
-            ["Fiber", catalyst.fiber_notes],
-            ["Land", catalyst.land_notes],
-            ["Incentives", catalyst.incentives_notes],
-            ["Development Environment", catalyst.development_environment_notes],
-            ["Risks", catalyst.risk_notes],
-          ] as const).map(
-            ([label, value]) =>
-              value && (
-                <div key={label} className="mb-3">
-                  <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">{label}</p>
-                  <p className="text-sm leading-relaxed text-white/70">{value}</p>
+
+          {/* 4 scannable pillars (Jared's 2026-10-02 clarification: keep the
+              map simple, push Approval/Infrastructure depth in here instead
+              of new top-level categories), each expandable into supporting
+              detail -- never shown unless the underlying label is actually
+              on file, so an unscored pillar doesn't render as a false "Unknown". */}
+          <div className="space-y-2">
+            {catalyst.power_pillar_label && (
+              <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                  <span>Power</span>
+                  <span className="text-white/60">{PILLAR_STRENGTH_LABEL[catalyst.power_pillar_label]}</span>
+                </summary>
+                <div className="mt-2 space-y-2 text-sm text-white/70">
+                  {catalyst.power_notes && <p className="leading-relaxed">{catalyst.power_notes}</p>}
+                  {potentialComponentsByPillar.power.map((c) => (
+                    <div key={c.key} className="flex justify-between text-xs text-white/50">
+                      <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
+                      <span>
+                        {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              )
-          )}
+              </details>
+            )}
+
+            {catalyst.site_pillar_label && (
+              <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                  <span>Site</span>
+                  <span className="text-white/60">{PILLAR_STRENGTH_LABEL[catalyst.site_pillar_label]}</span>
+                </summary>
+                <div className="mt-2 space-y-2 text-sm text-white/70">
+                  {([
+                    ["Land / Expansion", catalyst.land_notes],
+                    ["Fiber", catalyst.fiber_notes],
+                    ["Environmental / Physical Risk", catalyst.risk_notes],
+                  ] as const).map(
+                    ([label, value]) =>
+                      value && (
+                        <p key={label} className="leading-relaxed">
+                          <span className="text-white/40">{label}: </span>
+                          {value}
+                        </p>
+                      )
+                  )}
+                  {potentialComponentsByPillar.site.map((c) => (
+                    <div key={c.key} className="flex justify-between text-xs text-white/50">
+                      <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
+                      <span>
+                        {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+
+            {catalyst.approval_pillar_label && (
+              <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                  <span>Approval</span>
+                  <span className="text-white/60">{APPROVAL_PILLAR_LABEL[catalyst.approval_pillar_label]}</span>
+                </summary>
+                <div className="mt-2 space-y-2 text-sm text-white/70">
+                  {catalyst.entitlement_velocity && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">Entitlement Velocity — {ENTITLEMENT_VELOCITY_LABEL[catalyst.entitlement_velocity]}: </span>
+                      {catalyst.entitlement_velocity_notes}
+                    </p>
+                  )}
+                  {catalyst.city_receptiveness && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">City Receptiveness — {CITY_RECEPTIVENESS_LABEL[catalyst.city_receptiveness]}: </span>
+                      {catalyst.city_receptiveness_notes}
+                    </p>
+                  )}
+                  {catalyst.community_friction && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">Community Friction — {COMMUNITY_FRICTION_LABEL[catalyst.community_friction]}: </span>
+                      {catalyst.community_friction_notes}
+                    </p>
+                  )}
+                  {catalyst.incentives_notes && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">Incentives: </span>
+                      {catalyst.incentives_notes}
+                    </p>
+                  )}
+                  {catalyst.development_environment_notes && <p className="leading-relaxed">{catalyst.development_environment_notes}</p>}
+                </div>
+              </details>
+            )}
+
+            {catalyst.utility_timeline && (
+              <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                  <span>Infrastructure</span>
+                  <span className="text-white/60">{UTILITY_TIMELINE_LABEL[catalyst.utility_timeline]}</span>
+                </summary>
+                <div className="mt-2 space-y-2 text-sm text-white/70">
+                  {catalyst.utility_timeline_notes && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">Utility Timeline: </span>
+                      {catalyst.utility_timeline_notes}
+                    </p>
+                  )}
+                </div>
+              </details>
+            )}
+          </div>
+
           {catalyst.unknowns_to_verify.length > 0 && (
-            <div className="mb-3">
+            <div className="mt-4">
               <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Unknowns to Verify</p>
               <ul className="space-y-1 text-sm text-white/70">
                 {catalyst.unknowns_to_verify.map((u, i) => (

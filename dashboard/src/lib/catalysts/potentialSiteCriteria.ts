@@ -124,6 +124,104 @@ export const POTENTIAL_SITE_FACTOR_CHECKLIST: Record<PotentialSiteFactorKey, str
   ],
 };
 
+// Card-level pillar organization (Jared's clarification, 2026-10-02, same
+// day as the type's creation): the map stays simple (Potential/Possible/
+// Planned only, no new top-level categories) -- Approval and Infrastructure
+// depth live INSIDE every Potential site's profile as 2 of 4 scannable
+// pillars, not as new map layers. The 8 factors above are still the
+// underlying weighted scoring detail ("supporting details" a pillar
+// expands into); this map groups them for display purposes only, no
+// change to POTENTIAL_SITE_FACTOR_WEIGHT.
+export type PotentialSitePillar = "power" | "site" | "approval" | "infrastructure";
+
+export const POTENTIAL_SITE_PILLAR_LABEL: Record<PotentialSitePillar, string> = {
+  power: "Power",
+  site: "Site",
+  approval: "Approval",
+  infrastructure: "Infrastructure",
+};
+
+// Which of the 8 underlying factors each pillar's "expand for details"
+// view shows. transportation_workforce sits under Site (its own checklist
+// already includes "strong road access") rather than Infrastructure --
+// Infrastructure here is specifically delivery/timeline feasibility
+// (utility interconnection process, large-load timelines), not site-level
+// road/transit access.
+export const POTENTIAL_SITE_PILLAR_FACTORS: Record<PotentialSitePillar, PotentialSiteFactorKey[]> = {
+  power: ["power_grid"],
+  site: ["land_expansion", "fiber_connectivity", "water_cooling", "physical_environmental_risk", "transportation_workforce"],
+  approval: ["government_incentives", "development_entitlement"],
+  infrastructure: [],
+};
+
+// Power/Site pillar rollups -- a holistic word a researcher assigns from
+// the underlying evidence, same "don't use unless the research justifies
+// it" discipline as every other label here.
+export type PillarStrength = "strong" | "moderate" | "weak" | "unknown";
+export const PILLAR_STRENGTH_LABEL: Record<PillarStrength, string> = {
+  strong: "Strong",
+  moderate: "Moderate",
+  weak: "Weak",
+  unknown: "Unknown",
+};
+
+// Approval pillar -- "now a major factor" per Jared's clarification.
+// Researched against comparable major industrial/infrastructure/
+// manufacturing/warehouse/energy projects in the same jurisdiction, never
+// predicted without evidence.
+export type EntitlementVelocity = "favorable" | "moderate" | "difficult" | "unknown";
+export const ENTITLEMENT_VELOCITY_LABEL: Record<EntitlementVelocity, string> = {
+  favorable: "Favorable",
+  moderate: "Moderate",
+  difficult: "Difficult",
+  unknown: "Unknown",
+};
+
+export type CityReceptiveness = "high" | "moderate" | "low" | "unknown";
+export const CITY_RECEPTIVENESS_LABEL: Record<CityReceptiveness, string> = {
+  high: "High",
+  moderate: "Moderate",
+  low: "Low",
+  unknown: "Unknown",
+};
+
+// Never predict community reaction without evidence -- 'unknown' is the
+// honest default, not an assumption of support or opposition either way.
+export type CommunityFriction = "low" | "moderate" | "high" | "unknown";
+export const COMMUNITY_FRICTION_LABEL: Record<CommunityFriction, string> = {
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+  unknown: "Unknown",
+};
+
+// Approval's card-level rollup is its OWN field (not a mechanical
+// combination of the three above) -- a site can be High receptiveness and
+// High friction at once, and only a researcher synthesizing both can
+// assign one honest overall word.
+export type ApprovalPillarLabel = "favorable" | "moderate" | "difficult" | "unknown";
+export const APPROVAL_PILLAR_LABEL: Record<ApprovalPillarLabel, string> = {
+  favorable: "Favorable",
+  moderate: "Moderate",
+  difficult: "Difficult",
+  unknown: "Unknown",
+};
+
+// Infrastructure pillar -- delivery/timeline feasibility specifically
+// (utility interconnection process, published large-load timelines,
+// historical delivery timelines, transmission/substation requirements,
+// water/sewer/road/fiber extension, nearby infrastructure projects).
+// Utility Timeline IS this pillar's card-level headline label -- no
+// separate infrastructure_pillar_label column exists (see migration
+// 20261002080000's comment for why).
+export type UtilityTimeline = "favorable" | "moderate" | "long" | "unknown";
+export const UTILITY_TIMELINE_LABEL: Record<UtilityTimeline, string> = {
+  favorable: "Favorable",
+  moderate: "Moderate",
+  long: "Long",
+  unknown: "Unknown",
+};
+
 // Mirrors CatalystScoreComponent's shape (lib/catalysts/score.ts) for
 // consistency, but this is a SEPARATE scoring system with its own rubric --
 // never conflate potential_score with catalyst_score.

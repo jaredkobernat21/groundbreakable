@@ -243,10 +243,58 @@ elsewhere). **Never display false precision** -- a factor with no real evidence 
 a populated list of unknowns, not a guessed number. Record evidence and unknowns per factor
 (`PotentialScoreComponent`), not just a final number with no paper trail.
 
+### The card: 4 pillars, not 8 factors (Jared's clarification, same day)
+
+The map itself stays simple -- **Potential / Possible / Planned**, nothing more, no new top-level
+categories for entitlement, community opposition, city approval, or utility timelines. Those
+become evaluation factors **inside** every Potential site's profile instead. When someone opens a
+Potential site, the card leads with the **Potential Score** (e.g. "87/100"), then four scannable
+pillars, each expandable into supporting detail:
+
+- **Power** -- `power_pillar_label` (`strong`/`moderate`/`weak`/`unknown`) + `power_notes`.
+- **Site** -- `site_pillar_label` (`strong`/`moderate`/`weak`/`unknown`) + `land_notes` (Land /
+  Expansion), `fiber_notes` (Fiber), `risk_notes` (Environmental / Physical Risk).
+- **Approval** -- `approval_pillar_label` (`favorable`/`moderate`/`difficult`/`unknown`, a
+  holistic judgment, not a mechanical rollup) + three independently-evaluated sub-signals:
+  - `entitlement_velocity` (`favorable`/`moderate`/`difficult`/`unknown`) + `entitlement_velocity_notes`
+    -- researched against comparable major industrial/infrastructure/manufacturing/warehouse/energy
+    project timelines in that jurisdiction (rezoning, CUP, planning commission, council, annexation,
+    development-agreement timelines; frequency of delays/continuances; whether expedited review
+    exists; historical approval rates).
+  - `city_receptiveness` (`high`/`moderate`/`low`/`unknown`) + `city_receptiveness_notes` --
+    documented evidence of city support for major investment (incentives offered, public statements,
+    infrastructure investment, industrial recruitment, supportive planning policy). A city actively
+    recruiting data centers *specifically* is a yellow flag for Potential, not a clean receptiveness
+    signal -- investigate further before assuming it's just posture.
+  - `community_friction` (`low`/`moderate`/`high`/`unknown`) + `community_friction_notes` --
+    documented public-hearing opposition, petitions, organized resistance, lawsuits/appeals, repeated
+    controversy around comparable major projects (power infrastructure, industrial uses, warehouses,
+    substations, manufacturing). **Never predict community reaction without evidence** -- `unknown`
+    is the honest default when evidence is thin, not an assumed "low" or "high."
+  - `incentives_notes` and `development_environment_notes` (zoning, comprehensive plan, annexation
+    feasibility, permitting specifics) round out the Approval pillar's supporting detail.
+- **Infrastructure** -- delivery/timeline feasibility specifically (utility interconnection
+  process, published or historical large-load delivery timelines, transmission/substation
+  requirements, water/sewer/road/fiber extension, nearby infrastructure projects) -- distinct from
+  Power (does capacity exist at all) and Site (the parcel's own characteristics). Its card-level
+  label IS `utility_timeline` (`favorable`/`moderate`/`long`/`unknown`) + `utility_timeline_notes`
+  -- no separate rollup column, since Jared's spec names Utility Timeline as this pillar's one
+  headline metric. **Never invent a delivery date or capacity figure** -- only state a numerical
+  timeline when a real source documents one.
+
+Every label above is a categorical, evidence-backed judgment a researcher assigns -- never
+mechanically derived, never asserted without evidence, and `unknown` is always an honest, expected
+answer when the research genuinely didn't turn up enough to say more. The underlying 8-factor
+scoring detail (`POTENTIAL_SITE_PILLAR_FACTORS` in `lib/catalysts/potentialSiteCriteria.ts`) still
+feeds the 0-100 `potential_score`/`potential_score_components` and renders as each pillar's
+"supporting details" on expand -- the 4-pillar card is a display/organization layer on top of that
+scoring, not a replacement for it.
+
 ### What every Potential write-up must include
 
 Store on the `catalysts` row (columns added in
-`20261002070000_add_potential_data_center_site_catalyst_type.sql`, meaningful only for
+`20261002070000_add_potential_data_center_site_catalyst_type.sql` and
+`20261002080000_add_potential_site_approval_infrastructure_pillars.sql`, meaningful only for
 `catalyst_type = 'prospective_data_center_site'`):
 
 - **Location** -- `address` (city/county/state).
@@ -256,15 +304,8 @@ Store on the `catalysts` row (columns added in
   breakdown).
 - **Why It Stands Out** -- `why_it_matters`: 2-4 concise sentences on why this could make sense as
   a future data-center location (reuses the field every other catalyst type already has).
-- **Power** -- `power_notes`: known transmission, substations, generation, utility territory,
-  expansion indicators -- clearly distinguishing infrastructure from confirmed available capacity.
-- **Fiber** -- `fiber_notes`: known carriers/routes/connectivity where available.
-- **Land** -- `land_notes`: approximate acreage and expansion characteristics.
-- **Incentives** -- `incentives_notes`: relevant state/local incentives.
-- **Development Environment** -- `development_environment_notes`: zoning, industrial
-  compatibility, permitting environment, government posture.
-- **Risks** -- `risk_notes`: flood, environmental, utility, entitlement, community, or
-  infrastructure concerns.
+- **The 4 pillars** -- see above: Power, Site, Approval (+ its 3 sub-signals), Infrastructure
+  (Utility Timeline).
 - **Unknowns to Verify** -- `unknowns_to_verify`: an explicit list of what still needs utility,
   fiber, engineering, environmental, or jurisdictional confirmation. A Potential row with an empty
   list hasn't actually been researched -- every real write-up should have some.
@@ -274,9 +315,19 @@ Store on the `catalysts` row (columns added in
 - **Sources and date researched** -- `source_id`/`additional_source_ids` + `last_verified_at`, same
   as every other catalyst.
 
+A Potential site should **not** qualify simply because it has vacant land near transmission lines --
+the best Potential sites are places where Power + Site + Approval + Infrastructure all align
+*before* any known data-center project appears, not just one favorable factor among several unknowns.
+
 Groundbreakable should never claim a Potential location is a confirmed data-center site. The point
 is surfacing places worth additional investigation because the fundamentals align with major
 site-selection requirements -- nothing more.
+
+**Future filtering** (not yet built, per Jared's 2026-10-02 note: "allow Potential results to
+eventually be filtered by attributes such as" Strong Power, Fast/Favorable Approvals, Low Community
+Friction, Favorable Utility Timeline, Strong Incentives, Large Land, Strong Fiber) -- the columns
+above already carry exactly the categorical values such a filter would read; no schema changes
+should be needed when that UI gets built, just a filter control reading these same fields.
 
 ## Potential Data Center — Priority #1 is power
 

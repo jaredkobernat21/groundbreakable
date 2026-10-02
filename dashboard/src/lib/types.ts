@@ -411,6 +411,16 @@ export type PotentialScoreComponent = {
   unknowns: string[];
 };
 
+// Mirrors lib/catalysts/potentialSiteCriteria.ts's Approval/Infrastructure
+// pillar vocabulary (Jared's 2026-10-02 same-day clarification) -- see that
+// file for the full evaluation guidance behind each label.
+export type PillarStrength = "strong" | "moderate" | "weak" | "unknown";
+export type EntitlementVelocity = "favorable" | "moderate" | "difficult" | "unknown";
+export type CityReceptiveness = "high" | "moderate" | "low" | "unknown";
+export type CommunityFriction = "low" | "moderate" | "high" | "unknown";
+export type ApprovalPillarLabel = "favorable" | "moderate" | "difficult" | "unknown";
+export type UtilityTimeline = "favorable" | "moderate" | "long" | "unknown";
+
 export type Catalyst = {
   id: string;
   market_id: string;
@@ -472,6 +482,19 @@ export type Catalyst = {
   risk_notes: string | null;
   unknowns_to_verify: string[];
   why_still_potential: string | null;
+  // Approval/Infrastructure pillar fields (2026-10-02 clarification) --
+  // meaningful only when catalyst_type === 'prospective_data_center_site'.
+  power_pillar_label: PillarStrength | null;
+  site_pillar_label: PillarStrength | null;
+  approval_pillar_label: ApprovalPillarLabel | null;
+  entitlement_velocity: EntitlementVelocity | null;
+  entitlement_velocity_notes: string | null;
+  city_receptiveness: CityReceptiveness | null;
+  city_receptiveness_notes: string | null;
+  community_friction: CommunityFriction | null;
+  community_friction_notes: string | null;
+  utility_timeline: UtilityTimeline | null;
+  utility_timeline_notes: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
