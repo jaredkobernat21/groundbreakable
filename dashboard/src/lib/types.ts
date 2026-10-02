@@ -309,8 +309,17 @@ export type CatalystType =
   | "data_center"
   // Deliberately distinct from 'data_center' -- an unconfirmed investigation
   // in progress (see lib/catalysts/dataCenterSignal.ts), never conflated
-  // with a confirmed project. See CATALYST_SIGNAL_BIBLE.md.
+  // with a confirmed project. See CATALYST_SIGNAL_BIBLE.md. UI label calls
+  // this "Possible" (Jared's 2026-10-02 3-tier naming) -- the DB value
+  // itself is unchanged for backward compatibility; don't be misled by the
+  // word "potential" in the column value, it means an ACTIVE signal, not
+  // the separate 'prospective_data_center_site' type below.
   | "potential_data_center"
+  // Strong underlying fundamentals (power, land, fiber, incentives,
+  // entitlement feasibility) with NO known data-center activity -- the
+  // genuinely new third tier, UI-labeled "Potential". See
+  // lib/catalysts/potentialSiteCriteria.ts for the full scoring rubric.
+  | "prospective_data_center_site"
   | "housing_development"
   | "industrial_logistics"
   | "incentive_district"
@@ -323,8 +332,9 @@ export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
   institutional: "Institutional",
   public_facility: "Public Facility",
   mixed_use_anchor: "Mixed-Use Anchor",
-  data_center: "Data Center (confirmed)",
-  potential_data_center: "Potential Data Center (unconfirmed)",
+  data_center: "Data Center (confirmed / Planned)",
+  potential_data_center: "Possible Data Center (unconfirmed signal)",
+  prospective_data_center_site: "Potential Data Center Site (strong fundamentals, no known activity)",
   housing_development: "Housing Development",
   industrial_logistics: "Industrial / Logistics",
   incentive_district: "Incentive / TIF District",
@@ -381,6 +391,26 @@ export type DataCenterSignalCategory =
 
 export type DataCenterSignalConfidence = "low" | "medium" | "high" | "very_high";
 
+// Mirrors lib/catalysts/potentialSiteCriteria.ts (this file stays
+// import-free, same convention as DataCenterSignalCategory/Confidence
+// above mirroring dataCenterSignal.ts rather than importing it).
+export type PotentialSiteFactorKey =
+  | "power_grid"
+  | "land_expansion"
+  | "fiber_connectivity"
+  | "government_incentives"
+  | "development_entitlement"
+  | "physical_environmental_risk"
+  | "water_cooling"
+  | "transportation_workforce";
+
+export type PotentialScoreComponent = {
+  key: PotentialSiteFactorKey;
+  points: number;
+  evidence: string[];
+  unknowns: string[];
+};
+
 export type Catalyst = {
   id: string;
   market_id: string;
@@ -428,6 +458,20 @@ export type Catalyst = {
   // Quantified power/load figure (MW) from a utility/RTO/regulator source,
   // when publicly stated -- drives the MW-threshold confidence tiers.
   power_load_mw: number | null;
+  // Potential Data Center Site fields (lib/catalysts/potentialSiteCriteria.ts)
+  // -- meaningful only when catalyst_type === 'prospective_data_center_site';
+  // empty/null otherwise. A separate scoring system from catalyst_score.
+  potential_score: number | null;
+  potential_score_components: PotentialScoreComponent[] | null;
+  opportunity_area: string | null;
+  power_notes: string | null;
+  fiber_notes: string | null;
+  land_notes: string | null;
+  incentives_notes: string | null;
+  development_environment_notes: string | null;
+  risk_notes: string | null;
+  unknowns_to_verify: string[];
+  why_still_potential: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

@@ -14,6 +14,7 @@ import {
   DC_STAGE_LABEL,
   nearbySupportingCatalysts,
 } from "@/lib/catalysts/dcStage";
+import { POTENTIAL_SITE_FACTOR_LABEL, POTENTIAL_SITE_FACTOR_WEIGHT } from "@/lib/catalysts/potentialSiteCriteria";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
@@ -82,6 +83,68 @@ export function CatalystDetails({
       {catalyst.address && <div className="mt-1 text-sm text-white/40">{catalyst.address}</div>}
 
       {dcStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{DC_STAGE_HEADLINE[dcStage]}</p>}
+
+      {dcStage === "potential" && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          {catalyst.potential_score != null && (
+            <div className="mb-3">
+              <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Potential Score</p>
+              <p className="text-sm font-medium text-white">{catalyst.potential_score} / 100</p>
+            </div>
+          )}
+          {catalyst.potential_score_components && catalyst.potential_score_components.length > 0 && (
+            <ul className="mb-3 space-y-1 text-xs text-white/60">
+              {catalyst.potential_score_components.map((c) => (
+                <li key={c.key} className="flex justify-between gap-2">
+                  <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
+                  <span className="shrink-0 text-white/40">
+                    {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {catalyst.opportunity_area && (
+            <div className="mb-3">
+              <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Opportunity Area</p>
+              <p className="text-sm text-white/70">{catalyst.opportunity_area}</p>
+            </div>
+          )}
+          {([
+            ["Power", catalyst.power_notes],
+            ["Fiber", catalyst.fiber_notes],
+            ["Land", catalyst.land_notes],
+            ["Incentives", catalyst.incentives_notes],
+            ["Development Environment", catalyst.development_environment_notes],
+            ["Risks", catalyst.risk_notes],
+          ] as const).map(
+            ([label, value]) =>
+              value && (
+                <div key={label} className="mb-3">
+                  <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">{label}</p>
+                  <p className="text-sm leading-relaxed text-white/70">{value}</p>
+                </div>
+              )
+          )}
+          {catalyst.unknowns_to_verify.length > 0 && (
+            <div className="mb-3">
+              <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Unknowns to Verify</p>
+              <ul className="space-y-1 text-sm text-white/70">
+                {catalyst.unknowns_to_verify.map((u, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-white/30">—</span>
+                    {u}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="mt-3 text-xs italic text-white/40">
+            {catalyst.why_still_potential ??
+              "No credible public evidence was identified indicating that a data center is currently proposed, planned, or being pursued at this location."}
+          </p>
+        </div>
+      )}
 
       {dcStage === "possible" && (
         <div className="mt-4 border-t border-white/10 pt-4">

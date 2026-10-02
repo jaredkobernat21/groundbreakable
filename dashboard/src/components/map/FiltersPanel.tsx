@@ -6,7 +6,7 @@ import { DC_STAGE_LABEL, type DcStage } from "@/lib/catalysts/dcStage";
 
 export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
-const DC_STAGES: DcStage[] = ["possible", "planned"];
+const DC_STAGES: DcStage[] = ["potential", "possible", "planned"];
 
 // "all" sits outside CatalystColorGroup (that type stays a strict
 // CatalystType->color mapping used for marker styling) -- it's a filter-only

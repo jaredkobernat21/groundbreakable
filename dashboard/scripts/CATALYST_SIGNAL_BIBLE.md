@@ -1,5 +1,33 @@
 # Catalyst Signal Bible
 
+## Naming note (2026-10-02) -- read this before anything else below
+
+The Data Center stage model is now **three** tiers, not two: **Potential → Possible → Planned**.
+This section only exists because the DB column value `potential_data_center` and the new UI label
+"Potential" are NOT the same thing, and conflating them will cause real mistakes:
+
+- **Planned** -- `catalyst_type = 'data_center'`. A confirmed project.
+- **Possible** -- everything the rest of this doc originally called "Possible" or "Potential Data
+  Center," unchanged in meaning: `catalyst_type = 'potential_data_center'` (an *active, forming*
+  signal investigation -- land assembly, a substation being built now, an LLC land purchase) OR any
+  other catalyst_type carrying at least one tagged `signal_category` (standing infrastructure
+  capacity, with or without active movement). The DB value is still literally named
+  `potential_data_center` for backward compatibility -- don't be confused by the word "potential"
+  there; in the 3-tier UI it renders as "Possible."
+- **Potential** (genuinely new, Jared's full spec 2026-10-02) -- `catalyst_type =
+  'prospective_data_center_site'`. Strong underlying fundamentals (power, land, fiber, incentives,
+  entitlement feasibility, environmental risk, water/cooling, transportation/workforce) with **no
+  known data-center activity at all** -- no proposal, pursuit, rumor, permit, rezoning, land
+  assembly, or development. See the dedicated section below for the full rubric. This is a
+  *site-selector* exercise (where should a data center go that nobody's looking at yet), not a
+  *signal-detector* exercise (what's quietly happening here already) -- that distinction is the
+  whole point of keeping it a separate tier instead of folding it into Possible.
+
+Pin color: Potential is green, Possible is amber, Planned is the existing confirmed-data-center
+plum (`lib/catalysts/dcStage.ts`'s `DC_STAGE_COLOR_HEX`) -- Potential is deliberately rendered
+smaller/softer on the map than the other two, since it should read as the most exploratory of the
+three.
+
 What to look for, and where, when curating a Catalyst — Groundbreakable's earliest-signal
 category: major planned or emerging events that could materially change where development
 becomes feasible, valuable, or necessary, ideally before permits are issued and before the
@@ -132,6 +160,123 @@ Tag whichever apply on the catalyst, the same controlled vocabulary used for the
 Center investigation — a single tagged category is enough for the catalyst to render as "Possible"
 on the live dashboard (Jared's call, 2026-10-02: don't require multiple before it's visible), but
 the write-up itself should still make the multi-factor case, not lean on one tag alone.
+
+## Potential Data Center Sites — fundamentals without activity
+
+This is a different exercise from everything else in this doc. Every other section is about
+*detecting* something already moving (even faintly). This section is about *recognizing* a
+location is well-suited **before** anything is happening there at all -- think like an early-stage
+data-center site selector looking for overlooked markets and sites before competitors start
+pursuing them. Prioritize a handful of genuinely exceptional candidates over a large volume of
+weak, speculative ones -- a few defensible Potential sites are worth more than hundreds of pins.
+
+**The strict rule, in full**: a location only qualifies as Potential when (1) its underlying
+infrastructure, land, economics, government environment, connectivity, and development conditions
+make it legitimately attractive for data-center development, **AND** (2) there is no credible
+indication a data center is already being pursued there. Before adding any Potential location,
+actively search combinations of the city, county, utility, parcel/site, landowner, nearby
+industrial park, economic-development organization, and relevant companies against:
+`data center`, `datacenter`, `hyperscale`, `AI campus`, `compute campus`, `cloud campus`, `server
+farm`, `digital infrastructure`, `data center rezoning`, `data center permit`, `data center utility
+request`, `data center land acquisition` (constant: `POTENTIAL_SITE_NEGATIVE_SEARCH_TERMS` in
+`lib/catalysts/potentialSiteCriteria.ts`). If any of that search turns up credible evidence, the
+finding belongs under Possible or Planned instead -- never classify it as Potential. A municipality
+actively recruiting data centers specifically can itself be evidence an actual project is already
+underway -- investigate further before treating recruitment posture alone as a clean Potential
+signal.
+
+### The 8 factors and their weights (sum to 100 -- see `POTENTIAL_SITE_FACTOR_WEIGHT`)
+
+1. **Power + Grid Scalability — 30%** (the single most important factor). Look for high-voltage
+   transmission infrastructure, substations, multiple transmission paths, proximity to generation,
+   utility territory capable of serving major industrial loads, existing large industrial power
+   users, planned *general* grid improvements with no named data-center customer, retired/retiring
+   industrial or generation sites with valuable electrical infrastructure left behind, room for
+   substantial future electrical expansion, natural-gas infrastructure that could support
+   behind-the-meter generation, and renewable generation where applicable. Distinguish **confirmed
+   capacity** from **infrastructure merely indicating potential capacity** -- transmission lines or
+   a substation nearby never means capacity is actually available; never invent an MW figure.
+2. **Land + Expansion — 15%**. ~100+ contiguous developable acres for a major campus (200-500+
+   acres where available), relatively flat terrain, limited parcel fragmentation, large parcels
+   under one or few owners, industrial or agricultural land, room for buildings/substations/
+   generators/cooling/setbacks/security, strong road access. Can represent a specific parcel OR a
+   broader development corridor when parcel-level selection is premature.
+3. **Fiber + Connectivity — 15%**. Long-haul fiber routes, multiple carriers, redundant network
+   paths, interstate/rail/utility corridors likely supporting fiber, nearby network nodes,
+   connectivity to major metros, latency considerations, potential to extend fiber into the site.
+   Favor locations where multiple geographically diverse routes may eventually be available.
+4. **Government + Incentives — 10%**. Data-center/sales-tax exemptions, property-tax abatements,
+   PILOT, industrial development incentives, economic-development grants, TIF or similar districts,
+   utility economic-development programs, expedited permitting, development-ready industrial
+   areas, favorable local economic-development policy. Weigh local government attitude toward large
+   industrial/infrastructure investment -- positive signals include active recruitment of major
+   capital investment, streamlined industrial permitting, infrastructure investment, available
+   industrial land, strong economic-development agencies; negative signals include data-center
+   moratoriums, restrictive zoning, major community opposition, prohibitive utility/environmental
+   policy. (Recruitment specifically aimed at data centers is a yellow flag for Potential, not a
+   green one -- see the strict rule above.)
+5. **Development + Entitlement Feasibility — 10%**. Current zoning and likelihood of
+   industrial/data-center use, comprehensive/future land-use plans, annexation feasibility,
+   permitting environment, setbacks, noise restrictions, height restrictions, neighboring uses,
+   entitlement difficulty, jurisdictional complexity. Prefer areas where large-scale industrial
+   development appears reasonably feasible.
+6. **Physical + Environmental Risk — 10%**. Evaluate and penalize floodplain, wetlands, wildfire,
+   seismic, hurricane/storm-surge, extreme weather exposure, airport runway zones, hazardous
+   industrial neighbors, major rail safety exposure, protected lands, difficult terrain, and
+   significant environmental constraints. A strong Potential site has manageable mission-critical
+   infrastructure risk.
+7. **Water + Cooling Feasibility — 5%**. Municipal water infrastructure, wastewater capacity,
+   reclaimed-water opportunities, treatment facilities, cooling climate, water scarcity, likely
+   cooling constraints. Do not automatically reject a site lacking major water availability --
+   different data-center cooling architectures have different requirements.
+8. **Transportation + Workforce — 5%**. Interstate/highway access, airport proximity, construction
+   workforce, electrical/mechanical/utility contractors, engineering resources, industrial
+   workforce, access to a nearby metro.
+
+### Scoring
+
+Assign each candidate a **Potential Score** (0-100) by summing the per-factor points a researcher
+assigns against documented evidence (`sumPotentialScore` in `lib/catalysts/potentialSiteCriteria.ts`
+-- a straight sum against each factor's weight-as-max, not a formula derived from other columns,
+since factors like terrain flatness or government attitude aren't boolean data this schema holds
+elsewhere). **Never display false precision** -- a factor with no real evidence gets 0 points and
+a populated list of unknowns, not a guessed number. Record evidence and unknowns per factor
+(`PotentialScoreComponent`), not just a final number with no paper trail.
+
+### What every Potential write-up must include
+
+Store on the `catalysts` row (columns added in
+`20261002070000_add_potential_data_center_site_catalyst_type.sql`, meaningful only for
+`catalyst_type = 'prospective_data_center_site'`):
+
+- **Location** -- `address` (city/county/state).
+- **Opportunity Area** -- `opportunity_area`: the specific parcel, industrial area, utility
+  corridor, or approximate geographic zone.
+- **Potential Score** -- `potential_score` + `potential_score_components` (the per-factor
+  breakdown).
+- **Why It Stands Out** -- `why_it_matters`: 2-4 concise sentences on why this could make sense as
+  a future data-center location (reuses the field every other catalyst type already has).
+- **Power** -- `power_notes`: known transmission, substations, generation, utility territory,
+  expansion indicators -- clearly distinguishing infrastructure from confirmed available capacity.
+- **Fiber** -- `fiber_notes`: known carriers/routes/connectivity where available.
+- **Land** -- `land_notes`: approximate acreage and expansion characteristics.
+- **Incentives** -- `incentives_notes`: relevant state/local incentives.
+- **Development Environment** -- `development_environment_notes`: zoning, industrial
+  compatibility, permitting environment, government posture.
+- **Risks** -- `risk_notes`: flood, environmental, utility, entitlement, community, or
+  infrastructure concerns.
+- **Unknowns to Verify** -- `unknowns_to_verify`: an explicit list of what still needs utility,
+  fiber, engineering, environmental, or jurisdictional confirmation. A Potential row with an empty
+  list hasn't actually been researched -- every real write-up should have some.
+- **Why This Is Still "Potential"** -- `why_still_potential`: a statement such as "No credible
+  public evidence was identified indicating that a data center is currently proposed, planned, or
+  being pursued at this location."
+- **Sources and date researched** -- `source_id`/`additional_source_ids` + `last_verified_at`, same
+  as every other catalyst.
+
+Groundbreakable should never claim a Potential location is a confirmed data-center site. The point
+is surfacing places worth additional investigation because the fundamentals align with major
+site-selection requirements -- nothing more.
 
 ## Potential Data Center — Priority #1 is power
 

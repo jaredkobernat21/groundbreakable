@@ -1,23 +1,29 @@
 import type { Catalyst, DataCenterSignalConfidence } from "@/lib/types";
 import { filterWithinRadius } from "@/lib/geo";
 
-// Data Center Refocus (Jared, 2026-10-01; collapsed to 2 stages 2026-10-02):
-// the dashboard's primary product is a data-center early-warning model --
-// Possible / Planned -- derived entirely from columns that already exist on
-// `catalysts` (catalyst_type, signal_categories, signal_confidence). No
-// migration, no new column. This file is the single source of truth for
-// "is this catalyst DC-relevant, and at what stage" -- every map/filter/
-// panel component imports from here instead of re-deriving the logic.
+// Data Center Refocus (Jared, 2026-10-01; collapsed to 2 stages 2026-10-02;
+// expanded to 3 stages 2026-10-02 same day): the dashboard's primary
+// product is a data-center early-warning model -- Potential / Possible /
+// Planned -- derived entirely from columns that already exist on
+// `catalysts` (catalyst_type, signal_categories, signal_confidence). This
+// file is the single source of truth for "is this catalyst DC-relevant,
+// and at what stage" -- every map/filter/panel component imports from here
+// instead of re-deriving the logic.
 //
-// Possible and the former "Predicted" stage were merged into one Possible
-// bucket per Jared's instruction -- a catalyst can still carry richer
-// evidence (signal_confidence, a converging multi-signal investigation) and
-// the detail panel still surfaces that when it's present (see
-// CatalystIntelligencePanel.tsx), it just no longer gets its own top-level
-// stage/filter.
-export type DcStage = "possible" | "planned";
+// NAMING NOTE: "Possible" below is NOT the same thing the DB column value
+// `potential_data_center` might suggest at a glance -- that catalyst_type
+// is the ACTIVE, forming-signal investigation (land assembly, a substation
+// being built now, an LLC land purchase), which is exactly what "Possible"
+// means in Jared's 2026-10-02 3-tier spec. The genuinely new "Potential"
+// stage (strong fundamentals, ZERO known activity) is a different
+// catalyst_type entirely: 'prospective_data_center_site'. Don't rename the
+// DB value to match the UI label -- see the migration comment
+// (20261002070000_add_potential_data_center_site_catalyst_type.sql) for why.
+export type DcStage = "potential" | "possible" | "planned";
 
-// Planned = catalyst_type already confirmed 'data_center'. Possible =
+// Planned = catalyst_type already confirmed 'data_center'. Potential =
+// catalyst_type 'prospective_data_center_site' (strong fundamentals, no
+// known activity -- see lib/catalysts/potentialSiteCriteria.ts). Possible =
 // everything else that's DC-relevant at all: a `potential_data_center`
 // investigation (multiple converging signals, per lib/catalysts/
 // dataCenterSignal.ts's own 2+-category requirement for ever assigning a
@@ -28,12 +34,14 @@ export type DcStage = "possible" | "planned";
 // publicly confirmed, so both live under the same stage.
 export function computeDcStage(catalyst: Pick<Catalyst, "catalyst_type" | "signal_categories">): DcStage | null {
   if (catalyst.catalyst_type === "data_center") return "planned";
+  if (catalyst.catalyst_type === "prospective_data_center_site") return "potential";
   if (catalyst.catalyst_type === "potential_data_center") return "possible";
   if (catalyst.signal_categories.length >= 1) return "possible";
   return null;
 }
 
 export const DC_STAGE_LABEL: Record<DcStage, string> = {
+  potential: "Potential",
   possible: "Possible",
   planned: "Planned",
 };
@@ -41,6 +49,7 @@ export const DC_STAGE_LABEL: Record<DcStage, string> = {
 // The exact UI-goal sentences from Jared's brief -- each stage must
 // immediately communicate this, not a vaguer paraphrase.
 export const DC_STAGE_HEADLINE: Record<DcStage, string> = {
+  potential: "This location has strong underlying fundamentals for a future data center, but no known data-center activity has been detected here yet.",
   possible: "This area is becoming capable of supporting a data center.",
   planned: "A data center is now publicly confirmed or formally planned.",
 };
@@ -48,10 +57,11 @@ export const DC_STAGE_HEADLINE: Record<DcStage, string> = {
 // Planned reuses the existing confirmed-data-center plum
 // (catalystTypeColors.ts's CATALYST_COLOR_GROUP_HEX.data_center) so a
 // catalyst's color never jumps when it graduates from Possible to Planned
-// in an admin's hands. Possible sits on a warm amber, deliberately distinct
-// from the cooler secondary-layer palette (emerald/gold/slate/gray) so the
-// two systems never visually collide.
+// in an admin's hands. Possible sits on a warm amber. Potential is green,
+// per Jared's explicit instruction -- deliberately the most "exploratory"-
+// feeling of the three and visually distinct from both.
 export const DC_STAGE_COLOR_HEX: Record<DcStage, string> = {
+  potential: "#5a9e4a", // green -- strong fundamentals, no known activity
   possible: "#d9923f", // amber -- early/converging signal
   planned: "#8b6bb0", // existing confirmed-data-center plum
 };

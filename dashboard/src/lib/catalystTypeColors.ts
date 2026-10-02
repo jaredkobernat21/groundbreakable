@@ -16,6 +16,7 @@ export const CATALYST_TYPE_COLOR_GROUP: Record<CatalystType, CatalystColorGroup>
   infrastructure_project: "infrastructure",
   data_center: "data_center",
   potential_data_center: "data_center",
+  prospective_data_center_site: "data_center",
   institutional: "schools_civic",
   public_facility: "schools_civic",
   housing_development: "housing",

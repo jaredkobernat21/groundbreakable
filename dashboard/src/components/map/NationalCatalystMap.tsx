@@ -187,12 +187,14 @@ const NationalCatalystMap = forwardRef<
         // is a full-prominence member of whichever category is active --
         // no more "dim supporting layer shown alongside the primary one."
         // A staged catalyst's color comes from the DC Stage ramp
-        // (possible/planned) instead of the flat type-group
-        // palette; Possible renders slightly smaller/softer than
-        // Predicted/Planned since it's the earliest, least-certain signal.
+        // (potential/possible/planned) instead of the flat type-group
+        // palette. Potential renders the smallest/softest of the three --
+        // Jared's explicit "should visually appear more exploratory than
+        // Possible or Planned" -- Possible next, Planned at full
+        // prominence since it's a confirmed project.
         const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
-        const size = dcStage === "possible" ? 18 : CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
-        const baseOpacity = dcStage === "possible" ? 0.85 : 1;
+        const size = dcStage === "potential" ? 15 : dcStage === "possible" ? 18 : CATALYST_SIZE_TIER_PX[catalystSizeTier(catalyst)];
+        const baseOpacity = dcStage === "potential" ? 0.7 : dcStage === "possible" ? 0.85 : 1;
         const isSelected = catalyst.id === selectedCatalystId;
 
         const el = document.createElement("div");

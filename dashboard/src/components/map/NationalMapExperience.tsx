@@ -113,7 +113,7 @@ export default function NationalMapExperience({
   }, [baseFilteredCatalysts, filters]);
 
   const dcStageCounts = useMemo(() => {
-    const counts: Record<DcStage, number> = { possible: 0, planned: 0 };
+    const counts: Record<DcStage, number> = { potential: 0, possible: 0, planned: 0 };
     for (const c of baseFilteredCatalysts) {
       const stage = computeDcStage(c);
       if (stage) counts[stage] += 1;
