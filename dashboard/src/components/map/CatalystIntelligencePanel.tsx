@@ -39,18 +39,23 @@ function formatShortDate(value: string): string {
 // both a single isolated signal and a converging multi-signal
 // `potential_data_center` investigation -- the richer confidence/signal-
 // count detail only renders when signal_confidence is actually on file.
-export default function CatalystIntelligencePanel({
+// Shared detail content -- extracted (2026-10-02, mobile optimization) so
+// the mobile bottom sheet's "View Project" expansion can reuse the exact
+// same catalyst detail rendering instead of rebuilding it. This component
+// is the full content with no outer chrome (no absolute positioning, no
+// close button) so either caller can wrap it however it needs to
+// (desktop's floating panel below, or MobileBottomSheet's scrollable sheet
+// body).
+export function CatalystDetails({
   catalyst,
   allCatalysts,
   isFollowing,
   onToggleFollow,
-  onClose,
 }: {
   catalyst: CatalystWithSources;
   allCatalysts: CatalystWithSources[];
   isFollowing: boolean;
   onToggleFollow: () => void;
-  onClose: () => void;
 }) {
   const dcStage = computeDcStage(catalyst);
   const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
@@ -61,11 +66,7 @@ export default function CatalystIntelligencePanel({
   const watching = dcStage ? nearbySupportingCatalysts(catalyst, allCatalysts) : [];
 
   return (
-    <div className="absolute right-3 top-3 bottom-3 z-30 w-[380px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-5 shadow-2xl backdrop-blur-xl">
-      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 text-white/40 hover:text-white">
-        ✕
-      </button>
-
+    <>
       <div
         className="mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide"
         style={{ borderColor: `${color}55`, color, backgroundColor: `${color}1a` }}
@@ -210,6 +211,34 @@ export default function CatalystIntelligencePanel({
         <div>First detected {formatShortDate(catalyst.created_at)}</div>
         <div>Last verified {formatRelativeVerified(catalyst.last_verified_at)}</div>
       </div>
+    </>
+  );
+}
+
+// Desktop floating panel (unchanged since the 2026-10-01/02 Data Center
+// Refocus) -- just the absolute-positioned card chrome + close button
+// around CatalystDetails now. Hidden below `sm` -- the mobile bottom sheet
+// (NationalMapExperience) is the small-screen equivalent and renders
+// CatalystDetails itself inside its own sheet chrome instead of this panel.
+export default function CatalystIntelligencePanel({
+  catalyst,
+  allCatalysts,
+  isFollowing,
+  onToggleFollow,
+  onClose,
+}: {
+  catalyst: CatalystWithSources;
+  allCatalysts: CatalystWithSources[];
+  isFollowing: boolean;
+  onToggleFollow: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="hidden absolute right-3 top-3 bottom-3 z-30 w-[380px] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-white/10 bg-black/80 p-5 shadow-2xl backdrop-blur-xl sm:block">
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 text-white/40 hover:text-white">
+        ✕
+      </button>
+      <CatalystDetails catalyst={catalyst} allCatalysts={allCatalysts} isFollowing={isFollowing} onToggleFollow={onToggleFollow} />
     </div>
   );
 }

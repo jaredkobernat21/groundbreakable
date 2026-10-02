@@ -37,7 +37,10 @@ export default function FollowingPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-[340px] overflow-y-auto border-l border-white/10 bg-black/90 p-5 shadow-2xl backdrop-blur-xl">
+      <div
+        className="fixed right-0 top-0 bottom-0 z-50 w-[340px] overflow-y-auto border-l border-white/10 bg-black/90 p-5 shadow-2xl backdrop-blur-xl max-sm:right-3 max-sm:w-[calc(100%-1.5rem)]"
+        style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
+      >
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Following</h2>
           <button type="button" onClick={onClose} className="text-white/40 hover:text-white">

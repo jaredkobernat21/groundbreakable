@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,6 +8,16 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
+};
+
+// viewportFit: "cover" lets the mobile map experience (NationalMapExperience,
+// MobileBottomSheet) read real env(safe-area-inset-*) values on notch/home-
+// indicator iPhones instead of them resolving to 0 -- without this, the
+// full-screen mobile map would render under the notch/home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

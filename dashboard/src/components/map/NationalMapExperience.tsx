@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { CatalystWithSources, Market } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,7 @@ import MapSearch from "./MapSearch";
 import FiltersPanel, { defaultMapFilters, type CategoryFilterValue, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
 import CategoryFilterBar from "./CategoryFilterBar";
+import MobileBottomSheet from "./MobileBottomSheet";
 
 // National map redesign (Jared, 2026-09-30): "the map should be the
 // product." This is the fixed full-screen overlay that replaces the old
@@ -46,6 +47,19 @@ export default function NationalMapExperience({
   const [filters, setFilters] = useState<MapFilters>(defaultMapFilters());
   const [followedCatalystIds, setFollowedCatalystIds] = useState(new Set(initialFollowedCatalystIds));
   const [followedMarketIds, setFollowedMarketIds] = useState(new Set(initialFollowedMarketIds));
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Mobile account menu (2026-10-02 mobile optimization): same
+  // click-outside-closes pattern CategoryFilterBar/MapSearch already use.
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) setMobileMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const marketById = useMemo(() => new Map(markets.map((m) => [m.id, m])), [markets]);
 
@@ -184,16 +198,14 @@ export default function NationalMapExperience({
       {/* Top nav -- logo, search, filters, following, profile. No permanent
           sidebar; the map occupies the rest of the screen.
 
-          Mobile layout (2026-09-30): below `sm`, the row wraps instead of
-          squeezing everything into one line -- the search bar (`order-3
-          w-full`) drops to its own full-width row below the logo/pills row,
-          and the pill group shrinks its padding/text and can itself wrap to
-          a second line on very narrow phones. `shrink-0` on the logo and
-          pill-group wrappers stops flexbox from compressing the logo image
-          or pill text when space is tight (the "smushed icon" bug). At
-          `sm:` and up this is byte-for-byte the original single-row,
-          flex-1-search layout -- unchanged on desktop. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-wrap items-center gap-3 p-3 sm:flex-nowrap sm:gap-4 sm:p-4">
+          Desktop only (`sm:` and up) -- byte-for-byte the original
+          single-row, flex-1-search layout. Mobile (below `sm`) gets its own
+          dedicated, much shorter bar in the "Mobile top bar" block below
+          instead of this row wrapping to two lines -- a parallel mobile-only
+          block is safer here than interleaving responsive classes into this
+          one, since any accidental shared-class change would regress
+          desktop. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden items-center gap-4 p-4 sm:flex">
         <div className="pointer-events-auto flex shrink-0 items-center rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-sm">
           <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 shrink-0 brightness-0 invert" />
         </div>
@@ -250,6 +262,135 @@ export default function NationalMapExperience({
         </div>
       </div>
 
+      {/* Mobile top bar (2026-10-02 mobile optimization) -- `sm:hidden`, so
+          this never renders at the desktop breakpoint above. One short row:
+          logo, the same compact CategoryFilterBar the desktop bar uses, and
+          a search/filters/account icon cluster. Admin/Following/Sign
+          out/email move into the account dropdown below instead of sitting
+          in the row -- the row's job is just "get out of the map's way."
+          Tapping the search icon swaps the row for the same MapSearch input
+          desktop uses (full width, with a back control) rather than
+          cramming a visible input in permanently. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-20 sm:hidden"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        <div className="pointer-events-auto flex items-center gap-2 p-3">
+          {mobileSearchOpen ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(false)}
+                aria-label="Back"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="min-w-0 flex-1">
+                <MapSearch
+                  catalysts={catalysts}
+                  markets={markets}
+                  followedMarketIds={followedMarketIds}
+                  onFlyTo={(center, zoom) => mapRef.current?.flyTo(center, zoom)}
+                  onSelectCatalyst={handleSelectCatalyst}
+                  onToggleFollowMarket={toggleFollowMarket}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex shrink-0 items-center rounded-full bg-black/50 px-2.5 py-1.5 backdrop-blur-sm">
+                <img src="/groundbreakable-icon.png" alt="Groundbreakable" className="h-5 w-5 shrink-0 brightness-0 invert" />
+              </div>
+
+              <CategoryFilterBar
+                category={filters.category}
+                onCategoryChange={changeCategory}
+                categoryCount={categoryCount}
+                dcStageCounts={dcStageCounts}
+                activeDcStages={filters.dcStages}
+                onToggleDcStage={toggleDcStage}
+              />
+
+              <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen(true)}
+                  aria-label="Search"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                    <circle cx="11" cy="11" r="7" />
+                    <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(true)}
+                  aria-label="Filters"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M8 12h12M11 18h9" />
+                    <circle cx="6" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="9" cy="18" r="1.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </button>
+                <div ref={mobileMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                    aria-label="Account menu"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path strokeLinecap="round" d="M5 20c0-3.5 3.1-6 7-6s7 2.5 7 6" />
+                    </svg>
+                  </button>
+
+                  {mobileMenuOpen && (
+                    <div className="absolute right-0 top-full z-40 mt-2 w-56 overflow-hidden rounded-xl border border-white/10 bg-black/90 py-1 shadow-2xl backdrop-blur-xl">
+                      {isAdmin && (
+                        <Link
+                          href="/dashboard/admin/users"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white"
+                        >
+                          Admin
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setFollowingOpen(true);
+                        }}
+                        className="block w-full px-4 py-3 text-left text-sm text-white/80 hover:bg-white/5 hover:text-white"
+                      >
+                        Following
+                      </button>
+                      {userEmail && (
+                        <div className="truncate border-t border-white/10 px-4 py-2.5 text-xs text-white/40">{userEmail}</div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="block w-full px-4 py-3 text-left text-sm text-white/80 hover:bg-white/5 hover:text-white"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {selectedCatalyst && (
         <CatalystIntelligencePanel
           catalyst={selectedCatalyst}
@@ -259,6 +400,18 @@ export default function NationalMapExperience({
           onClose={() => handleSelectCatalyst(null)}
         />
       )}
+
+      <MobileBottomSheet
+        visibleCatalysts={filteredCatalysts}
+        allCatalysts={catalysts}
+        selectedCatalyst={selectedCatalyst}
+        isFollowing={selectedCatalyst ? followedCatalystIds.has(selectedCatalyst.id) : false}
+        onToggleFollow={() => selectedCatalyst && toggleFollowCatalystId(selectedCatalyst.id)}
+        onSelectCatalyst={handleSelectCatalyst}
+        onFlyTo={(center, zoom) => mapRef.current?.flyTo(center, zoom)}
+        onOpenFilters={() => setFiltersOpen(true)}
+        onOpenFollowing={() => setFollowingOpen(true)}
+      />
 
       <FiltersPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} filters={filters} onChange={setFilters} markets={markets} />
 

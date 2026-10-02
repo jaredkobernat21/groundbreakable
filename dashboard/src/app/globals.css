@@ -7,9 +7,40 @@ body {
   color: #1c1c1c;
 }
 
+/* Belt-and-suspenders against horizontal scroll on small screens -- nothing
+   in the mobile map layout is meant to exceed 100vw, but a stray overflow
+   here would be unusually hard to spot (the map itself is full-bleed and
+   would mask a sliver of horizontal scroll behind it). Scoped to mobile so
+   it can't change desktop's own already-correct behavior. */
+@media (max-width: 639px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}
+
 .roq-dev-map .mapboxgl-ctrl-top-right {
   top: 8px;
   right: 8px;
+}
+
+/* Mobile touch targets (2026-10-02 mobile optimization): an invisible 44x44
+   hit zone centered on every catalyst marker, mobile viewports only (same
+   640px cutoff as Tailwind's `sm:`). The visible marker glyph stays exactly
+   as small as the national-scale declutter design needs it -- this only
+   enlarges what's clickable, via a zero-visual pseudo-element, so it can't
+   affect desktop (gated by the media query) or the marker's own appearance
+   at any size. */
+@media (max-width: 639px) {
+  .roq-marker-catalyst::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .roq-marker {
