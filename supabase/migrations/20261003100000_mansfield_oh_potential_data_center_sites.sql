@@ -1,0 +1,26 @@
+-- Mansfield, OH / North Central Ohio (market `mansfield-oh`) "Potential
+-- Data Center Site" pass (2026-10-03), #8 of this session's 14-market
+-- queue. NO STATEMENTS IN THIS FILE.
+--
+-- THIS PASS IS INCOMPLETE, NOT A CONFIRMED ZERO-RESULT -- flagging that
+-- distinction explicitly rather than letting it look like the same kind of
+-- researched "zero candidates" finding as passes #1-7. This session's
+-- WebSearch budget (200 calls, shared across the whole session and every
+-- fork spawned in it) was exhausted one query into this pass -- only the
+-- general statewide Ohio moratorium count (138+ municipalities/townships
+-- as of 2026-09-17, per Ohio Capital Journal) was confirmed before further
+-- searches were blocked. Richland, Ashland, and Crawford County-specific
+-- moratorium/zoning status (the single most important thing this pass was
+-- supposed to check, given the statewide pattern found in every other Ohio
+-- market this session) was NOT confirmed either way, nor was any site-
+-- level research (power, land, fiber, incentives, approval, risk) done at
+-- all beyond re-confirming the 2 pre-existing, unrelated catalysts already
+-- in this market (US-30 Bridge Replacement at SR 98; Newman Technology
+-- Mansfield Plant Expansion -- neither data-center-relevant).
+--
+-- Per this session's own "never invent" discipline, no Potential site is
+-- added here on incomplete information, and no "zero candidates" claim is
+-- made either -- both would overstate what was actually verified. This
+-- market needs a genuine re-run once search capacity is available again
+-- (a new session, or a raised CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION),
+-- not a guess in either direction.
