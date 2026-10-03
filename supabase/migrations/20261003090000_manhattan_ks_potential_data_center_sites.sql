@@ -1,0 +1,53 @@
+-- Manhattan, KS (market `manhattan-ks`) "Potential Data Center Site" pass
+-- (2026-10-03), #7 of this session's 14-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying
+-- candidates. Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: this market had zero existing data-center-relevant catalysts
+-- before this pass (5 unrelated rows: NBAF, K-State Campus Master Plan,
+-- EDGE District, The Bureau Lofts, the Manhattan Levee project) -- a
+-- genuinely clean slate, researched fresh rather than assumed saturated
+-- just because neighboring Lawrence (pass #6) was.
+--
+-- THE FINDING, decisively disqualifying: Riley County adopted a formal
+-- SIX-MONTH MORATORIUM on new data-center and battery-energy-storage
+-- applications, effective May 18, 2026 through November 12, 2026 --
+-- STILL IN EFFECT as of this research (WIBW, "Riley County Planning
+-- Director shares details on data center moratorium," 2026-06-02;
+-- themercury.com, "Riley County places temporary pause on data centers";
+-- ransonfinancial.com, "End date set for Riley County's data center
+-- moratorium," 2026-05-19). Riley County has no existing zoning code
+-- definition for data centers or battery storage at all -- the moratorium
+-- exists to let staff draft one before reviewing any new application.
+--
+-- CRITICAL JURISDICTIONAL NOTE: the City of Manhattan and Riley County
+-- have operated under a joint interlocal planning agreement since 1976
+-- (the Manhattan Urban Area Planning Board), under which the county
+-- exercises planning authority not just in unincorporated Riley County but
+-- in a designated area around the city as well. No search found the City
+-- of Manhattan had separately adopted its own distinct data-center
+-- ordinance exempting in-city parcels from the county's pause. Given that
+-- joint arrangement, there's no safe basis to treat a specific parcel
+-- "inside city limits" as exempt from the county-level regulatory response
+-- -- same reasoning already applied to Lawrence/Douglas County (pass #6),
+-- where a formal moratorium disqualified the whole jurisdiction regardless
+-- of individual site fundamentals.
+--
+-- For the record, independent of the moratorium: Manhattan Business Park
+-- (177 acres total, 120 acres available for development per city/chamber
+-- marketing) would otherwise have been a real, scoreable Land candidate --
+-- large enough, and no data-center-specific search hit was found for it by
+-- name. Evergy's Kansas Corporation Commission-approved large-load tariff
+-- (KCC Docket 25-EKME-315-TAR, same program already confirmed in other
+-- Kansas passes this session) does apply to Evergy's Kansas Central
+-- territory, which includes this area -- a real Power-fundamentals signal.
+-- Separately, Riley County's own Planning Board unanimously recommended
+-- DENYING an unrelated Evergy substation request near Konza Prairie in
+-- 2023 (Konza Substation, McDowell Creek Rd) -- not data-center-related
+-- itself, but a real, documented precedent of this county being willing to
+-- reject utility infrastructure requests, relevant context for how
+-- Entitlement/Development Path would likely play out here even once the
+-- moratorium lifts.
+--
+-- No existing catalyst in manhattan-ks was touched by this migration.
