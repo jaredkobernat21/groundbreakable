@@ -1,0 +1,175 @@
+-- St. Louis, MO metro (market `st-louis-mo`) "Potential Data Center Site"
+-- pass (2026-10-03), #4 of this session's 7-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying candidates.
+-- Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: queried live `catalysts` joined to `markets` for slug
+-- 'st-louis-mo' before researching. Market row exists (name "St. Louis",
+-- center ~38.627,-90.1994, zoom 12) with 4 existing catalyst rows, all tied
+-- to St. Louis CITY specifically:
+--   - "Armory Data Center" (catalyst_type data_center, status approved) --
+--     120MW, final city approval April 2026, adjacent to an existing Ameren
+--     substation, Prospect Ave near The Armory.
+--   - "Midtown Data Center (TerraWatt)" (data_center, approved) -- $3B,
+--     120MW, old Famous-Barr building at 3728 Market St, permit upheld on
+--     appeal, construction expected to begin Aug 2027.
+--   - "Ameren Missouri Data-Center-Driven Power Buildout" (infrastructure_
+--     project, status funding_incentives) -- Ameren has signed binding
+--     Electric Service Agreements with multiple large data centers totaling
+--     2.2GW (since grown to 2.8GW by mid-2026 per Ameren's own Q2 earnings
+--     materials), driving a 20-year, nine-new-gas-plant buildout plan.
+--   - "Next NGA West Campus" (public_facility, operating) -- $1.7B federal
+--     NGA campus, unrelated to data centers, not relevant to this pass.
+-- No rows at status 'rumored' existed to evaluate as conversion candidates
+-- (unlike the KC-metro and Omaha passes) -- this is a from-scratch
+-- county-by-county search across the rest of the metro.
+--
+-- GEOGRAPHIC SCOPE CONFIRMED: the existing rows and the market's own
+-- center point are entirely within St. Louis City. Per the task brief, the
+-- broader metro was researched county-by-county: St. Louis City, St. Louis
+-- County, St. Charles County, Jefferson County, and Franklin County, MO.
+-- Metro East (the Illinois side) was treated as out of scope, consistent
+-- with the market slug ("st-louis-mo") and the fact that none of the
+-- market's existing rows or center point touch Illinois.
+--
+-- FINDING: this is an unusually saturated metro -- every county checked
+-- except St. Louis County itself turned out to already have real, named,
+-- confirmed data-center activity (not rumor-level), and the one clean
+-- large site found in St. Louis County turned out to have its own
+-- documented data-center-specific interest. Checked and excluded, by
+-- jurisdiction:
+--
+--   ST. LOUIS CITY -- already fully covered by the two existing approved
+--   rows above (Armory, Midtown/TerraWatt) plus multiple pre-existing
+--   operating colocation facilities (Hostirian, River City Internet Group,
+--   etc., per datacentermap.com/baxtel.com) and a just-passed, dedicated
+--   three-tier data-center zoning ordinance (Board Bill 49, Sept 2026,
+--   600-ft residential setback). No further candidates sought here --
+--   fully saturated and out of scope for a from-scratch site search
+--   (the task is about undiscovered Potential sites, not re-describing an
+--   already-saturated jurisdiction).
+--
+--   ST. CHARLES CITY -- a hyperscale AI facility (documents reportedly
+--   linked to Google) was proposed, then withdrawn in 2025 after community
+--   backlash over nondisclosure-agreement secrecy; the city followed with a
+--   one-year moratorium and then a PERMANENT ban on data centers (May 2026,
+--   STLPR). Real, named, specific-site history -- excluded outright.
+--
+--   ST. CHARLES COUNTY (unincorporated/Wentzville) -- the Wentzville Board
+--   of Aldermen approved a six-month moratorium on new large-scale data
+--   center APPLICATIONS in July 2026 specifically to study health, water,
+--   energy-bill, and quality-of-life impacts, with the council considering
+--   another moratorium once it expires (STLPR). A moratorium on
+--   "applications" (not a purely precautionary ordinance-drafting exercise)
+--   implies real pending interest already existed in the county when it was
+--   enacted. Same "whole jurisdiction too uncertain, real activity already
+--   present" logic already applied this session to Belmont County, OH and
+--   Jefferson County, KS -- excluded countywide, no site-level candidate
+--   sought inside it.
+--
+--   JEFFERSON COUNTY, MO -- CRG (a Clayco subsidiary) has a real, named,
+--   active $6B hyperscale campus under development in Festus: 360 acres
+--   north of Highway 67, rezoning approved Nov 2025, development agreement
+--   approved 6-2 by Festus City Council March 30 2026 despite major public
+--   opposition (Wake Up JeffCo and four property owners filed suit April 8
+--   2026; all four incumbent council members were ousted in the following
+--   municipal election). The county's own Planning & Zoning Commission
+--   separately voted in March 2026 to recommend a new county-wide
+--   data-center regulatory framework (UDO amendment), moving to the County
+--   Council -- confirming the controversy and regulatory attention span the
+--   whole county, not just Festus. Excluded countywide on the same
+--   real-active-pursuit-plus-anticipatory-regulation logic.
+--
+--   FRANKLIN COUNTY, MO -- TWO confirmed, named, approved projects as of
+--   September 2026: "Gateway Digital Campus" (Provident Data Centers,
+--   Diamond Farms site, ~575 acres on Robertsville Road, rezoned
+--   agricultural-to-industrial) and a $16B campus proposed by Beltline
+--   Energy near Pacific's wastewater treatment facility ("Crooked Creek").
+--   Franklin County commissioners voted unanimously in September 2026 to
+--   approve rezoning on both properties after a contentious, multi-month
+--   planning-commission process (packed hearings, denial-then-recommend
+--   reversals). Excluded countywide -- real, active, named pursuits at
+--   metro scale, not a gap to fill with a new Potential pin.
+--
+--   ST. LOUIS COUNTY -- the one jurisdiction in this metro with NO
+--   confirmed site-specific pursuit: county planning staff are proactively
+--   drafting new data-center zoning rules (micro/standard/major tiers by
+--   size and MW) prompted by the broader regional debate, and multiple news
+--   sources (Spectrum News, STLPR) explicitly state "there are currently no
+--   pending or under development data center projects in unincorporated
+--   St. Louis County" as of mid-2026 -- the county has "the luxury of
+--   focusing on regulation before considering a proposal." This is exactly
+--   the profile the Potential tier is meant for, so it got the deepest
+--   site-level search this pass. Every specific large/notable site
+--   identified, however, turned out to be disqualified on its own facts:
+--     - Jamestown Mall site (144.5 acres, Old Jamestown Rd & N. Lindbergh
+--       Blvd, Florissant/north St. Louis County) -- cleared, development-
+--       ready, utilities in place, marketed nationally by CBRE on behalf of
+--       the St. Louis County Port Authority (free & clear, no debt).
+--       Excellent land fundamentals on paper, but a dedicated search for
+--       "Jamestown Mall" + "data center" surfaced real, on-point coverage
+--       (fox2now.com, "CBRE markets Jamestown Mall, community shares
+--       pitches") reporting that the site "has attracted interest from
+--       community engagement sites, mixed-use developers, and those eying
+--       the property for a data center," with a local official responding
+--       on the record that "there is a place for a data center, it's not
+--       the Jamestown Mall redevelopment." That is real, documented,
+--       site-specific data-center interest and an explicit official
+--       response to it -- which fails the strict "no credible evidence of
+--       a pursuit" bar even though the official's framing is a rejection,
+--       not an endorsement. Excluded as already in rumor/contested
+--       territory, not clean Potential.
+--     - Former Ameren Meramec Energy Center site (Oakville, south St. Louis
+--       County) -- the retired coal plant (closed 2022) is textbook
+--       "retired generation site with power infrastructure already in
+--       place" Potential material in the abstract, but Ameren itself is
+--       actively redeveloping it for its OWN continued generation use: an
+--       approved 800MW simple-cycle gas plant (Castle Bluff Energy Center)
+--       and a utility-scale battery storage facility (~6 acres, ~88
+--       modules). No evidence was found of any excess acreage being made
+--       available to third parties -- this is Ameren's own asset, not an
+--       open site, so it does not function as a land candidate the way the
+--       Mansfield OH / Appalachian OH retired-plant candidates did earlier
+--       this session.
+--     - Westport / Borman Drive (west St. Louis County, near I-270 &
+--       Lambert Airport) -- already hosts an operating commercial data
+--       center (Hostirian, 11756 Borman Dr) -- real, current, confirmed
+--       activity, not a Potential site.
+--     - Former Ford St. Louis Assembly Plant site, Hazelwood -- fully
+--       redeveloped since 2008 as Panattoni's Aviator Business Park (~160
+--       acres, 2.6M sq ft, $250M invested, 1,150+ employees) -- no
+--       available land, same "looks big but is actually built out" pattern
+--       excluded elsewhere this session (ECO Business Park, OH; Eastern Iowa
+--       Industrial Center).
+--     - Former Chrysler assembly site, Fenton -- fully redeveloped as
+--       Fenton Logistics Park (~295 acres, $250M, Amazon and Grey Eagle
+--       Distributors among tenants, ~3,000 workers); the developer is
+--       already in a hotel/retail follow-on phase. Same built-out
+--       exclusion as Hazelwood.
+--     - "Missouri Power Belt" (a rural electric co-op marketing alliance
+--       along I-70) and the "Heart of America Mega Site" (Montgomery
+--       County) were checked and found to be entirely west of this metro
+--       (Callaway, Cooper, Warren, Montgomery counties) -- out of the
+--       5-county scope confirmed above, and Montgomery County already has
+--       its own confirmed, named $25B+ AWS/Google hyperscale cluster
+--       (Project Green, Project Spade) independent of this market.
+--     - St. Louis Development Corporation's own "priority sites" list
+--       (developstlouis.org) consists entirely of small urban
+--       historic-building redevelopment parcels in St. Louis City (Chuck
+--       Berry House, Wellston Station, Railway Exchange, etc.) -- no
+--       industrial/large-load candidates among them.
+--
+-- RESULT: zero new Potential candidates added for st-louis-mo. This is a
+-- disqualified-by-real-activity outcome for four of the five counties
+-- checked (City, St. Charles, Jefferson, Franklin), and the fifth (St.
+-- Louis County) -- the one jurisdiction genuinely clean at the regulatory
+-- level -- did not yield a site that was simultaneously (a) available, (b)
+-- undeveloped/uncommitted, and (c) free of any documented data-center-
+-- specific interest. The closest candidate, Jamestown Mall, was excluded
+-- specifically because real, on-the-record data-center interest already
+-- exists there, which places it in rumor/contested territory rather than
+-- clean Potential. Per the brief: zero is the correct, honest outcome here,
+-- not a research gap -- this was an unusually thorough pass precisely
+-- because St. Louis County initially looked like fertile ground before
+-- each specific candidate was individually disqualified on its own facts.
