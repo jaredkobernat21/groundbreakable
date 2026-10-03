@@ -1,0 +1,101 @@
+-- Kansas City metro "Potential Data Center Site" pass, ROUND 2 (2026-10-03).
+-- Follow-up to 20261002090000 (which converted 3 sites: Eisenhower Road
+-- Business Park Corridor/Leavenworth, Bonner Springs Industrial Park,
+-- K-7/McIntyre Road/Lansing). NO STATEMENTS IN THIS FILE -- documentation-
+-- only record of a broadened search that found zero new qualifying
+-- candidates, kept as a migration for the record (same pattern as the
+-- Columbus and Lehigh Valley zero-result passes). Safe to apply (a no-op)
+-- or never run.
+--
+-- TASK 1: THE FLAGGED NARROWER PASS -- Corporate Ridge and College West,
+-- Olathe, KS (the first pass's own comment: "might still be clean
+-- Potential candidates on their own -- worth a future narrower pass").
+-- Checked both specifically and separately from Cedar Creek:
+--   - Corporate Ridge (K-10 & Ridgeview, Olathe) is primarily an OFFICE
+--     park, not an industrial/data-center-scale site (anchor tenant:
+--     Terracon's $30M HQ, 78,000 sq ft, 190+ jobs) -- weak on Land
+--     fundamentals regardless of activity (commercial real estate
+--     listings, CBRE).
+--   - College West Business Park (135th & Black Bob, Olathe, 211,000 sq
+--     ft) is a modest existing business park -- no DC-specific search hit
+--     found for it directly.
+--   - HOWEVER: a real, active, named, substantial data-center pursuit --
+--     Spark AI Foundry's "Olathe, KS" campus (sparkaifoundry.com/
+--     locations/olathe-ks) -- surfaced during this search. Real, specific
+--     terms are published: ~21MW initial IT load, an anchor tenant lease
+--     pending, on-site Bloom Energy fuel-cell generation, a 40-acre
+--     initial entitlement with a phased path toward much larger buildout,
+--     BNSF rail adjacency, direct interstate access, and KCI airport
+--     proximity. Its EXACT site address could not be confirmed after
+--     multiple searches (a Cushman & Wakefield broker quote suggests Spark
+--     may be leasing office space in a multi-tenant building as a
+--     separate, smaller move) -- but the rail/interstate/airport
+--     description does not match either Corporate Ridge (an office park)
+--     or College West (135th & Black Bob, nowhere near KCI or a BNSF rail
+--     line) closely, and neither can be confirmed as NOT the site either.
+--     Given a real, named, substantial pursuit is confirmed to exist
+--     somewhere in "Olathe" with terms this specific, the whole Olathe
+--     submarket carries a live, unresolved activity signal right now --
+--     the strict "no credible evidence of activity" bar cannot be cleanly
+--     applied to any unconfirmed Olathe site while this is outstanding.
+--     Neither Corporate Ridge nor College West is added as Potential.
+--
+-- TASK 2: BROADENED GEOGRAPHY.
+--   KS inner-ring Johnson County (Shawnee, Mission, Merriam, Prairie
+--   Village, Roeland Park, Fairway, Westwood): Shawnee itself already has
+--   a real, confirmed, operating data center (Netrality, 7801 Nieman Road,
+--   172,000 sq ft, 2MW available -- baxtel/DCD) -- disqualified. Mission,
+--   Merriam, Prairie Village, Roeland Park, Fairway, and Westwood are all
+--   small, built-out, almost entirely residential/retail inner-ring
+--   suburbs (populations roughly 1,700-9,000) with no meaningful
+--   contiguous industrial land -- excluded on basic Land-fundamentals
+--   grounds (the first Potential factor) rather than on an activity
+--   search, since forcing a DC-specific negative search against cities
+--   this size and built out would not change the outcome.
+--   Missouri side, beyond Clay County (already excluded by the first
+--   pass): checked Platte, Cass, and Jackson Counties directly --
+--     - PLATTE COUNTY: even more saturated than the first pass's summary
+--       suggested. Beyond Google's Project Mica and Meta's operating
+--       facility, "Project Kestrel" -- a $100 BILLION, 379-acre, 6-building
+--       hyperscale campus at the KCI-29 mega site (Port KC-backed) -- and
+--       Lambda's 24MW-to-100MW+ facility are both real and active
+--       (Platte County Landmark; fox4kc.com; datacenterdynamics.com).
+--       Definitively not a gap.
+--     - CASS COUNTY (includes Raymore, Harrisonville, Belton): the
+--       Planning Commission voted July 13-14, 2026 to recommend a
+--       data-center moratorium to the Board of Commissioners pending
+--       zoning regulations; Raymore's own city council has an active,
+--       documented policy debate specifically about whether to welcome,
+--       limit, or study data centers (citizenportal.ai); Belton has
+--       already enacted a temporary prohibition on data centers and
+--       battery storage pending its Unified Development Code update
+--       (gathergov.com). All three disqualify the county on the same
+--       "anticipatory regulatory activity is itself a disqualifying
+--       signal" basis already established for Nashville/Columbus/Lehigh
+--       Valley.
+--     - JACKSON COUNTY (includes Grandview): county legislators are
+--       actively considering their own data-center moratorium (The
+--       Beacon: Kansas City, 2026-06-08) -- same disqualifying pattern;
+--       no county-specific search was needed for Grandview itself once
+--       the county-level signal was confirmed.
+--
+-- TASK 3: RE-CHECKED the 4 rejected candidates from the first pass
+-- (Lenexa South Lake Campus corridor, Overland Park College Blvd
+-- corridor, the Olathe K-10/I-35 bundle, Spring Hill US-169/Webster) for
+-- anything materially new -- nothing found that changes any of the four
+-- original rejections; not re-litigated further.
+--
+-- No market was added on the Missouri side -- every MO county actually
+-- checked (Clay, Platte, Cass, Jackson) is disqualified by real, sourced,
+-- current activity or active regulatory response, not a research gap.
+-- No existing catalyst in this metro was touched by this migration (the
+-- stale signal_categories on the first pass's 3 converted rows were
+-- already corrected separately in 20261003010000).
+--
+-- Consistent with "quality over quantity": broadening the search this
+-- round surfaced MORE reasons the KC metro's remaining ungapped areas are
+-- disqualified (Spark AI Foundry, Project Kestrel, three separate county-
+-- level moratorium processes), not fewer -- the first pass's 3 conversions
+-- stand as the genuine Potential sites in this metro as currently
+-- researchable, and this round adds zero more rather than forcing weak
+-- ones in.
