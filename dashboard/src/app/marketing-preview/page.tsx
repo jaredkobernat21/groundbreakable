@@ -344,6 +344,11 @@ const demoCatalysts: CatalystWithSource[] = [
     water_notes: null,
     natural_gas_notes: null,
     potential_site_type: null,
+    people: null,
+    readiness_stage: null,
+    readiness_notes: null,
+    next_steps: [],
+    why_this_site: null,
     source: null,
   },
 ];

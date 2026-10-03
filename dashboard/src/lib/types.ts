@@ -404,13 +404,69 @@ export type PotentialSiteFactorKey =
   | "water_cooling"
   | "transportation_workforce";
 
-// Evidence confidence (Jared, 2026-10-03) -- a DIFFERENT axis from a
-// pillar's strength label (strong/favorable/etc, "how good is this
-// factor"): this is "how sure are we," independent of how strong or weak
-// the underlying finding is. Optional on each component -- the 4 rows
-// that predate this field simply render without a badge, same
-// backward-compatible pattern as every other optional addition here.
-export type PotentialEvidenceStatus = "verified" | "indicated" | "unknown";
+// Evidence confidence (Jared, 2026-10-03; widened 2026-10-03 for the
+// Energy/Timeline/Risk/People brief) -- a DIFFERENT axis from a pillar's
+// strength label (strong/favorable/etc, "how good is this factor"): this
+// is "how sure are we," independent of how strong or weak the underlying
+// finding is. Optional on each component -- rows that predate this field
+// simply render without a badge. See
+// lib/catalysts/potentialSiteCriteria.ts for the full rationale on each
+// value.
+export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown";
+
+// PEOPLE (Jared's 2026-10-03 brief) -- who actually controls the decisions
+// necessary for a site to move forward. Mirrors
+// lib/catalysts/potentialSiteCriteria.ts's PotentialSitePeople family;
+// every field optional, no DB-level shape enforcement (the `people` column
+// is plain jsonb). Meaningful only for catalyst_type ===
+// 'prospective_data_center_site'.
+export type PotentialSitePeople = {
+  owner?: {
+    name?: string;
+    entity?: string;
+    contact?: string;
+    ownership_since?: string;
+    outreach_status?: string;
+    interest_status?: string;
+    asking_price?: string;
+    site_control_status?: string;
+    mineral_rights?: string;
+    notes?: string;
+  };
+  utility?: {
+    utility?: string;
+    economic_development_contact?: string;
+    large_load_contact?: string;
+    engineer_contact?: string;
+    notes?: string;
+  };
+  government?: {
+    municipality?: string;
+    county?: string;
+    planning_department?: string;
+    economic_development_org?: string;
+    decision_making_body?: string;
+    notes?: string;
+  };
+  development?: {
+    developer?: string;
+    broker?: string;
+    site_selection_contact?: string;
+    epc?: string;
+    engineering_firm?: string;
+    energy_developer?: string;
+    gas_provider?: string;
+    notes?: string;
+  };
+};
+
+// READINESS (Jared's brief) -- a different axis from potential_score: how
+// much of the site-control/utility/entitlement/environmental picture has
+// actually been validated through real work, as opposed to how strong the
+// fundamentals look on paper. Never auto-advanced; see
+// lib/catalysts/potentialSiteCriteria.ts's computeReadinessStage for the
+// null-defaults-to-"discovery" convention.
+export type ReadinessStage = "discovery" | "qualified" | "feasibility" | "controlled" | "de_risked";
 
 export type PotentialScoreComponent = {
   key: PotentialSiteFactorKey;
@@ -519,6 +575,16 @@ export type Catalyst = {
   // where they're already parcel-specific; a future row created without
   // this in mind simply has no type badge rather than a wrong guess.
   potential_site_type: PotentialSiteType | null;
+  // Energy/Timeline/Risk/People brief (2026-10-03) -- see migration
+  // 20261003160000_potential_site_energy_timeline_risk_people.sql. All
+  // meaningful only for 'prospective_data_center_site'; null/empty on
+  // every existing row until a researcher actually populates them (never
+  // backfilled with guesses -- see that migration's comment for why).
+  people: PotentialSitePeople | null;
+  readiness_stage: ReadinessStage | null;
+  readiness_notes: string | null;
+  next_steps: string[];
+  why_this_site: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
