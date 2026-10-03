@@ -42,6 +42,13 @@ import {
   UTILITY_TIMELINE_BUCKET_LABEL,
   type IntelligenceCategory,
 } from "@/lib/catalysts/potentialSiteCriteria";
+import {
+  DEVELOPMENT_IMPACT_LEVEL_LABEL,
+  DEVELOPMENT_IMPACT_TYPE_LABEL,
+  infrastructureStatusGroup,
+  INFRASTRUCTURE_STATUS_GROUP_LABEL,
+  INFRASTRUCTURE_TYPE_LABEL,
+} from "@/lib/catalysts/infrastructureCriteria";
 import type { PotentialEvidenceStatus, PotentialScoreComponent, PotentialSitePeople, ReadinessStage } from "@/lib/types";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
@@ -262,6 +269,27 @@ export function CatalystDetails({
   const readinessStage = isPotentialTier ? computeReadinessStage(catalyst) : null;
   const nextSteps = isPotentialTier ? computeNextSteps(catalyst) : [];
 
+  // Infrastructure brief (2026-10-03) -- NOT a Potential/Planned tier like
+  // the two above; a project-delivery lifecycle instead (see
+  // lib/catalysts/infrastructureCriteria.ts).
+  const isInfrastructure = catalyst.catalyst_type === "infrastructure_project";
+  const infraStatusGroup = isInfrastructure ? infrastructureStatusGroup(catalyst.status) : null;
+  const relatedOpportunities = isInfrastructure
+    ? catalyst.related_catalyst_ids.map((id) => allCatalysts.find((c) => c.id === id)).filter((c): c is CatalystWithSources => c != null)
+    : [];
+  // "4 Potential Housing sites" / "1 Potential Data Center site" -- grouped
+  // by the same stage labels the Potential tiers themselves use, not the
+  // raw catalyst_type, so this reads identically to how the linked site
+  // describes itself elsewhere in the product.
+  const opportunityCounts = new Map<string, number>();
+  for (const related of relatedOpportunities) {
+    const relatedDcStage = computeDcStage(related);
+    const relatedHousingStage = computeHousingStage(related);
+    const label =
+      relatedDcStage === "potential" ? "Potential Data Center site" : relatedHousingStage === "potential" ? "Potential Housing site" : CATALYST_TYPE_LABEL[related.catalyst_type];
+    opportunityCounts.set(label, (opportunityCounts.get(label) ?? 0) + 1);
+  }
+
   return (
     <>
       <div
@@ -273,7 +301,9 @@ export function CatalystDetails({
           ? `${DC_STAGE_LABEL[dcStage]} Data Center`
           : housingStage
             ? `${HOUSING_STAGE_LABEL[housingStage]} Housing`
-            : CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
+            : isInfrastructure && catalyst.infrastructure_type
+              ? `${INFRASTRUCTURE_TYPE_LABEL[catalyst.infrastructure_type]} Infrastructure`
+              : CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
       </div>
 
       <h2 className="pr-6 text-lg font-semibold leading-snug text-white">{catalyst.title}</h2>
@@ -291,6 +321,17 @@ export function CatalystDetails({
       {housingStage === "potential" && catalyst.housing_type && (
         <div className="mt-1.5 inline-flex items-center rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
           {HOUSING_TYPE_LABEL[catalyst.housing_type]}
+        </div>
+      )}
+
+      {/* Status (lifecycle bucket) + Timeline, ahead of Why It Matters,
+          per the brief's top-of-panel ordering: Project Name / Type /
+          Status / Timeline, then Why It Matters. */}
+      {isInfrastructure && (infraStatusGroup || catalyst.expected_timeline) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-white/50">
+          {infraStatusGroup && <span className="font-medium text-white/70">{INFRASTRUCTURE_STATUS_GROUP_LABEL[infraStatusGroup]}</span>}
+          {infraStatusGroup && catalyst.expected_timeline && <span className="text-white/30">·</span>}
+          {catalyst.expected_timeline && <span>{catalyst.expected_timeline}</span>}
         </div>
       )}
 
@@ -658,6 +699,93 @@ export function CatalystDetails({
         </div>
       )}
 
+      {isInfrastructure && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          {/* WHY IT MATTERS leads the card, reusing why_it_matters
+              directly -- every existing infrastructure_project row
+              already has one written in exactly this voice, so (unlike
+              the two Potential tiers) no fallback-synthesis function was
+              needed. Suppressed below from the generic Why It Matters
+              block further down the panel to avoid showing it twice. */}
+          {catalyst.why_it_matters && (
+            <div className="mb-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Why It Matters</p>
+              <p className="text-sm leading-relaxed text-white/80">{catalyst.why_it_matters}</p>
+            </div>
+          )}
+
+          {catalyst.infrastructure_subtype && (
+            <div className="mb-4">
+              <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Project</p>
+              <p className="text-sm text-white/70">{catalyst.infrastructure_subtype}</p>
+            </div>
+          )}
+
+          {(catalyst.development_impact_types.length > 0 || catalyst.development_impact_level) && (
+            <div className="mb-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Development Impact</p>
+              {catalyst.development_impact_types.length > 0 && (
+                <p className="text-sm font-medium text-white">
+                  {catalyst.development_impact_types.map((t) => DEVELOPMENT_IMPACT_TYPE_LABEL[t]).join(" · ")}
+                </p>
+              )}
+              {catalyst.development_impact_level && (
+                <p className="mt-1 text-xs text-white/50">
+                  Impact: <span className="font-medium text-white/70">{DEVELOPMENT_IMPACT_LEVEL_LABEL[catalyst.development_impact_level]}</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {catalyst.impact_area_notes && (
+            <div className="mb-4">
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Impact Area</p>
+              <p className="text-sm leading-relaxed text-white/70">{catalyst.impact_area_notes}</p>
+            </div>
+          )}
+
+          <PotentialPeopleSection people={catalyst.people} />
+
+          {/* OPPORTUNITIES CREATED -- read-only for now (resolved live
+              against allCatalysts, never denormalized). The brief's own
+              "eventually be able to click" phrasing marks real click-to-
+              navigate as a future increment; not forced here. Never
+              rendered at all when no related opportunity exists yet, per
+              the brief's explicit "do not force this relationship." */}
+          {relatedOpportunities.length > 0 && (
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Opportunities Created</p>
+              <ul className="space-y-1 text-sm text-white/70">
+                {Array.from(opportunityCounts.entries()).map(([label, count]) => (
+                  <li key={label} className="flex gap-2">
+                    <span className="text-white/30">—</span>
+                    {count} {label}
+                    {count > 1 ? "s" : ""}
+                  </li>
+                ))}
+              </ul>
+              {catalyst.opportunities_created_notes && (
+                <p className="mt-2 text-xs leading-relaxed text-white/50">{catalyst.opportunities_created_notes}</p>
+              )}
+            </div>
+          )}
+
+          {catalyst.unknowns_to_verify.length > 0 && (
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Next Intelligence Needed</p>
+              <ul className="space-y-1 text-sm text-white/70">
+                {catalyst.unknowns_to_verify.map((u, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-white/30">—</span>
+                    {u}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       {dcStage === "possible" && (
         <div className="mt-4 border-t border-white/10 pt-4">
           {confidenceLabel && (
@@ -712,15 +840,19 @@ export function CatalystDetails({
 
       {/* Suppressed for either Potential tier -- already rendered at the
           top of that tier's own block as "Why This Site?", which falls
-          back to this same field when nothing more specific is on file. */}
-      {catalyst.why_it_matters && dcStage !== "potential" && housingStage !== "potential" && (
+          back to this same field when nothing more specific is on file.
+          Also suppressed for Infrastructure, which renders why_it_matters
+          directly at the top of its own block instead. */}
+      {catalyst.why_it_matters && dcStage !== "potential" && housingStage !== "potential" && !isInfrastructure && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Why It Matters</p>
           <p className="text-sm leading-relaxed text-white/70">{catalyst.why_it_matters}</p>
         </div>
       )}
 
-      {catalyst.expected_timeline && (
+      {/* Suppressed for Infrastructure -- already shown in the compact
+          Type/Status/Timeline summary near the top of the panel. */}
+      {catalyst.expected_timeline && !isInfrastructure && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Timeline</p>
           <p className="text-sm font-medium text-white">{catalyst.expected_timeline}</p>

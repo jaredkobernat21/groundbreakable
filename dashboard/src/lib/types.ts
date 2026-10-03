@@ -361,6 +361,13 @@ export type CatalystStatus =
   | "funding_incentives"
   | "land_acquired"
   | "planning_entitlement"
+  // Infrastructure brief (2026-10-03) -- the one gap in this pipeline when
+  // grouped into Infrastructure's 7-stage lifecycle (see
+  // lib/catalysts/infrastructureCriteria.ts infrastructureStatusGroup):
+  // engineering, environmental review, surveying, or other detailed
+  // preconstruction work underway. Usable by any catalyst type, not just
+  // infrastructure_project.
+  | "design"
   | "approved"
   | "construction_pending"
   | "under_construction"
@@ -375,6 +382,7 @@ export const CATALYST_STATUS_LABEL: Record<CatalystStatus, string> = {
   funding_incentives: "Funding / Incentives",
   land_acquired: "Land Acquired",
   planning_entitlement: "Planning / Entitlement",
+  design: "Design",
   approved: "Approved",
   construction_pending: "Construction Pending",
   under_construction: "Under Construction",
@@ -423,11 +431,15 @@ export type PotentialSiteFactorKey =
 export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown";
 
 // PEOPLE (Jared's 2026-10-03 brief) -- who actually controls the decisions
-// necessary for a site to move forward. Mirrors
+// necessary for a site or project to move forward. Mirrors
 // lib/catalysts/potentialSiteCriteria.ts's PotentialSitePeople family;
 // every field optional, no DB-level shape enforcement (the `people` column
-// is plain jsonb). Meaningful only for catalyst_type ===
-// 'prospective_data_center_site'.
+// is plain jsonb). Originally data-center-specific; now shared by
+// prospective_housing_site and (2026-10-03 Infrastructure brief)
+// infrastructure_project too -- "owner" reads as "project owner/sponsor"
+// for infrastructure, "government" as the municipality/county/planning
+// department/public works agency, "development" as engineering firm/
+// developer/contractor.
 export type PotentialSitePeople = {
   owner?: {
     name?: string;
@@ -464,6 +476,10 @@ export type PotentialSitePeople = {
     engineering_firm?: string;
     energy_developer?: string;
     gas_provider?: string;
+    // Infrastructure brief (2026-10-03) -- a genuine infrastructure-world
+    // role with no existing slot; optional, so this is a pure TS widening
+    // with no schema change (jsonb has no fixed shape).
+    contractor?: string;
     notes?: string;
   };
 };
@@ -494,6 +510,13 @@ export type PotentialSiteType = "area" | "site";
 // catalyst_type 'prospective_housing_site'.
 export type HousingType = "large_single_family" | "multifamily" | "build_to_rent" | "townhome_attached" | "infill_redevelopment" | "mixed_residential";
 export type EntitlementStatus = "by_right" | "entitlement_required" | "high_entitlement_risk" | "unknown";
+
+// Mirrors lib/catalysts/infrastructureCriteria.ts -- see migration
+// 20261003190000_infrastructure_project_intelligence.sql. Meaningful only
+// for catalyst_type 'infrastructure_project'.
+export type InfrastructureType = "sewer" | "water" | "power" | "natural_gas" | "roads" | "fiber" | "transit" | "airport" | "other";
+export type DevelopmentImpactType = "housing" | "data_center" | "industrial" | "commercial" | "mixed_use" | "logistics" | "other";
+export type DevelopmentImpactLevel = "high" | "moderate" | "low" | "unknown";
 
 // Mirrors lib/catalysts/potentialSiteCriteria.ts's Approval/Infrastructure
 // pillar vocabulary (Jared's 2026-10-02 same-day clarification) -- see that
@@ -632,6 +655,30 @@ export type Catalyst = {
   // extension, an annexation, a comp-plan amendment. The one concept with
   // no Data-Center-era equivalent.
   opportunity_catalyst: string | null;
+  // Infrastructure brief (2026-10-03) -- see migration
+  // 20261003190000_infrastructure_project_intelligence.sql. Meaningful
+  // only for 'infrastructure_project'; null/empty on every other type.
+  infrastructure_type: InfrastructureType | null;
+  infrastructure_subtype: string | null;
+  // Distinct from the pre-existing `development_impact` free-text column
+  // above (used generically by every catalyst type's admin form) -- this
+  // is the structured, multiple-allowed classification of what KIND of
+  // development this infrastructure project could unlock.
+  development_impact_types: DevelopmentImpactType[];
+  development_impact_level: DevelopmentImpactLevel | null;
+  // Human-written Impact Area narrative; confidence (VERIFIED/ESTIMATED/
+  // INFERRED) conveyed in-sentence, same convention as every other notes
+  // field this session. The actual map geometry reuses `boundary`/
+  // `influence_radius_meters` above, already rendered on the national map.
+  impact_area_notes: string | null;
+  // OPPORTUNITIES CREATED -- IDs of downstream Potential catalyst rows
+  // this infrastructure project helped create, resolved live against
+  // whatever catalyst rows are already loaded (never denormalized).
+  // Empty on every row until a future curated research pass links one --
+  // Groundbreakable does not automatically generate or link Potential
+  // sites.
+  related_catalyst_ids: string[];
+  opportunities_created_notes: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

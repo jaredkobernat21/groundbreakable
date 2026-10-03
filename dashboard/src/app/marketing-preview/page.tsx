@@ -359,6 +359,13 @@ const demoCatalysts: CatalystWithSource[] = [
     estimated_yield: null,
     economics_notes: null,
     opportunity_catalyst: null,
+    infrastructure_type: null,
+    infrastructure_subtype: null,
+    development_impact_types: [],
+    development_impact_level: null,
+    impact_area_notes: null,
+    related_catalyst_ids: [],
+    opportunities_created_notes: null,
     source: null,
   },
 ];

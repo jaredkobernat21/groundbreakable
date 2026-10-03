@@ -5,12 +5,31 @@ import { CATALYST_COLOR_GROUP_LABEL, CATALYST_STAGE_GROUP_LABEL, type CatalystCo
 import { DC_STAGE_LABEL, type DcStage } from "@/lib/catalysts/dcStage";
 import { HOUSING_STAGE_LABEL, type HousingStage } from "@/lib/catalysts/housingStage";
 import { HOUSING_TYPE_LABEL, type HousingType } from "@/lib/catalysts/housingPotentialCriteria";
+import {
+  DEVELOPMENT_IMPACT_TYPE_LABEL,
+  INFRASTRUCTURE_STATUS_GROUP_LABEL,
+  INFRASTRUCTURE_TYPE_LABEL,
+  type DevelopmentImpactType,
+  type InfrastructureStatusGroup,
+  type InfrastructureType,
+} from "@/lib/catalysts/infrastructureCriteria";
 
 export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
 const DC_STAGES: DcStage[] = ["potential", "possible", "planned"];
 const HOUSING_STAGES: HousingStage[] = ["potential", "planned"];
 const HOUSING_TYPES: HousingType[] = ["large_single_family", "multifamily", "build_to_rent", "townhome_attached", "infill_redevelopment", "mixed_residential"];
+const INFRASTRUCTURE_TYPES: InfrastructureType[] = ["sewer", "water", "power", "natural_gas", "roads", "fiber", "transit", "airport", "other"];
+const INFRASTRUCTURE_STATUS_GROUPS: InfrastructureStatusGroup[] = [
+  "conceptual",
+  "proposed",
+  "funded",
+  "design",
+  "permitted_bid",
+  "under_construction",
+  "complete",
+];
+const DEVELOPMENT_IMPACT_TYPES: DevelopmentImpactType[] = ["housing", "data_center", "industrial", "commercial", "mixed_use", "logistics", "other"];
 
 // "all" sits outside CatalystColorGroup (that type stays a strict
 // CatalystType->color mapping used for marker styling) -- it's a filter-only
@@ -47,6 +66,14 @@ export type MapFilters = {
   // Empty set = no filter applied, same convention as `states`/`marketIds`
   // below.
   housingTypes: Set<HousingType>;
+  // Sub-filters of the Infrastructure category only -- meaningless for any
+  // other category. infrastructureStatuses defaults to the full set (same
+  // convention as dcStages/housingStages, nothing hidden by default);
+  // infrastructureTypes/developmentImpactTypes default empty (= no
+  // filter, same convention as housingTypes/states/marketIds).
+  infrastructureTypes: Set<InfrastructureType>;
+  infrastructureStatuses: Set<InfrastructureStatusGroup>;
+  developmentImpactTypes: Set<DevelopmentImpactType>;
   time: TimeFilter;
   states: Set<string>;
   marketIds: Set<string>;
@@ -59,6 +86,9 @@ export function defaultMapFilters(): MapFilters {
     stages: new Set(Object.keys(CATALYST_STAGE_GROUP_LABEL) as CatalystStageGroup[]),
     housingStages: new Set(HOUSING_STAGES),
     housingTypes: new Set(),
+    infrastructureTypes: new Set(),
+    infrastructureStatuses: new Set(INFRASTRUCTURE_STATUS_GROUPS),
+    developmentImpactTypes: new Set(),
     time: "all",
     states: new Set(),
     marketIds: new Set(),
@@ -211,6 +241,63 @@ export default function FiltersPanel({
                 </div>
               </section>
             )}
+          </>
+        )}
+
+        {filters.category === "infrastructure" && (
+          <>
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Infrastructure Type</p>
+              <p className="mb-2 text-[11px] text-white/30">Leave all unchecked to show every type.</p>
+              <div className="space-y-1.5">
+                {INFRASTRUCTURE_TYPES.map((type) => (
+                  <label key={type} className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.infrastructureTypes.has(type)}
+                      onChange={() => onChange({ ...filters, infrastructureTypes: toggle(filters.infrastructureTypes, type) })}
+                      className="accent-white"
+                    />
+                    {INFRASTRUCTURE_TYPE_LABEL[type]}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Infrastructure Status</p>
+              <div className="space-y-1.5">
+                {INFRASTRUCTURE_STATUS_GROUPS.map((group) => (
+                  <label key={group} className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.infrastructureStatuses.has(group)}
+                      onChange={() => onChange({ ...filters, infrastructureStatuses: toggle(filters.infrastructureStatuses, group) })}
+                      className="accent-white"
+                    />
+                    {INFRASTRUCTURE_STATUS_GROUP_LABEL[group]}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Development Impact</p>
+              <p className="mb-2 text-[11px] text-white/30">Leave all unchecked to show every project, including those with no development impact logged yet.</p>
+              <div className="space-y-1.5">
+                {DEVELOPMENT_IMPACT_TYPES.map((type) => (
+                  <label key={type} className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.developmentImpactTypes.has(type)}
+                      onChange={() => onChange({ ...filters, developmentImpactTypes: toggle(filters.developmentImpactTypes, type) })}
+                      className="accent-white"
+                    />
+                    {DEVELOPMENT_IMPACT_TYPE_LABEL[type]}
+                  </label>
+                ))}
+              </div>
+            </section>
           </>
         )}
 

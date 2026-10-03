@@ -9,6 +9,7 @@ import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
 import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
 import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
 import { computeHousingStage, type HousingStage } from "@/lib/catalysts/housingStage";
+import { infrastructureStatusGroup } from "@/lib/catalysts/infrastructureCriteria";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
@@ -114,6 +115,18 @@ export default function NationalMapExperience({
         if (!filters.housingStages.has(housingStage)) return false;
         if (housingStage === "potential" && filters.housingTypes.size > 0) {
           if (!c.housing_type || !filters.housingTypes.has(c.housing_type)) return false;
+        }
+        return true;
+      }
+      if (filters.category === "infrastructure") {
+        if (catalystColorGroup(c) !== "infrastructure") return false;
+        if (filters.infrastructureTypes.size > 0) {
+          if (!c.infrastructure_type || !filters.infrastructureTypes.has(c.infrastructure_type)) return false;
+        }
+        const statusGroup = infrastructureStatusGroup(c.status);
+        if (!statusGroup || !filters.infrastructureStatuses.has(statusGroup)) return false;
+        if (filters.developmentImpactTypes.size > 0) {
+          if (!c.development_impact_types.some((impact) => filters.developmentImpactTypes.has(impact))) return false;
         }
         return true;
       }
