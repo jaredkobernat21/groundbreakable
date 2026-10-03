@@ -1,0 +1,69 @@
+-- Tulsa, OK metro "Potential Data Center Site" pass (2026-10-03), covering
+-- bixby-ok, owasso-ok, tulsa-ok -- #3 of this session's 14-market queue.
+-- Same discipline as the Kansas City/Nashville/Columbus/Lehigh Valley/Des
+-- Moines/Quad Cities passes. NO STATEMENTS IN THIS FILE -- documentation-
+-- only record of a pass that found zero qualifying candidates. Safe to
+-- apply (a no-op) or never run.
+--
+-- THE FINDING: this metro is already saturated with real, named,
+-- confirmed activity in all three cities checked -- the opposite of a
+-- quiet gap:
+--
+--   - OWASSO: Google's "Project Clydesdale" (developer: Beale
+--     Infrastructure) is a confirmed, already-logged 506-acre campus west
+--     of N Sheridan Rd between E 76th St N and E 86th St N, near the
+--     Cherokee Industrial Park and north of the Whirlpool plant -- Tulsa
+--     County Commissioners approved zoning (3-0) and 25-year tax
+--     exemptions across four financial incentive districts (NewsOn6,
+--     "Tulsa County Commissioners vote to approve tax incentives for
+--     'Project Clydesdale' data center"; DataCenterDynamics, "Google
+--     reveals it is behind 506-acre Project Clydesdale data center in
+--     Oklahoma"). This is the SAME project as this market's existing
+--     "Project Clydesdale (Google)" catalyst row, not a second one --
+--     confirmed via matching site description (Kimberly Clark/Cherokee
+--     Industrial Park geography, 500+ acres, Whirlpool-adjacent) before
+--     concluding that.
+--   - TULSA: Meta's "Project Anthem" is confirmed and already logged
+--     (2,000-acre Fair Oaks industrial park, East Tulsa, 2M+ sq ft) --
+--     Oklahoma Dept. of Commerce, "Meta Breaks Ground on New $1 Billion
+--     Data Center in Tulsa." Separately, PSO (Public Service Company of
+--     Oklahoma) signed a single customer agreement for 1,000+ MW of
+--     power -- an 8x jump over its previous largest contract (130MW) --
+--     and has 11 customers under Letters of Agreement/contracts at 50MW+,
+--     with "several industrial parks in PSO's service area in late-stage
+--     negotiations for large-load projects" (Tulsa World, "5 things to
+--     know about PSO's plans to expand capacity, handle data centers").
+--     That single detail alone -- unnamed industrial parks already in
+--     late-stage large-load negotiations, metro-wide -- makes it
+--     impossible to responsibly clear ANY unlabeled Tulsa-area industrial
+--     park as "zero known activity" at this moment.
+--   - BIXBY: the city's own public statement ("no data center project
+--     under consideration... no formal proposal has been submitted") is
+--     real, but so is a documented, specific, named prior inquiry: Gemini
+--     Capital (an LA-based AI-active firm) contacted the Bixby Chamber of
+--     Commerce to ask about multiple specific properties in the Bixby
+--     area for an "IT-related venture," and a Bixby City Manager email
+--     separately described a meeting on "process for annexation, rezone,
+--     PUD for potential data center near Kimberly Clark" -- the same
+--     Kimberly Clark Pl. location as Bixby's own South County Industrial
+--     Park (E 151st St S & Kimberly Clark Pl, Class A, 1.5-13.82-acre
+--     sites). City staff determined the specific parcel discussed in that
+--     email wasn't actually inside city limits, but the real, named,
+--     specific activity in the immediate South County Industrial
+--     Park/Kimberly Clark area is exactly the kind of credible indication
+--     of pursuit the strict rule requires excluding on (NewsOn6, "Bixby
+--     says no data center project under consideration"; basentinel.com,
+--     "Bixby officials say no data center planned," which is itself the
+--     source reporting the Gemini Capital inquiry and the City Manager
+--     email).
+--
+-- No site in any of the three cities combines genuinely strong
+-- fundamentals with a verified absence of activity -- Owasso and Tulsa
+-- each already have a named, confirmed megaproject, and Bixby's one real
+-- industrial park sits exactly where a named company's rezoning/PUD
+-- inquiry was already documented. Consistent with "quality over
+-- quantity": no weak or borderline site was forced in to avoid an empty
+-- result.
+--
+-- No existing catalyst in bixby-ok, owasso-ok, or tulsa-ok was touched by
+-- this migration.
