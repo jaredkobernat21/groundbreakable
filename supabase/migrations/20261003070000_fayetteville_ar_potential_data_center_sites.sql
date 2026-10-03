@@ -1,0 +1,56 @@
+-- Fayetteville, AR (market `fayetteville-ar`) "Potential Data Center Site"
+-- pass (2026-10-03), #5 of this session's 14-market queue. Same discipline
+-- as every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying
+-- candidates, for two independent real reasons. Safe to apply (a no-op)
+-- or never run.
+--
+-- CONTEXT: this market already has "NWA Data Center Readiness Signal
+-- (inferred -- no project identified)" (`potential_data_center`, the
+-- Possible tier) -- Fayetteville City Council passed data-center-specific
+-- zoning regulations in June 2026 purely anticipatorily, even though the
+-- Northwest Arkansas Council's own president/CEO said in Feb. 2026 he
+-- wasn't aware of any planned data centers in the region and the council
+-- isn't actively recruiting them. This research reconfirmed that ordinance
+-- is real and current (nwaonline.com, "Fayetteville passes data center
+-- regulations; more to come, City Council says," 2026-06-16/17;
+-- arkansasonline.com, same headline) -- it makes data centers a
+-- CONDITIONAL USE (not an outright ban) in I-2 General Industrial zoning,
+-- requiring Planning Commission review, cooling-system/heat/energy/water
+-- disclosures, and a 1,000-ft residential buffer.
+--
+-- REASON 1 -- anticipatory zoning disqualifies the whole jurisdiction, same
+-- convention already applied to Lehigh Valley's Lower Macungie/Palmer
+-- Township/Bethlehem and this market's own existing Possible-tier row: a
+-- city proactively regulating data centers ahead of any actual proposal is
+-- itself a disqualifying activity signal under the strict rule, not a
+-- clean "zero known activity" posture -- it cannot be un-applied just
+-- because a specific I-2 parcel happens to have good land/power
+-- fundamentals. No individual Fayetteville site was searched further once
+-- this applied citywide, consistent with how Lehigh Valley's LVIP VII (a
+-- genuinely strong site) was excluded on the same basis.
+--
+-- REASON 2 -- independently, Land fundamentals are also real and thin: the
+-- largest I-2-zoned parcels found for sale/available in Fayetteville are
+-- approximately 24.30 acres (2364 S Armstrong Ave) and 16.71 acres, with
+-- most available industrial-zoned land in the 5-7 acre range (various
+-- Fayetteville Industrial Park / I-49-corridor listings). General
+-- industrial (I-2) zoning citywide totals only 728.96 acres across all of
+-- Fayetteville (2.27% of total land use), already fragmented across many
+-- small owners/users. Well short of the 85+ contiguous developable acres
+-- every genuine Potential site logged this session has had -- this alone,
+-- even setting Reason 1 aside, would exclude every site checked.
+--
+-- Also checked: Ozarks Electric Cooperative (headquartered in Fayetteville,
+-- serving Benton/Crawford/Franklin/Madison/Washington counties, AR plus 4
+-- OK counties) has no confirmed data-center-specific large-load tariff as
+-- of this research (unlike ~25 other states' utilities that have adopted
+-- one) -- a real Power unknown, not a positive or negative finding either
+-- way. Arkansas's real hyperscale data-center boom (talkbusiness.net,
+-- "Hyperscale data centers come to Arkansas," 2026-02; ~$12B combined
+-- investment, up to 4 facilities) is explicitly concentrated in central
+-- and eastern Arkansas (Entergy Arkansas territory), not Northwest
+-- Arkansas -- confirming this region's quiet status is real, not an
+-- under-researched gap.
+--
+-- No existing catalyst in fayetteville-ar was touched by this migration.
