@@ -1,0 +1,207 @@
+-- Kansas City metro "Potential Data Center Site" pass, ROUND 3 (2026-10-03).
+-- Follow-up to 20261002090000 (3 conversions: Eisenhower Road/Leavenworth,
+-- Bonner Springs Industrial Park, K-7/McIntyre Road/Lansing) and
+-- 20261003020000 (round 2, zero new candidates). NO STATEMENTS IN THIS FILE
+-- -- documentation-only record of (A) re-checking round 2's two live
+-- ambiguities and (B) sweeping genuinely unchecked geography. Zero new
+-- qualifying candidates found either way. Safe to apply (a no-op) or never
+-- run.
+--
+-- Before researching, queried the live DB for this market directly (slug
+-- `kansas-city-ks`, name "Kansas City") rather than assuming round 1/2's
+-- summary was exhaustive. Confirmed the 3 round-1 conversions are the only
+-- `prospective_data_center_site` rows, and found 3 other existing
+-- `potential_data_center` (Possible-tier) rows not previously described in
+-- either prior migration's comments in this much detail -- material to
+-- Part B below: "Project Red Wolf" (near Kansas Speedway/Parallel Pkwy,
+-- 600MW, 548 acres), "Project Yardbird" (former Quindaro Power Station,
+-- 200MW, PowerTransitions' $13.6M purchase option), and "Project Linda"
+-- (no confirmed site -- the row's own description explicitly scopes it to
+-- "the general Wyandotte County / BPU service area only, not an actual
+-- proposed location," ~200MW, early-stage/unconfirmed).
+--
+-- =========================================================================
+-- PART A -- RE-CHECKING ROUND 2'S TWO LIVE AMBIGUITIES
+-- =========================================================================
+--
+-- A1. Spark AI Foundry "Olathe, KS" campus (the reason Corporate Ridge and
+-- College West were left unconverted in round 2). Re-verified
+-- sparkaifoundry.com/locations/olathe-ks directly this pass: claims are
+-- unchanged from round 2 (~160-acre campus, ~40-acre Phase 1, ~21MW initial
+-- IT load scaling to 500MW, on-site Bloom Energy SOFC generation, BNSF rail
+-- access adjacent to site, I-35 & K-7 corridor, ~20 min to KCI) -- still no
+-- street address or parcel ID published. Searched Olathe's own Legistar
+-- system for a Spark-named rezoning/site-plan filing -- none found.
+--
+-- MATERIAL NEW FINDING this pass: BizWest (Colorado), 2026-07-14, "Data
+-- center developer has no tie to Loveland property" -- reporting that
+-- directly undercuts Spark AI Foundry's credibility across ALL THREE of its
+-- advertised locations (Loveland CO, Olathe KS, Lansing Township MI), not
+-- just Olathe:
+--   - The Loveland, CO landowner (Martin Lind) states Spark has no lease or
+--     rights to his property, calls the marketing unauthorized, and issued
+--     a cease-and-desist.
+--   - Spark AI Foundry (and its affiliated entity) is NOT registered to do
+--     business in Colorado, Michigan, Kansas, or Illinois.
+--   - The Michigan "site" is actually owned by the RACER Trust (a GM
+--     bankruptcy entity) with no confirmed Spark involvement.
+--   - No local official or landowner anywhere confirmed any actual Spark
+--     project.
+--   - On Olathe specifically: the reporting states the claimed location
+--     "appears to be a standard multi-tenant office building" where Spark
+--     "may potentially lease office space" -- i.e. a possible small office
+--     presence, not a confirmed 160-acre/500MW greenfield campus.
+--
+-- This does NOT resolve the ambiguity in round 2's favor. The task's
+-- conditional for adding College West was "confirmed to a specific site
+-- OTHER than Corporate Ridge or College West." What was actually found is
+-- different and, if anything, less resolvable: credible reporting that
+-- Spark's own marketing may be unauthorized/unverified, with its real
+-- Olathe footprint (if any) possibly being nothing more than ordinary
+-- leased office space in an unidentified multi-tenant building -- a
+-- description that does not rule out Corporate Ridge (an office park) or
+-- College West (an existing business park) any more than it rules either
+-- one IN. No confirmed address, in either direction, exists. Per the task's
+-- explicit instruction ("do NOT add it if the ambiguity is still
+-- unresolved"), College West is NOT added. Corporate Ridge remains
+-- separately excluded on its own Land-fundamentals grounds from round 2
+-- (office park, not an industrial/DC-scale site). The whole Olathe
+-- submarket exclusion stands.
+--
+-- A2. Cass County, MO and Jackson County, MO moratorium status.
+--   - JACKSON COUNTY: RESOLVED, and more disqualifying than round 2 knew.
+--     The moratorium was not merely "considered" -- the County Legislature
+--     passed it, 8-1, originally proposed at 120 days and amended to 180
+--     days, effective ~2026-06-22 (kctv5.com, "Jackson County legislature
+--     passes 6-month moratorium on data center applications"; fox4kc.com;
+--     citizenportal.ai). Separately, and even more disqualifying: Jackson
+--     County already has a real, massive, APPROVED project -- Nebius AI
+--     Factory at Independence's Eastgate Commerce Center, approved
+--     2026-03-02, 2.5M sq ft / 800MW scaling to 1.1GW across up to 10
+--     buildings on 398 acres, financed via $150.6M in Chapter 100 bonds; a
+--     court rejected a resident attempt to force a public referendum on it
+--     (missouridatacenters.org tracker). Exclusion stands, confirmed more
+--     strongly, not loosened.
+--   - CASS COUNTY: genuinely inconclusive re-verification, flagged honestly
+--     rather than guessed. Confirmed Raymore, MO's own city-level policy
+--     debate is STILL ACTIVE as of 2026-09-23 (citizenportal.ai, "Mark
+--     Miller, veteran applicant, criticizes council tone and warns against
+--     data centers" -- urging the Raymore council to adopt ordinances
+--     keeping data centers out of city limits) -- i.e. no resolution at the
+--     city level either. Could NOT independently confirm whether Cass
+--     County, MO's Board of Commissioners specifically acted on the
+--     Planning Commission's July 2026 moratorium recommendation cited in
+--     round 2: nearly every search for "Cass County" + data center +
+--     moratorium is dominated by a separate, far more heavily covered, and
+--     confusingly near-simultaneous moratorium process in Cass County,
+--     NEBRASKA (Omaha-metro county; Planning Commission recommendation
+--     ~same week in July 2026, Board of Commissioners 5-0 approval
+--     2026-08-11) -- an unrelated county this market has no connection to.
+--     This sub-question is left genuinely unresolved this round rather than
+--     resolved by inference. It does not change this migration's outcome
+--     either way: no specific Cass County, MO site was identified in round
+--     1 or round 2 to potentially convert, so the county-level exclusion
+--     stands under either a pending or an already-adopted moratorium, and
+--     Belton's and Raymore's own city-level friction/prohibition (round 2)
+--     are unaffected by this ambiguity.
+--
+-- =========================================================================
+-- PART B -- GENUINELY UNCHECKED GEOGRAPHY
+-- =========================================================================
+--
+-- B1. Wyandotte County, KS (KCK) beyond Bonner Springs Industrial Park
+-- (already converted) and the Kansas Speedway/BPU corridor (already
+-- excluded as "Project Red Wolf"). Checked Fairfax Industrial District,
+-- Turner, and Village West specifically:
+--   - Fairfax Industrial District: real and long-established (founded
+--     1922, believed the first planned industrial district in the US;
+--     130+ businesses, 10,000+ jobs, $5.4B annual sales per the Fairfax
+--     Industrial Association). No DC-specific search hit for this district
+--     by name.
+--   - Turner: no meaningful search hits of any kind (industrial or DC)
+--     specific to this neighborhood were found.
+--   - Village West: NOT an industrial site at all -- a $1.2B, 1,500-acre
+--     retail/dining/entertainment district (outlet mall, Sporting KC,
+--     casino) at I-70/I-435. Fails Land fundamentals outright regardless of
+--     any activity search.
+--   - Any other BPU-served industrial park: not searched individually
+--     beyond the above, for the reason below.
+--
+-- DISQUALIFYING REASON, applied to all of Wyandotte County, not just these
+-- three: this market's own existing "Project Linda" catalyst row (queried
+-- directly from the DB this pass, id 117fdf46-3d4c-47c1-8798-fadcb8cacfcf,
+-- status 'rumored') explicitly defines its own location as "the general
+-- Wyandotte County / BPU service area only, not an actual proposed
+-- location" -- a real, already-logged, live signal that could describe ANY
+-- site within this exact county/utility territory, including Fairfax,
+-- Turner, or any other BPU-served park. This is the identical logic already
+-- applied to Olathe/Spark AI Foundry in round 2 and reaffirmed in Part A1
+-- above, except more explicit here since it comes from the market's own
+-- existing data, not an inference. Reinforcing context: Wyandotte County's
+-- BPU territory already hosts Project Red Wolf (600MW) and Project Yardbird
+-- (200MW, real purchase option) in addition to Linda -- a combined
+-- potential load that would roughly double-to-triple BPU's entire current
+-- ~500MW system peak (per Red Wolf's own existing row) -- making this the
+-- single most saturated utility service territory in the metro right now,
+-- not a gap. Zero new candidates in Wyandotte County.
+--
+-- B2. Miami County, KS (Paola, Louisburg, south of Spring Hill). A real,
+-- substantial, active, named pursuit was found: "Project Catalyst" in
+-- Osawatomie -- a pre-development agreement with Alcove Development, site
+-- grown from 115 to 283 acres, ~600,000 sq ft campus, requiring ~1M
+-- gallons/day of water and 150MW/day of power (including 5MW of renewable
+-- energy credits), projected at $10M+/year to the county and $10M+/year to
+-- USD 367 (Osawatomie schools), sited a few hundred yards from Osawatomie
+-- State Hospital (a real safety/opposition flashpoint), with an active
+-- public debate over Marais des Cygnes River water use (KSHB's multi-part
+-- 2026 coverage; DataCenterDynamics). Critically, the Miami County
+-- Commission is ITSELF actively considering its own moratorium specifically
+-- in response to this proposal -- the same "anticipatory regulatory
+-- activity is itself disqualifying" pattern already applied metro-wide
+-- (Cass/Jackson Counties, MO in round 2). Real, active, named, substantial
+-- -- disqualifies the whole county, not a gap. Zero new candidates in Miami
+-- County. (Paola and Louisburg specifically were not searched individually
+-- given the county-level signal.)
+--
+-- B3. Broader Overland Park / Lenexa sweep for a park genuinely distinct
+-- from the already-excluded College Boulevard corridor and Olathe bundle:
+--   - Lenexa Logistics Centre (Block Real Estate Services / ARCO, ~117.5
+--     contiguous acres, Renner Blvd & College Blvd): excluded on Land
+--     fundamentals -- already fully built out, a 10-building, ~3.6M sq ft
+--     Class A distribution park (buildings ranging ~200,000-640,000 sq ft,
+--     tilt-up concrete, 32-36 ft clear heights) -- a logistics/distribution
+--     profile, not an available large contiguous DC-scale parcel. Also sits
+--     on the identical Renner/College Blvd corridor already flagged in
+--     round 1 as hosting real, confirmed QTS data-center activity nearby.
+--   - Bluhawk (277-acre Overland Park mixed-use/retail master plan) and the
+--     Black & Veatch HQ redevelopment rezoning (Ordinance Z-4406 /
+--     REZ2026-00003, passed 2026-06-01, 180,390 sq ft): both real, but
+--     non-industrial / non-DC-scale by use type alone (lifestyle retail
+--     center; corporate HQ office redevelopment) -- excluded on Land/
+--     use-type grounds, no further activity search needed.
+--   - Confirmed Lenexa already hosts multiple REAL, OPERATING data centers
+--     within this same search radius (TierPoint/Cosentury, the Cavern
+--     Technologies/LightEdge underground facility, DataBank Lenexa KC2, and
+--     MCI3, which just completed an expansion) -- consistent with round 1's
+--     finding that this corridor is an already-live DC cluster, not a gap.
+--   - No other named, distinct, large-contiguous-acreage business or
+--     industrial park surfaced in Overland Park or Lenexa beyond the above.
+-- Zero new candidates from this sweep.
+--
+-- =========================================================================
+-- NET RESULT
+-- =========================================================================
+-- Zero new Potential sites added this round, from either Part A or Part B.
+-- Consistent with "quality over quantity": every area actually checked this
+-- round turned out to be disqualified by real, sourced activity (Miami
+-- County's Project Catalyst; Jackson County's enacted moratorium + approved
+-- Nebius project), by an already-logged county-wide ambiguity signal
+-- (Wyandotte County's own Project Linda row), by Land fundamentals alone
+-- (Village West, Lenexa Logistics Centre, Bluhawk, Black & Veatch
+-- redevelopment), or left as a genuinely unresolved ambiguity rather than
+-- forced one way or the other (Spark AI Foundry/Olathe; the Cass County, MO
+-- Board of Commissioners' specific vote outcome, confounded by Cass County,
+-- Nebraska's parallel and far better-covered process). The 3 round-1
+-- conversions (Eisenhower Road/Leavenworth, Bonner Springs Industrial Park,
+-- K-7/McIntyre Road/Lansing) remain the only genuine Potential sites
+-- identified in this metro across all three research passes.
