@@ -321,6 +321,13 @@ export type CatalystType =
   // lib/catalysts/potentialSiteCriteria.ts for the full scoring rubric.
   | "prospective_data_center_site"
   | "housing_development"
+  // Housing's own Potential tier (Jared, 2026-10-03) -- a promising future
+  // housing-development opportunity (demand/entitlement/infrastructure/
+  // site/economics signals) with NO specific project yet, same
+  // relationship to 'housing_development' that 'prospective_data_center_site'
+  // has to 'data_center'. See lib/catalysts/housingStage.ts and
+  // lib/catalysts/housingPotentialCriteria.ts.
+  | "prospective_housing_site"
   | "industrial_logistics"
   | "incentive_district"
   | "annexation_rezoning"
@@ -335,7 +342,8 @@ export const CATALYST_TYPE_LABEL: Record<CatalystType, string> = {
   data_center: "Data Center (confirmed / Planned)",
   potential_data_center: "Possible Data Center (unconfirmed signal)",
   prospective_data_center_site: "Potential Data Center Site (strong fundamentals, no known activity)",
-  housing_development: "Housing Development",
+  housing_development: "Housing Development (Planned)",
+  prospective_housing_site: "Potential Housing Site (promising opportunity, no project yet)",
   industrial_logistics: "Industrial / Logistics",
   incentive_district: "Incentive / TIF District",
   annexation_rezoning: "Annexation / Rezoning",
@@ -481,6 +489,12 @@ export type PotentialScoreComponent = {
 // 20261003000000_extend_potential_site_card_fields.sql.
 export type PotentialSiteType = "area" | "site";
 
+// Mirrors lib/catalysts/housingPotentialCriteria.ts -- see migration
+// 20261003180000_housing_potential_subcategory.sql. Meaningful only for
+// catalyst_type 'prospective_housing_site'.
+export type HousingType = "large_single_family" | "multifamily" | "build_to_rent" | "townhome_attached" | "infill_redevelopment" | "mixed_residential";
+export type EntitlementStatus = "by_right" | "entitlement_required" | "high_entitlement_risk" | "unknown";
+
 // Mirrors lib/catalysts/potentialSiteCriteria.ts's Approval/Infrastructure
 // pillar vocabulary (Jared's 2026-10-02 same-day clarification) -- see that
 // file for the full evaluation guidance behind each label.
@@ -567,24 +581,57 @@ export type Catalyst = {
   utility_timeline_notes: string | null;
   // 2026-10-03 enhancement -- water_cooling was already a scored factor but
   // had no notes column; natural_gas/behind-the-meter was never its own
-  // factor at all. Both nullable, both meaningful only for
-  // 'prospective_data_center_site'.
+  // factor at all. Originally data-center-specific; as of the Housing
+  // Potential brief (2026-10-03) also reused directly by
+  // 'prospective_housing_site' for its Water and other-infrastructure
+  // (electric/gas/fiber/stormwater) notes rather than adding near-duplicate
+  // columns -- meaningful for any Potential-tier catalyst type, null
+  // otherwise.
   water_notes: string | null;
   natural_gas_notes: string | null;
   // Nullable, no default -- existing rows were backfilled to 'site' only
   // where they're already parcel-specific; a future row created without
   // this in mind simply has no type badge rather than a wrong guess.
+  // Meaningful only for 'prospective_data_center_site' (Housing's parallel
+  // concept, housing_type below, has its own simpler enum).
   potential_site_type: PotentialSiteType | null;
   // Energy/Timeline/Risk/People brief (2026-10-03) -- see migration
-  // 20261003160000_potential_site_energy_timeline_risk_people.sql. All
-  // meaningful only for 'prospective_data_center_site'; null/empty on
-  // every existing row until a researcher actually populates them (never
-  // backfilled with guesses -- see that migration's comment for why).
+  // 20261003160000_potential_site_energy_timeline_risk_people.sql. Already
+  // generic/catalyst-agnostic concepts -- reused as-is by the Housing
+  // Potential brief (2026-10-03, see housing fields below) for
+  // 'prospective_housing_site' rows too, no new columns needed for these.
+  // Meaningful for any Potential-tier catalyst type; null/empty on every
+  // existing row until a researcher actually populates them (never
+  // backfilled with guesses).
   people: PotentialSitePeople | null;
   readiness_stage: ReadinessStage | null;
   readiness_notes: string | null;
   next_steps: string[];
   why_this_site: string | null;
+  // Housing Potential brief (2026-10-03) -- see migration
+  // 20261003180000_housing_potential_subcategory.sql. Meaningful only for
+  // 'prospective_housing_site'; null on every 'housing_development' (Planned)
+  // row, which keeps its pre-existing meaning unchanged.
+  housing_type: HousingType | null;
+  demand_notes: string | null;
+  entitlement_status: EntitlementStatus | null;
+  entitlement_notes: string | null;
+  sewer_notes: string | null;
+  road_notes: string | null;
+  site_notes: string | null;
+  // Always prose, never a bare numeric range -- must carry its own stated
+  // assumptions and be clearly preliminary (e.g. "Estimated 180-230
+  // single-family lots based on ~110 usable acres...").
+  estimated_yield: string | null;
+  // Labeled "Preliminary Economics" in the UI -- land basis per lot/unit,
+  // nearby comps/rents. Not a pro forma or ROI figure. The headline $ ask
+  // and scale reuse the generic estimated_value/estimated_scale_note
+  // columns above rather than new ones.
+  economics_notes: string | null;
+  // "What changed to make this land developable" -- e.g. a funded sewer
+  // extension, an annexation, a comp-plan amendment. The one concept with
+  // no Data-Center-era equivalent.
+  opportunity_catalyst: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

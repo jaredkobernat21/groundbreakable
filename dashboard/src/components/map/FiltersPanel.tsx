@@ -3,10 +3,14 @@
 import type { Market } from "@/lib/types";
 import { CATALYST_COLOR_GROUP_LABEL, CATALYST_STAGE_GROUP_LABEL, type CatalystColorGroup, type CatalystStageGroup } from "@/lib/catalystTypeColors";
 import { DC_STAGE_LABEL, type DcStage } from "@/lib/catalysts/dcStage";
+import { HOUSING_STAGE_LABEL, type HousingStage } from "@/lib/catalysts/housingStage";
+import { HOUSING_TYPE_LABEL, type HousingType } from "@/lib/catalysts/housingPotentialCriteria";
 
 export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
 const DC_STAGES: DcStage[] = ["potential", "possible", "planned"];
+const HOUSING_STAGES: HousingStage[] = ["potential", "planned"];
+const HOUSING_TYPES: HousingType[] = ["large_single_family", "multifamily", "build_to_rent", "townhome_attached", "infill_redevelopment", "mixed_residential"];
 
 // "all" sits outside CatalystColorGroup (that type stays a strict
 // CatalystType->color mapping used for marker styling) -- it's a filter-only
@@ -35,6 +39,14 @@ export type MapFilters = {
   // Construction-pipeline stage -- only meaningful for Planned (confirmed
   // data_center) catalysts within the Data Centers category.
   stages: Set<CatalystStageGroup>;
+  // Sub-filter of the Housing category only -- meaningless for any other
+  // category. Mirrors dcStages above.
+  housingStages: Set<HousingStage>;
+  // Housing-type sub-filter, meaningful only for Potential housing sites
+  // within the Housing category (Planned rows don't carry housing_type).
+  // Empty set = no filter applied, same convention as `states`/`marketIds`
+  // below.
+  housingTypes: Set<HousingType>;
   time: TimeFilter;
   states: Set<string>;
   marketIds: Set<string>;
@@ -45,6 +57,8 @@ export function defaultMapFilters(): MapFilters {
     category: "data_center",
     dcStages: new Set(DC_STAGES),
     stages: new Set(Object.keys(CATALYST_STAGE_GROUP_LABEL) as CatalystStageGroup[]),
+    housingStages: new Set(HOUSING_STAGES),
+    housingTypes: new Set(),
     time: "all",
     states: new Set(),
     marketIds: new Set(),
@@ -156,6 +170,47 @@ export default function FiltersPanel({
                 ))}
               </div>
             </section>
+          </>
+        )}
+
+        {filters.category === "housing" && (
+          <>
+            <section className="mb-6 border-t border-white/10 pt-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-white/35">Housing Stage</p>
+              <div className="space-y-1.5">
+                {HOUSING_STAGES.map((stage) => (
+                  <label key={stage} className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.housingStages.has(stage)}
+                      onChange={() => onChange({ ...filters, housingStages: toggle(filters.housingStages, stage) })}
+                      className="accent-white"
+                    />
+                    {HOUSING_STAGE_LABEL[stage]}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            {filters.housingStages.has("potential") && (
+              <section className="mb-6 border-t border-white/10 pt-4">
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Housing Type</p>
+                <p className="mb-2 text-[11px] text-white/30">Applies only to Potential housing sites; leave all unchecked to show every type.</p>
+                <div className="space-y-1.5">
+                  {HOUSING_TYPES.map((type) => (
+                    <label key={type} className="flex items-center gap-2 text-sm text-white/70">
+                      <input
+                        type="checkbox"
+                        checked={filters.housingTypes.has(type)}
+                        onChange={() => onChange({ ...filters, housingTypes: toggle(filters.housingTypes, type) })}
+                        className="accent-white"
+                      />
+                      {HOUSING_TYPE_LABEL[type]}
+                    </label>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
 

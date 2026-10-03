@@ -8,6 +8,7 @@ import { followCatalyst, unfollowCatalyst } from "@/lib/queries/catalystFollows"
 import { followMarket, unfollowMarket } from "@/lib/queries/marketFollows";
 import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColors";
 import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
+import { computeHousingStage, type HousingStage } from "@/lib/catalysts/housingStage";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
@@ -97,6 +98,7 @@ export default function NationalMapExperience({
   const filteredCatalysts = useMemo(() => {
     return baseFilteredCatalysts.filter((c) => {
       const dcStage = computeDcStage(c);
+      const housingStage = computeHousingStage(c);
       if (filters.category === "all") return true;
       if (filters.category === "data_center") {
         if (!dcStage) return false;
@@ -107,7 +109,15 @@ export default function NationalMapExperience({
         }
         return true;
       }
-      if (dcStage) return false;
+      if (filters.category === "housing") {
+        if (!housingStage) return false;
+        if (!filters.housingStages.has(housingStage)) return false;
+        if (housingStage === "potential" && filters.housingTypes.size > 0) {
+          if (!c.housing_type || !filters.housingTypes.has(c.housing_type)) return false;
+        }
+        return true;
+      }
+      if (dcStage || housingStage) return false;
       return catalystColorGroup(c) === filters.category;
     });
   }, [baseFilteredCatalysts, filters]);
@@ -116,6 +126,15 @@ export default function NationalMapExperience({
     const counts: Record<DcStage, number> = { potential: 0, possible: 0, planned: 0 };
     for (const c of baseFilteredCatalysts) {
       const stage = computeDcStage(c);
+      if (stage) counts[stage] += 1;
+    }
+    return counts;
+  }, [baseFilteredCatalysts]);
+
+  const housingStageCounts = useMemo(() => {
+    const counts: Record<HousingStage, number> = { potential: 0, planned: 0 };
+    for (const c of baseFilteredCatalysts) {
+      const stage = computeHousingStage(c);
       if (stage) counts[stage] += 1;
     }
     return counts;
@@ -132,6 +151,13 @@ export default function NationalMapExperience({
     if (next.has(stage)) next.delete(stage);
     else next.add(stage);
     setFilters({ ...filters, dcStages: next });
+  }
+
+  function toggleHousingStage(stage: HousingStage) {
+    const next = new Set(filters.housingStages);
+    if (next.has(stage)) next.delete(stage);
+    else next.add(stage);
+    setFilters({ ...filters, housingStages: next });
   }
 
   function changeCategory(category: CategoryFilterValue) {
@@ -217,6 +243,9 @@ export default function NationalMapExperience({
           dcStageCounts={dcStageCounts}
           activeDcStages={filters.dcStages}
           onToggleDcStage={toggleDcStage}
+          housingStageCounts={housingStageCounts}
+          activeHousingStages={filters.housingStages}
+          onToggleHousingStage={toggleHousingStage}
         />
 
         <div className="pointer-events-auto order-3 w-full sm:order-none sm:w-auto sm:flex-1">
@@ -312,6 +341,9 @@ export default function NationalMapExperience({
                 dcStageCounts={dcStageCounts}
                 activeDcStages={filters.dcStages}
                 onToggleDcStage={toggleDcStage}
+                housingStageCounts={housingStageCounts}
+                activeHousingStages={filters.housingStages}
+                onToggleHousingStage={toggleHousingStage}
               />
 
               <div className="ml-auto flex shrink-0 items-center gap-1.5">

@@ -20,6 +20,12 @@ export const CATALYST_TYPE_COLOR_GROUP: Record<CatalystType, CatalystColorGroup>
   institutional: "schools_civic",
   public_facility: "schools_civic",
   housing_development: "housing",
+  // Housing Potential tier (2026-10-03) -- deliberately the SAME color
+  // group as housing_development (Jared's instruction: Housing keeps one
+  // map color/icon for both subcategories, unlike the Data Center stage
+  // ramp). lib/catalysts/housingStage.ts's Potential/Planned split is a
+  // filter-level concept only, not a marker-styling one.
+  prospective_housing_site: "housing",
   major_employer: "other",
   mixed_use_anchor: "other",
   industrial_logistics: "other",

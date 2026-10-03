@@ -14,6 +14,13 @@ import {
   DC_STAGE_LABEL,
   nearbySupportingCatalysts,
 } from "@/lib/catalysts/dcStage";
+import { computeHousingStage, HOUSING_STAGE_HEADLINE, HOUSING_STAGE_LABEL } from "@/lib/catalysts/housingStage";
+import {
+  computeWhyHousingSiteSummary,
+  ENTITLEMENT_STATUS_DESCRIPTION,
+  ENTITLEMENT_STATUS_LABEL,
+  HOUSING_TYPE_LABEL,
+} from "@/lib/catalysts/housingPotentialCriteria";
 import {
   APPROVAL_PILLAR_LABEL,
   CITY_RECEPTIVENESS_LABEL,
@@ -35,7 +42,7 @@ import {
   UTILITY_TIMELINE_BUCKET_LABEL,
   type IntelligenceCategory,
 } from "@/lib/catalysts/potentialSiteCriteria";
-import type { PotentialEvidenceStatus, PotentialScoreComponent } from "@/lib/types";
+import type { PotentialEvidenceStatus, PotentialScoreComponent, PotentialSitePeople, ReadinessStage } from "@/lib/types";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
@@ -80,6 +87,110 @@ function PeopleFactGroup({ label, facts }: { label: string; facts: [string, stri
   );
 }
 
+// Shared across every Potential-tier catalyst_type (prospective_data_center_site,
+// prospective_housing_site) -- the `people`/readiness_stage/readiness_notes/
+// next_steps columns are generic/catalyst-agnostic (see migration
+// 20261003180000_housing_potential_subcategory.sql), so this markup is
+// written once rather than duplicated per Potential tier.
+function PotentialPeopleSection({ people }: { people: PotentialSitePeople | null }) {
+  return (
+    <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+        <span>People</span>
+        <span className="text-white/60">{people ? "Logged" : "Not yet researched"}</span>
+      </summary>
+      <div className="mt-2 space-y-3 text-sm text-white/70">
+        {people?.owner && (
+          <PeopleFactGroup
+            label="Owner"
+            facts={[
+              ["Name", people.owner.name],
+              ["Entity", people.owner.entity],
+              ["Contact", people.owner.contact],
+              ["Ownership Since", people.owner.ownership_since],
+              ["Outreach Status", people.owner.outreach_status],
+              ["Interest Status", people.owner.interest_status],
+              ["Asking Price", people.owner.asking_price],
+              ["Site Control Status", people.owner.site_control_status],
+              ["Mineral Rights", people.owner.mineral_rights],
+              ["Notes", people.owner.notes],
+            ]}
+          />
+        )}
+        {people?.utility && (
+          <PeopleFactGroup
+            label="Utility"
+            facts={[
+              ["Utility", people.utility.utility],
+              ["Economic Development Contact", people.utility.economic_development_contact],
+              ["Large-Load Contact", people.utility.large_load_contact],
+              ["Engineer Contact", people.utility.engineer_contact],
+              ["Notes", people.utility.notes],
+            ]}
+          />
+        )}
+        {people?.government && (
+          <PeopleFactGroup
+            label="Government"
+            facts={[
+              ["Municipality", people.government.municipality],
+              ["County", people.government.county],
+              ["Planning Department", people.government.planning_department],
+              ["Economic Development Org", people.government.economic_development_org],
+              ["Decision-Making Body", people.government.decision_making_body],
+              ["Notes", people.government.notes],
+            ]}
+          />
+        )}
+        {people?.development && (
+          <PeopleFactGroup
+            label="Development"
+            facts={[
+              ["Developer", people.development.developer],
+              ["Broker", people.development.broker],
+              ["Site Selection Contact", people.development.site_selection_contact],
+              ["EPC", people.development.epc],
+              ["Engineering Firm", people.development.engineering_firm],
+              ["Energy Developer", people.development.energy_developer],
+              ["Gas Provider", people.development.gas_provider],
+              ["Notes", people.development.notes],
+            ]}
+          />
+        )}
+        {!people && <p className="text-white/40">Not yet researched — ownership and utility contacts are a recommended next step.</p>}
+      </div>
+    </details>
+  );
+}
+
+function PotentialReadinessSection({ readinessStage, readinessNotes }: { readinessStage: ReadinessStage; readinessNotes: string | null }) {
+  return (
+    <div className="mt-4 border-t border-white/10 pt-4">
+      <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Readiness</p>
+      <p className="text-sm font-medium text-white">{READINESS_STAGE_LABEL[readinessStage]}</p>
+      <p className="mt-1 text-xs leading-relaxed text-white/50">{READINESS_STAGE_DESCRIPTION[readinessStage]}</p>
+      {readinessNotes && <p className="mt-1 text-xs leading-relaxed text-white/60">{readinessNotes}</p>}
+    </div>
+  );
+}
+
+function PotentialNextStepsSection({ nextSteps }: { nextSteps: string[] }) {
+  if (nextSteps.length === 0) return null;
+  return (
+    <div className="mt-4 border-t border-white/10 pt-4">
+      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Next Steps</p>
+      <ol className="space-y-1 text-sm text-white/70">
+        {nextSteps.map((step, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="text-white/30">{i + 1}.</span>
+            {step}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function daysBetween(a: string, b: string): number {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / (24 * 60 * 60 * 1000));
 }
@@ -117,6 +228,7 @@ export function CatalystDetails({
   onToggleFollow: () => void;
 }) {
   const dcStage = computeDcStage(catalyst);
+  const housingStage = computeHousingStage(catalyst);
   const color = dcStage ? DC_STAGE_COLOR_HEX[dcStage] : catalystColorHex(catalyst);
   const sources = [catalyst.source, ...catalyst.additionalSources].filter((s): s is NonNullable<typeof s> => s != null);
   const confidenceLabel = dcConfidenceLabel(catalyst.signal_confidence);
@@ -139,9 +251,16 @@ export function CatalystDetails({
       }
     }
   }
+  // readiness_stage/next_steps are generic, catalyst-agnostic columns (see
+  // migration 20261003180000_housing_potential_subcategory.sql) shared by
+  // every Potential-tier catalyst_type -- computed once here for whichever
+  // one applies. why_this_site's synthesis differs per tier (different
+  // source fields to draw from), so each tier gets its own summary below.
+  const isPotentialTier = dcStage === "potential" || housingStage === "potential";
   const whySiteSummary = dcStage === "potential" ? computeWhySiteSummary(catalyst) : null;
-  const readinessStage = dcStage === "potential" ? computeReadinessStage(catalyst) : null;
-  const nextSteps = dcStage === "potential" ? computeNextSteps(catalyst) : [];
+  const whyHousingSiteSummary = housingStage === "potential" ? computeWhyHousingSiteSummary(catalyst) : null;
+  const readinessStage = isPotentialTier ? computeReadinessStage(catalyst) : null;
+  const nextSteps = isPotentialTier ? computeNextSteps(catalyst) : [];
 
   return (
     <>
@@ -150,7 +269,11 @@ export function CatalystDetails({
         style={{ borderColor: `${color}55`, color, backgroundColor: `${color}1a` }}
       >
         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-        {dcStage ? `${DC_STAGE_LABEL[dcStage]} Data Center` : CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
+        {dcStage
+          ? `${DC_STAGE_LABEL[dcStage]} Data Center`
+          : housingStage
+            ? `${HOUSING_STAGE_LABEL[housingStage]} Housing`
+            : CATALYST_COLOR_GROUP_LABEL[catalystColorGroup(catalyst)]}
       </div>
 
       <h2 className="pr-6 text-lg font-semibold leading-snug text-white">{catalyst.title}</h2>
@@ -165,7 +288,14 @@ export function CatalystDetails({
         </div>
       )}
 
+      {housingStage === "potential" && catalyst.housing_type && (
+        <div className="mt-1.5 inline-flex items-center rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
+          {HOUSING_TYPE_LABEL[catalyst.housing_type]}
+        </div>
+      )}
+
       {dcStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{DC_STAGE_HEADLINE[dcStage]}</p>}
+      {housingStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{HOUSING_STAGE_HEADLINE[housingStage]}</p>}
 
       {dcStage === "potential" && (
         <div className="mt-4 border-t border-white/10 pt-4">
@@ -369,96 +499,11 @@ export function CatalystDetails({
               </div>
             </details>
 
-            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                <span>{INTELLIGENCE_CATEGORY_LABEL.people}</span>
-                <span className="text-white/60">{catalyst.people ? "Logged" : "Not yet researched"}</span>
-              </summary>
-              <div className="mt-2 space-y-3 text-sm text-white/70">
-                {catalyst.people?.owner && (
-                  <PeopleFactGroup
-                    label="Owner"
-                    facts={[
-                      ["Name", catalyst.people.owner.name],
-                      ["Entity", catalyst.people.owner.entity],
-                      ["Contact", catalyst.people.owner.contact],
-                      ["Ownership Since", catalyst.people.owner.ownership_since],
-                      ["Outreach Status", catalyst.people.owner.outreach_status],
-                      ["Interest Status", catalyst.people.owner.interest_status],
-                      ["Asking Price", catalyst.people.owner.asking_price],
-                      ["Site Control Status", catalyst.people.owner.site_control_status],
-                      ["Mineral Rights", catalyst.people.owner.mineral_rights],
-                      ["Notes", catalyst.people.owner.notes],
-                    ]}
-                  />
-                )}
-                {catalyst.people?.utility && (
-                  <PeopleFactGroup
-                    label="Utility"
-                    facts={[
-                      ["Utility", catalyst.people.utility.utility],
-                      ["Economic Development Contact", catalyst.people.utility.economic_development_contact],
-                      ["Large-Load Contact", catalyst.people.utility.large_load_contact],
-                      ["Engineer Contact", catalyst.people.utility.engineer_contact],
-                      ["Notes", catalyst.people.utility.notes],
-                    ]}
-                  />
-                )}
-                {catalyst.people?.government && (
-                  <PeopleFactGroup
-                    label="Government"
-                    facts={[
-                      ["Municipality", catalyst.people.government.municipality],
-                      ["County", catalyst.people.government.county],
-                      ["Planning Department", catalyst.people.government.planning_department],
-                      ["Economic Development Org", catalyst.people.government.economic_development_org],
-                      ["Decision-Making Body", catalyst.people.government.decision_making_body],
-                      ["Notes", catalyst.people.government.notes],
-                    ]}
-                  />
-                )}
-                {catalyst.people?.development && (
-                  <PeopleFactGroup
-                    label="Development"
-                    facts={[
-                      ["Developer", catalyst.people.development.developer],
-                      ["Broker", catalyst.people.development.broker],
-                      ["Site Selection Contact", catalyst.people.development.site_selection_contact],
-                      ["EPC", catalyst.people.development.epc],
-                      ["Engineering Firm", catalyst.people.development.engineering_firm],
-                      ["Energy Developer", catalyst.people.development.energy_developer],
-                      ["Gas Provider", catalyst.people.development.gas_provider],
-                      ["Notes", catalyst.people.development.notes],
-                    ]}
-                  />
-                )}
-                {!catalyst.people && (
-                  <p className="text-white/40">Not yet researched — ownership and utility contacts are a recommended next step.</p>
-                )}
-              </div>
-            </details>
+            <PotentialPeopleSection people={catalyst.people} />
           </div>
 
-          <div className="mt-4 border-t border-white/10 pt-4">
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Readiness</p>
-            <p className="text-sm font-medium text-white">{READINESS_STAGE_LABEL[readinessStage!]}</p>
-            <p className="mt-1 text-xs leading-relaxed text-white/50">{READINESS_STAGE_DESCRIPTION[readinessStage!]}</p>
-            {catalyst.readiness_notes && <p className="mt-1 text-xs leading-relaxed text-white/60">{catalyst.readiness_notes}</p>}
-          </div>
-
-          {nextSteps.length > 0 && (
-            <div className="mt-4 border-t border-white/10 pt-4">
-              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Next Steps</p>
-              <ol className="space-y-1 text-sm text-white/70">
-                {nextSteps.map((step, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-white/30">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+          <PotentialReadinessSection readinessStage={readinessStage!} readinessNotes={catalyst.readiness_notes} />
+          <PotentialNextStepsSection nextSteps={nextSteps} />
 
           {catalyst.unknowns_to_verify.length > 0 && (
             <div className="mt-4 border-t border-white/10 pt-4">
@@ -477,6 +522,139 @@ export function CatalystDetails({
             {catalyst.why_still_potential ??
               "No credible public evidence was identified indicating that a data center is currently proposed, planned, or being pursued at this location."}
           </p>
+        </div>
+      )}
+
+      {housingStage === "potential" && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          {/* Why This Site? -- mirrors the Data Center Potential block's
+              top summary, synthesized from Housing's own fields (see
+              computeWhyHousingSiteSummary). */}
+          {whyHousingSiteSummary && (
+            <div className="mb-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Why This Site?</p>
+              <p className="text-sm leading-relaxed text-white/80">{whyHousingSiteSummary}</p>
+            </div>
+          )}
+
+          {/* Opportunity Catalyst -- "what changed to make this land
+              developable," the one concept with no Data-Center-era
+              equivalent. Surfaced prominently per the brief, only when a
+              researcher has actually identified one. */}
+          {catalyst.opportunity_catalyst && (
+            <div className="mb-4 rounded-lg border border-white/15 bg-white/[0.04] p-3">
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-white/35">Opportunity Catalyst</p>
+              <p className="text-sm font-medium leading-relaxed text-white/90">{catalyst.opportunity_catalyst}</p>
+            </div>
+          )}
+
+          {/* 4 always-present categories (Demand/Entitlement/Infrastructure/
+              Site & Economics -- Economics folded into Site rather than its
+              own accordion, since the brief itself says not to attempt a
+              full pro forma and its content is typically a sentence or two),
+              each with a graceful "not yet researched" fallback, same
+              discipline as the Data Center Potential categories above. */}
+          <div className="space-y-2">
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>Demand</span>
+                <span className="text-white/60">{catalyst.demand_notes ? "Logged" : "Not yet researched"}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                {catalyst.demand_notes ? (
+                  <p className="leading-relaxed">{catalyst.demand_notes}</p>
+                ) : (
+                  <p className="text-white/40">No demand-specific detail on file yet -- population/household growth, permit activity, and nearby absorption are worth confirming.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>Entitlement</span>
+                <span className="text-white/60">{ENTITLEMENT_STATUS_LABEL[catalyst.entitlement_status ?? "unknown"]}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                <p className="leading-relaxed text-white/50">{ENTITLEMENT_STATUS_DESCRIPTION[catalyst.entitlement_status ?? "unknown"]}</p>
+                {catalyst.entitlement_notes && <p className="leading-relaxed">{catalyst.entitlement_notes}</p>}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>Infrastructure</span>
+                <span className="text-white/60">
+                  {catalyst.sewer_notes || catalyst.water_notes || catalyst.road_notes || catalyst.natural_gas_notes || catalyst.fiber_notes
+                    ? "Logged"
+                    : "Not yet researched"}
+                </span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                {([
+                  ["Sewer", catalyst.sewer_notes],
+                  ["Water", catalyst.water_notes],
+                  ["Roads", catalyst.road_notes],
+                  ["Natural Gas", catalyst.natural_gas_notes],
+                  ["Fiber", catalyst.fiber_notes],
+                ] as const).map(
+                  ([label, value]) =>
+                    value && (
+                      <p key={label} className="leading-relaxed">
+                        <span className="text-white/40">{label}: </span>
+                        {value}
+                      </p>
+                    )
+                )}
+                {!catalyst.sewer_notes && !catalyst.water_notes && !catalyst.road_notes && !catalyst.natural_gas_notes && !catalyst.fiber_notes && (
+                  <p className="text-white/40">No infrastructure detail on file yet -- sewer/water proximity and capacity are worth confirming directly with the provider.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>Site &amp; Economics</span>
+                <span className="text-white/60">{catalyst.site_notes || catalyst.estimated_yield || catalyst.economics_notes ? "Logged" : "Not yet researched"}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                {catalyst.site_notes && <p className="leading-relaxed">{catalyst.site_notes}</p>}
+                {catalyst.estimated_yield && (
+                  <p className="leading-relaxed">
+                    <span className="text-white/40">Preliminary Estimated Yield: </span>
+                    {catalyst.estimated_yield}
+                  </p>
+                )}
+                {catalyst.economics_notes && (
+                  <p className="leading-relaxed">
+                    <span className="text-white/40">Preliminary Economics: </span>
+                    {catalyst.economics_notes}
+                  </p>
+                )}
+                {!catalyst.site_notes && !catalyst.estimated_yield && !catalyst.economics_notes && (
+                  <p className="text-white/40">No site or economics detail on file yet.</p>
+                )}
+              </div>
+            </details>
+
+            <PotentialPeopleSection people={catalyst.people} />
+          </div>
+
+          <PotentialReadinessSection readinessStage={readinessStage!} readinessNotes={catalyst.readiness_notes} />
+          <PotentialNextStepsSection nextSteps={nextSteps} />
+
+          {catalyst.unknowns_to_verify.length > 0 && (
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">What Still Needs Verification</p>
+              <ul className="space-y-1 text-sm text-white/70">
+                {catalyst.unknowns_to_verify.map((u, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-white/30">—</span>
+                    {u}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -532,9 +710,10 @@ export function CatalystDetails({
         </div>
       )}
 
-      {/* Suppressed for Potential -- already rendered at the top of that
-          stage's own block as "Why This Is Surfacing", same field. */}
-      {catalyst.why_it_matters && dcStage !== "potential" && (
+      {/* Suppressed for either Potential tier -- already rendered at the
+          top of that tier's own block as "Why This Site?", which falls
+          back to this same field when nothing more specific is on file. */}
+      {catalyst.why_it_matters && dcStage !== "potential" && housingStage !== "potential" && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Why It Matters</p>
           <p className="text-sm leading-relaxed text-white/70">{catalyst.why_it_matters}</p>
