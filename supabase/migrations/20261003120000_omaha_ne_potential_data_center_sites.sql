@@ -1,0 +1,167 @@
+-- Omaha, NE metro (market `omaha-ne`) "Potential Data Center Site" pass
+-- (2026-10-03), #2 of this session's 7-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying
+-- candidates. Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: queried live `catalysts` joined to `markets` for slug 'omaha-ne'
+-- before researching. 6 existing rows, none left untouched for the wrong
+-- reason:
+--   - Google Omaha Data Center (operating, data_center) -- confirmed,
+--     ~260 acres near Blair High Rd & State St, NW Omaha (Douglas County),
+--     one of Google's Nebraska campuses.
+--   - Google Mega Data Center Proposal (potential_data_center, status
+--     'rumored') -- a real, named-entity (Google, Tenaska, Tallgrass
+--     Energy), unconfirmed-site 1,000-3,000MW proposal with its own
+--     source already attached. This is the market's existing "Possible"-
+--     tier speculative-pursuit pin, catalyst_type `potential_data_center`
+--     (the OLDER/different type, not this pass's
+--     `prospective_data_center_site`) -- it already has real,
+--     disclosed-pursuit evidence (named developer + utility awareness),
+--     so it is NOT a zero-known-activity "Potential" candidate and was
+--     correctly left untouched. It does, however, confirm that any site
+--     research finding during this pass needs to clear a real bar: Google
+--     is actively, if unconfirmedly, shopping the broader metro for
+--     another huge load.
+--   - Union Pacific HQ Retention / Norfolk Southern Merger (major_employer,
+--     'rumored') -- rail-merger HQ-retention story, not data-center-
+--     relevant. Untouched.
+--   - Streetcar-Tied Affordable Housing, Omaha $815.8M Capital Improvement
+--     Program, Mutual of Omaha Headquarters Tower -- none data-center-
+--     relevant. Untouched.
+-- No existing row was a 'rumored' infrastructure_project/major_employer
+-- conversion candidate in the pattern used in the KC metro pass -- none of
+-- the non-data-center rows above have any data-center angle to convert.
+--
+-- RESEARCH / SATURATION FINDING: this metro, especially Sarpy County, is
+-- unusually deep in confirmed and actively-contested data-center territory
+-- -- far more saturated than most markets checked this session. Checked
+-- systematically by county (Douglas, Sarpy, Washington, Cass -- the four
+-- counties named in this pass's brief) plus OPPD's large-load posture, then
+-- every certified/shovel-ready industrial park site the Greater Omaha
+-- Chamber itself markets metro-wide ("Go Ready Certified Sites":
+-- omahachamber.org/economic-development/site-selection/go-ready/).
+--
+--   SARPY COUNTY -- excluded wholesale, not site-by-site. Confirmed by
+--   multiple sources as hosting 11 tracked data centers, the most of any
+--   Nebraska county (sarpychamber.org explicitly called Google's Papillion
+--   facility "Sarpy County's eighth"; Meta/Facebook has poured $50M+ into
+--   ~900 acres since 2017 for a 9-building, ~4M sq ft campus spanning
+--   Papillion and a newer ~500-acre Springfield expansion; a third major
+--   project, "Project Wizard" (275 acres near Hwy 50 & Schram Rd, since
+--   confirmed as another Google buildout), was independently tracked by
+--   local press before the developer was named). On top of that confirmed
+--   activity, the Chamber's own Go Ready list actively markets THREE more
+--   Sarpy County sites for exactly this kind of use -- I-80 Crossing
+--   (Gretna), R&R Commerce Park South (Papillion), and Springfield Commerce
+--   Park (Springfield, explicitly marketed as sitting in "Sarpy County,
+--   Nebraska's fastest growing county") -- with OPPD separately confirmed
+--   building new peaking capacity (Turtle Creek Power Station, 450MW)
+--   specifically because Sarpy's data-center load growth is outstripping
+--   supply. Site-by-site review would risk exactly the mistake the brief
+--   warns against: forcing speculative "no known activity" pins into a
+--   county where data-center activity is already the dominant land use
+--   story, not an outlier.
+--
+--   CASS COUNTY -- excluded wholesale for the same "too much real,
+--   DC-specific history in the jurisdiction" reason already used to
+--   exclude Richland County, OH and Spring Hill, KS earlier this session.
+--   Tenaska has optioned 1,300+ acres of Cass County farmland along
+--   Highway 75 for a real, named, still-live proposal; it produced a
+--   100+-person public meeting, a county moratorium, and (per later
+--   coverage) commissioners moving to ban hyperscale data centers outright
+--   ("'We just don't want it': Cass County bans hyperscale data centers,"
+--   3newsnow.com). The one certified Go Ready site in this county
+--   (Fourmile Industrial Park, Plattsmouth, 11 acres -- also just too small
+--   for a hyperscale footprint) is not treated as a clean, separate
+--   candidate given this countywide posture.
+--
+--   WASHINGTON COUNTY -- excluded wholesale. The Board of County
+--   Commissioners approved a one-year moratorium (Aug. 20, 2026) on new
+--   data-center applications in unincorporated Washington County
+--   specifically to study impacts and draft a new "I-3 Technology and Data
+--   Infrastructure District" zoning category -- i.e., the county is
+--   actively, currently rewriting its code around data centers, not
+--   quietly sitting on unrelated fundamentals. Blair itself (incorporated,
+--   outside the county moratorium's reach) already has a VACANT, FOR-SALE
+--   former data center building (AAIM Nebraska 2, 256 E. Grant St) and sits
+--   immediately adjacent to Google's active NW Omaha campus -- too much
+--   existing data-center-specific history concentrated in this small area
+--   for the zero-known-activity bar to cleanly apply, so the one certified
+--   Go Ready site here (Blair South Business Park, 224 acres) was not
+--   added either.
+--
+--   DOUGLAS COUNTY -- the one county confirmed to have NO moratorium or
+--   data-center-specific zoning action as of this pass (a genuine confirmed
+--   absence, not an assumption -- multiple dedicated searches turned up
+--   Nebraska's 12-county moratorium list as of mid-2026 and Douglas County
+--   is not on it). This is where a real candidate was most plausible, but
+--   none of the specific sites found clear the bar:
+--     - Rainwood Industrial Park (N 108th St & Rainwood Rd, NW Omaha) --
+--       excluded. It sits literally across the street from Google's newest
+--       Omaha data-center building (2.2M sq ft, under construction per
+--       Cushman & Wakefield's own marketing of this park), and the park
+--       itself is already under construction for a conventional spec
+--       light-industrial building (Opus, 272,076 sq ft, completion
+--       expected April 2027) -- both a direct-adjacency problem (any
+--       remaining grid headroom in this corridor is realistically
+--       contested by Google's own expansion, not a clean unclaimed
+--       resource) and a land problem (already committed to a different,
+--       smaller-footprint use, the same "looks available but is actually
+--       already spoken for" pattern used to exclude Rainwood's category of
+--       site in earlier passes this session).
+--     - Northeast Omaha Business Park (67 acres near 16th & Locust St + 13
+--       acres at 5906 Abbott Dr, near Eppley Airfield) -- excluded on land/
+--       program fit, not activity. This is a $90M state-funded job- and
+--       wealth-building initiative for a historically underinvested North
+--       Omaha neighborhood (Greater Omaha Chamber / Burlington Capital /
+--       Omaha Economic Development Corp.), already landing its first
+--       tenant (Pacific Engineering Inc., general manufacturing, ~150
+--       jobs) and planned alongside new housing and an urban farm stand on
+--       the same broader site. Small, split, urban-infill acreage with no
+--       power/land story suited to a hyperscale campus, and a stated
+--       community/economic-development purpose that a speculative
+--       data-center pin would misrepresent.
+--   No other Douglas County industrial site surfaced with enough concrete,
+--   sourced power/land/fiber detail to score honestly (a broad search for
+--   Elkhorn/Millard/La Vista-area industrial land turned up only small,
+--   sub-5-acre commercial parcels, not shovel-ready parks of a scale worth
+--   logging).
+--
+--   OUT OF SCOPE, noted for completeness, not researched further: two Go
+--   Ready sites (Mills Crossing Megasite, Mills County, IA, 1,641 acres,
+--   100% renewable power via MidAmerican; South Pointe Industrial Park,
+--   Council Bluffs, IA, 45 acres, EXPLICITLY marketed by the Chamber as
+--   suited for "light manufacturing, warehouse/distribution and data
+--   centers") sit on the Iowa side of the metro. The market slug
+--   `omaha-ne` and this pass's brief (Douglas/Sarpy/Washington/Cass
+--   counties) both point to the Nebraska side only; South Pointe would in
+--   any case fail the strict rule on its own terms, since it is already
+--   marketed by name specifically for data-center use. Also out of scope:
+--   Syracuse Dual Rail Site (Syracuse, NE) sits in Otoe County, outside the
+--   four named counties and outside the core Omaha metro -- Otoe County
+--   also independently turned up as one of the 12 Nebraska counties with
+--   an active data-center moratorium, so it would have been excluded on
+--   jurisdictional grounds regardless.
+--
+-- OPPD / POWER CONTEXT (confirmed, not tied to any single site, logged here
+-- rather than invented per-site): OPPD's data-center load is roughly
+-- two-thirds of the utility's total new growth; a June 2025 SPP
+-- generation-interconnection queue snapshot showed ~2,138MW of nameplate
+-- capacity queued in Nebraska; OPPD's board approved $2.0-2.2B in new
+-- generation investment through 2030, including the Turtle Creek Power
+-- Station (two 250MW simple-cycle gas/oil peaking turbines, Sarpy County).
+-- This confirms the utility-capacity pressure is real and metro-wide, but
+-- it is a reason the FEW remaining uncommitted, uncontested sites are worth
+-- re-checking in a future pass as the picture develops -- not a basis to
+-- invent a specific-site MW or interconnection figure that was never
+-- published for any candidate checked this pass.
+--
+-- RESULT: zero new Potential candidates added. Every specific site
+-- identified with real, sourced land/power fundamentals either sits in a
+-- county with active, named, real data-center pursuit or regulatory
+-- upheaval (Sarpy, Cass, Washington), or -- in the one clean county
+-- (Douglas) -- turned out to be already contested by adjacency to a
+-- confirmed campus or already committed to a differently-scaled,
+-- differently-purposed development. Per the brief: zero is the correct,
+-- honest outcome here, not a sign the pass was cut short.
