@@ -1,0 +1,56 @@
+-- Lawrence, KS (market `lawrence-ks`) "Potential Data Center Site" pass
+-- (2026-10-03), #6 of this session's 14-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying
+-- candidates. Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: this market already has "Lawrence Data Center Readiness Signal
+-- (inferred -- no project identified)" (`potential_data_center`, the
+-- Possible tier) -- a pattern-based inference anchored near the Lawrence
+-- Energy Center (Evergy's ~515MW coal plant, dense high-voltage
+-- transmission at the city's edge) plus permissive zoning, not a detected
+-- project. Still correctly modeled as Possible, not a reclassification
+-- candidate.
+--
+-- THE FINDING, decisively disqualifying: since that row was logged, Lawrence
+-- City Commission unanimously approved a formal TWO-YEAR MORATORIUM on
+-- large-scale data centers (July 2026), triggered after residents realized
+-- the city's own 2024 Land Development Code already permits large data
+-- centers by right in several zoning districts with no public-hearing
+-- requirement -- a small, organized "Data Center Watchdogs" group formed
+-- specifically around this (Lawrence Times, "Lawrence City Commission
+-- approves 2-year data center moratorium," 2026-07-14; "Data centers could
+-- easily come to Lawrence, sparking concerns about land development code,"
+-- 2026-05-19). The Lawrence Planning Commission separately approved a text
+-- amendment in September 2026 requiring special-use permits for data
+-- centers going forward (Lawrence Times/citizenportal.ai, 2026-09-21).
+-- Douglas County (the broader jurisdiction) is independently in its own
+-- "de facto pause" -- not a formal moratorium, but staff won't act on any
+-- data-center/crypto-mine/battery-storage application until new county
+-- regulations are adopted, following resident pressure (ljworld.com, "No
+-- moratorium, but no green light: Douglas County keeps data centers and
+-- crypto mines on hold until regulations developed," 2026-04-25).
+--
+-- A formal city-adopted moratorium is a stronger, more explicit
+-- disqualifying signal than the anticipatory-zoning pattern already applied
+-- to Fayetteville/Lehigh Valley's townships -- it cannot be un-applied by
+-- finding one favorable parcel. Confirmed (per the same reporting): "No
+-- plans have been filed for a large-scale data center within Douglas
+-- County" -- so the existing Possible-tier row's own framing stays
+-- correct (no named project), but the city/county's active, adopted
+-- regulatory response means no site in this market can be classified
+-- "zero known activity" right now. No individual site was researched
+-- further once this applied jurisdiction-wide.
+--
+-- Independently, for the record: East Hills Business Park (Lawrence's
+-- oldest industrial park, east side on K-10) is majority built out, with
+-- "less than one-half of the total acreage still vacant" and no confirmed
+-- large contiguous tract (growlawrence.org; Lawrence VenturePark, the
+-- adjacent 200-acre park, has tracts up to 167 acres and would otherwise
+-- be worth checking, but is moot given the moratorium). Evergy's
+-- Kansas-regulator-approved large-load tariff (75MW+ facilities) does
+-- apply to this territory -- confirming the existing Possible row's power
+-- premise is real, which is itself part of why the city/county reacted
+-- defensively.
+--
+-- No existing catalyst in lawrence-ks was touched by this migration.
