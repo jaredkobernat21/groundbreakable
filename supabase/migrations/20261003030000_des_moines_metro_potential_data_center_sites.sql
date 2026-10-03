@@ -1,0 +1,54 @@
+-- Des Moines, IA metro "Potential Data Center Site" pass (2026-10-03),
+-- covering ankeny-ia, grimes-ia, des-moines-ia. Same discipline as the
+-- Kansas City/Nashville/Columbus/Lehigh Valley passes. NO STATEMENTS IN
+-- THIS FILE -- documentation-only record of a pass that found zero
+-- qualifying candidates. Safe to apply (a no-op) or never run.
+--
+-- THE FINDING: central Iowa is a genuine, major hyperscale hub (Microsoft
+-- and Google alone represent ~600MW of tracked operating AI data center
+-- capacity in Iowa per industry trackers), and the specific 3 markets
+-- checked here are disqualified for 3 different, real reasons:
+--
+--   - ANKENY: a real, named, already-approved project disqualifies the
+--     whole city -- Edged (NY-based developer) has a city council-
+--     approved development agreement (March 2026) for a $187M, 13.2MW,
+--     105,000 sq ft AI-workload data center on 17.5 acres just northeast
+--     of the I-80/I-35 interchange, construction underway, targeting 2027
+--     completion (Business Record, "Ankeny council to consider data
+--     center development agreement"; DataCenterDynamics, "Edged breaks
+--     ground on data center in Des Moines, Iowa"; Ankeny's own newsflash
+--     confirming the approved waterless-cooling project). This is a real
+--     Planned-tier project not yet logged in this market's `catalysts` --
+--     worth a separate follow-up pass to log it under `data_center`, but
+--     that's out of scope for a Potential-only pass; it simply disqualifies
+--     Ankeny from Potential entirely.
+--   - GRIMES: no data-center-specific search hit found anywhere for
+--     Grimes -- genuinely clean on the activity side. However, this
+--     city's own industrial land (Prairie Business Park I-IV, S James St
+--     corridor) is real but modest and fragmented: available parcels run
+--     roughly 2.5-15 acres each (PropertyShark/LoopNet/Land.com listings),
+--     well short of the 85-265+ contiguous acres every other Potential
+--     site logged this session has had. Excluded on Land fundamentals,
+--     not activity -- forcing a low-acreage business park in as "Potential"
+--     would be exactly the weak, speculative pin this process is meant to
+--     avoid.
+--   - DES MOINES (proper, as logged in this market, which already covers
+--     Altoona and West Des Moines addresses): already fully accounted for
+--     by this market's existing Planned rows (Meta Altoona Data Center
+--     Campus, Microsoft Project Alluvion/West Des Moines) -- no additional
+--     specific site or corridor within this market's scope was found with
+--     both real land/power fundamentals AND a verified absence of
+--     activity. The existing "MidAmerican Energy Data-Center-Driven Power
+--     Buildout" row stays as-is (a utility-territory-wide infrastructure
+--     signal, not a specific opportunity area) -- same reasoning already
+--     applied to Nashville's TVA/NES framework row.
+--
+-- A statewide Iowa data-center debate is real and active (Iowa Public
+-- Radio, 2026-10-01, "Here's what Iowans can -- and can't -- do about
+-- hyperscale data centers"; Iowa Capital Dispatch, 2026-08-25, "Iowa
+-- groups ramp up campaigns for and against data centers") but no
+-- Polk-County(IA)-specific moratorium was confirmed -- a same-named-county
+-- search collision with Polk County, WISCONSIN was caught and discarded
+-- rather than mistakenly cited as Iowa evidence.
+--
+-- No existing catalyst in these 3 markets was touched by this migration.
