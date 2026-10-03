@@ -1,0 +1,90 @@
+-- Lehigh Valley, PA "Potential Data Center Site" research pass (2026-10-03),
+-- same exercise as the Kansas City (20261002090000), Nashville
+-- (20261002100000), and Columbus (20261002110000) passes. NO STATEMENTS IN
+-- THIS FILE -- this is a documentation-only record of a pass that found
+-- zero qualifying candidates, kept as a migration file purely so the
+-- research and its reasoning survive in the same place every other pass's
+-- findings do. Safe to apply (a no-op) or to simply never run.
+--
+-- THE FINDING: like Columbus, Lehigh Valley produced ZERO new Potential
+-- candidates -- for a related but distinct reason. Columbus was saturated
+-- by confirmed projects and moratoriums triggered by named projects. Lehigh
+-- Valley is saturated by something slightly different and, if anything,
+-- more total: near-universal ANTICIPATORY ZONING. As of the original full
+-- market pass, 57 of the Lehigh Valley's 62 municipalities had already
+-- adopted or were actively drafting data-center-specific zoning -- this
+-- pass independently reconfirmed that pattern is real and current, not
+-- stale, by checking specific municipalities directly:
+--
+--   - PALMER TOWNSHIP (Northampton Co.): on the record as having "no
+--     specific project in the works," explicitly amending its zoning to
+--     permit data centers BY RIGHT in the North End Business District
+--     (near Chrin Commerce Center/Rt. 33) specifically to "be proactive
+--     before a project was proposed" (WFMZ, "Another Lehigh Valley
+--     municipality preparing for the arrival of data centers"; WFMZ-TV
+--     69News, "There are no data centers on the horizon in Palmer
+--     Township. But, should that change, the township wants to be
+--     ready.").
+--   - CITY OF BETHLEHEM: proposing its own new data-center zoning
+--     regulations (height/yard/buffer/screening/fencing standards) --
+--     same anticipatory pattern (WFMZ, "Bethlehem proposes new zoning
+--     regulations for data centers"; city planning department zoning-text-
+--     amendment memo). This directly touches LVIP VII / Bethlehem Commerce
+--     Center, the single most promising fresh candidate checked this pass
+--     (1,000-acre former Bethlehem Steel site, ~85 acres remaining,
+--     genuinely shovel-ready with electric/gas/water AND fiber-optic cable
+--     already installed -- the only candidate this session with
+--     documented existing fiber, unlike every KC/Nashville/Columbus
+--     candidate) -- disqualified anyway because the city itself is already
+--     in anticipatory-zoning mode, the same disqualifying pattern already
+--     applied to this market's existing "Lower Macungie Township Data
+--     Center Readiness Signal" row (modeled as Possible/
+--     `potential_data_center`, not Potential, precisely because
+--     anticipatory DC-specific rezoning action -- even with zero named
+--     project -- is itself a `rezoning` signal under this schema's own
+--     established convention, not a "zero known activity" site).
+--   - EASTON: Planning Commission advanced its own proposed data-center
+--     regulations, explicitly modeled on Palmer Township's and other
+--     townships' ordinances (WFMZ, "Easton planners propose
+--     recommendations for data centers").
+--   - HANOVER TOWNSHIP (Lehigh Co.): adopted a zoning amendment
+--     specifically addressing data centers, effective June 23, 2026.
+--   - LEHIGH TOWNSHIP: actively reviewing its own draft data-center
+--     ordinance (Ordinance 2026-2) as of May 2026 (tnonline.com, "Lehigh
+--     Twp. discusses data center rules"; homenewspa.com, "Lehigh Township
+--     supervisors approve ordinance for data centers," Sept. 2026).
+--   - UPPER MOUNT BETHEL TOWNSHIP (Slate Belt): forwarded its own proposed
+--     data-center ordinance to the Lehigh Valley Planning Commission for
+--     review (late Sept. 2026) -- and, more importantly, did so specifically
+--     to avoid adopting a competing draft offered BY A DATA-CENTER
+--     DEVELOPER proposing a 723-acre campus in the same Slate Belt area as
+--     the already-logged "Lower Mount Bethel Tech Center" row (Yahoo
+--     News/Lehigh Valley Ramblings, "Lehigh Valley township rejects data
+--     center developer's regulatory pitch, goes with own plan"). This is
+--     real, active developer engagement, not a hypothetical -- the entire
+--     Slate Belt sub-region is confirmed-active, not clean.
+--
+-- Pennsylvania state-level context checked and found NOT to change the
+-- above: Senate Bill 1345 (18-month municipal moratorium option, 25MW+
+-- facilities, passed committee July 2026) and House Bill 2496 (180-day
+-- pause option) are both ENABLING legislation giving municipalities the
+-- OPTION to pause -- neither is itself a moratorium anywhere specific, and
+-- neither was found adopted by name in any Lehigh Valley municipality as
+-- of this research. The state's Computer Data Center Equipment sales-tax
+-- exemption (certified pre-Feb. 3, 2026 only; House Bill 2198 to repeal it
+-- passed 197-5) is a real incentive but doesn't change the local-activity
+-- picture for any specific site.
+--
+-- No candidate found combined genuinely strong fundamentals with a
+-- verified absence of BOTH named-project activity AND anticipatory
+-- municipal rezoning action -- the second bar is the one that, uniquely to
+-- this market, disqualified sites (like LVIP VII) that had no named
+-- project at all. Consistent with "quality over quantity": no weak or
+-- borderline candidate was forced in to avoid an empty result.
+--
+-- No changes made to any existing lehigh-valley-pa catalyst in this pass.
+-- The existing "Lower Macungie Township Data Center Readiness Signal" row
+-- was reviewed but is already correctly modeled as Possible
+-- (`potential_data_center`), not a Potential conversion candidate -- it is
+-- the same anticipatory-zoning pattern this pass found almost everywhere
+-- else in the region, already properly classified.
