@@ -1,0 +1,505 @@
+-- Tampa, FL metro (market `tampa-fl`) "Potential Data Center Site" pass
+-- (2026-10-03), #5 of this session's 7-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying
+-- candidates. Safe to apply (a no-op) or never run.
+--
+-- (A first attempt at this exact pass earlier today died on an API rate
+-- limit before doing any research and wrote nothing. This file is a
+-- from-scratch pass, not a recovery of partial work.)
+--
+-- ============================================================
+-- STEP 1 -- WHAT'S ALREADY IN THE DB (queried live before researching)
+-- ============================================================
+-- Market row exists: slug 'tampa-fl', name "Tampa", FL, center
+-- 27.9506,-82.4572 (downtown Tampa), default_zoom 11. Three existing
+-- catalyst rows, all inside the City of Tampa:
+--   - "Franklin Exchange Carrier Hotel (H5/Novacap acquisition from 365
+--     Data Centers)" (catalyst_type data_center, status 'operating') --
+--     655 N Franklin St, the carrier-dense colocation tower housing the
+--     Tampa Internet Exchange, acquired by the H5 Data Centers / Novacap
+--     JV in early 2026. Real, operating, confirmed -- the market's one
+--     actual data-center asset.
+--   - "South Selmon Expressway Capacity Project" (infrastructure_project,
+--     'under_construction') -- THEA's $362M widening. Not DC-relevant.
+--   - "Downtown Tampa Interchange (I-275/I-4) Rebuild"
+--     (infrastructure_project, 'under_construction') -- FDOT's $227.5M
+--     "Malfunction Junction" rebuild. Not DC-relevant.
+-- ZERO rows at status 'rumored' and zero `potential_data_center` rows --
+-- nothing to evaluate as a conversion candidate in the pattern used in the
+-- KC-metro and Omaha passes. This was a from-scratch, jurisdiction-by-
+-- jurisdiction site search.
+--
+-- NOTE ON PRE-EXISTING SOURCES: migration 20261002000000 (the Tampa market
+-- seed) already loaded five real, on-point Tampa-area data-center sources
+-- and attached them to `shifts` rows, not `catalysts` -- TECO's large-load
+-- tariff filing, the American Tower / Pinellas Park proposal (filed June
+-- 2026, later WITHDRAWN), Pinellas Park's Aug. 11 2026 one-year
+-- moratorium, Pinellas County's Aug. 29 2026 action, and Hillsborough
+-- County's Aug. 5 2026 7-0 vote. They appear unlinked from any catalyst
+-- because that pass wrote shifts. Every one of them was independently
+-- re-verified this pass by fresh search rather than taken on faith, and
+-- each is cited below. Nothing is inserted or relinked here.
+--
+-- ============================================================
+-- STEP 2 -- GEOGRAPHIC SCOPE
+-- ============================================================
+-- Core scope taken as the Tampa-St. Petersburg-Clearwater MSA:
+-- HILLSBOROUGH, PINELLAS and PASCO counties (plus Hernando, the MSA's
+-- fourth county). Adjacent counties were also checked because the brief
+-- raised them: POLK (Lakeland-Winter Haven MSA), MANATEE and SARASOTA
+-- (North Port-Bradenton-Sarasota MSA), and CITRUS. Utility territories
+-- checked: Tampa Electric (TECO -- Hillsborough and slivers of Polk/
+-- Pasco/Pinellas) and Duke Energy Florida (Pinellas, most of Pasco,
+-- Hernando, Citrus, parts of Polk).
+--
+-- ============================================================
+-- STEP 3 -- HEADLINE FINDING
+-- ============================================================
+-- Tampa Bay in October 2026 is not an under-discovered market -- it is the
+-- most comprehensively CLOSED market checked in this entire session. Every
+-- single jurisdiction in and adjacent to the metro falls into one of three
+-- disqualifying buckets, and the two large, well-entitled sites that do
+-- exist are each ALREADY being marketed by name as data-center locations.
+-- Unlike Omaha (saturated by confirmed campuses) or St. Louis (saturated by
+-- approved projects), Tampa's disqualifier is primarily REGULATORY: data
+-- centers are flatly not a permitted land use across the metro's single
+-- largest land bank.
+--
+-- --- A. UNINCORPORATED HILLSBOROUGH COUNTY -- HARD DISQUALIFICATION ---
+-- This is the decisive finding of the pass. Data centers are NOT a listed
+-- or allowed use in the Hillsborough County Land Development Code. The
+-- county's Development Services Director has stated that prospective
+-- developers who inquire are told data centers are "not an approved use
+-- currently under the land development code" and are "not eligible for
+-- development at this time"; any data center in unincorporated Hillsborough
+-- would first require commissioners to ADD it as an allowable use. On top
+-- of that, commissioners voted unanimously 7-0 on Aug. 5-6 2026 to
+-- commission a water-impact study and direct the county attorney to draft a
+-- moratorium ordinance on AI data centers in unincorporated areas.
+-- Commissioner Donna Cameron Cepeda originally sought a FIVE-year
+-- moratorium and narrowed it to one year only after a briefing on state
+-- preemption. On the record: "I certainly don't want to see us considering
+-- any of these until we've got a lot more information. There's tremendous
+-- public fear" (Comm. Harry Cohen).
+--   Why the moratorium hasn't taken effect yet, and why that is NOT an
+--   opening: SB 180 (2025), the post-hurricane recovery law, retroactively
+--   prohibits counties and municipalities under federal hurricane disaster
+--   declarations from proposing or adopting construction moratoriums or
+--   more restrictive land-development regulations -- applied retroactively
+--   to Aug. 1 2024 and running through Oct. 1 2027, triggered by Hurricanes
+--   Debby, Helene and Milton. Hillsborough is covered. So the county is
+--   legally barred from enacting its ban until Oct. 1 2027, and has said it
+--   intends to enact it then. A site whose only entitlement path is
+--   "convince commissioners to create a new allowable use, in a county that
+--   has already voted 7-0 to ban that use the moment state law lets it" is
+--   not a Potential site under any honest reading of the approval pillar.
+--   This single finding takes ~15,000 acres of industrial land -- the
+--   largest industrial land bank of any jurisdiction in the metro -- off
+--   the table.
+--   Confirmed absence of pending activity (the one genuinely clean fact
+--   here): county staff confirm ZERO formal applications for large-scale
+--   data centers, and there is currently no major data center proposal
+--   under review anywhere in Hillsborough County.
+--
+-- --- B. UNINCORPORATED PINELLAS COUNTY -- HARD DISQUALIFICATION ---
+-- On Aug. 29 2026 commissioners directed staff to prepare a resolution
+-- formally reaffirming that large-scale, standalone AI data centers are
+-- ALREADY PROHIBITED under the county's existing development code in
+-- unincorporated areas (smaller facilities serving hospitals, universities
+-- and government remain permitted). Not a new ban -- a clarification that
+-- the door was already shut. Pinellas is also the densest county in
+-- Florida; no large undeveloped contiguous land bank exists here
+-- regardless.
+--
+-- --- C. PINELLAS PARK -- DISQUALIFIED ON BOTH ACTIVITY AND REGULATION ---
+-- American Tower Corp. filed a June 2026 permit to demolish a
+-- light-industrial building at 10700 76th Court N and build a ~17,655 sq ft,
+-- 4MW edge data-processing facility on a half-acre of a 23-acre site with
+-- access to five fiber providers, a quarter-mile from the nearest home. It
+-- required conditional-use review and American Tower withdrew it under
+-- scrutiny; the City Council then voted unanimously for a one-year citywide
+-- data-center moratorium effective Aug. 11 2026. Real, named,
+-- site-specific history plus an enacted moratorium.
+--
+-- --- D. UNINCORPORATED PASCO COUNTY + ZEPHYRHILLS -- MORATORIUM ---
+-- Pasco commissioners unanimously approved a one-year moratorium on new
+-- large-scale data center applications in unincorporated Pasco, in force
+-- July 14 2026 through July 14 2027, tightening the small-facility
+-- exemption to a 2.5MW power-draw cap. It explicitly killed a long-debated
+-- proposal near I-75 and SR-52 (the developer publicly backed the
+-- moratorium). Zephyrhills separately passed its own one-year moratorium.
+-- Note the asymmetry worth flagging: no data-center project is on record in
+-- Pasco County at all -- the moratorium is pre-emptive, which makes the
+-- county clean on activity but closed on approval.
+--
+-- --- E. HERNANDO AND CITRUS COUNTIES -- MORATORIUM + WITHDRAWN PROJECT ---
+-- Both passed one-year moratoriums (Hernando unanimously; Citrus a yearlong
+-- freeze on new AI data center rezoning applications). Citrus also has real
+-- named history: the Deltona Corporation sought to expand a 557-acre
+-- industrial park near the unincorporated town of Holder to ~1,356 acres
+-- explicitly to attract heavy industry and possible data centers, met fierce
+-- backlash and skeptical county officials, and withdrew the application.
+--
+-- --- F. MANATEE, PALMETTO, SARASOTA, NORTH PORT -- MORATORIUM ---
+-- Manatee County: 12-month moratorium, unanimous, Sept. 15 2026. Palmetto:
+-- moving to halt data-center development for one year (Sept. 2026).
+-- Sarasota County: moratorium through July 2027. North Port: 18-month
+-- moratorium (3-2, Sept. 2026), adopted retroactively against a real site-
+-- and-development-plan application received July 20 2026 for a data center
+-- and office project in the city's northeast. All closed.
+--
+-- --- G. POLK COUNTY -- DISQUALIFIED ON ACTIVITY (the inverse case) ---
+-- Polk is the one nearby county with NO countywide moratorium, and it is
+-- disqualified for the opposite reason: it is by far the most active
+-- data-center county in the region, with three real, named pursuits:
+--   - FORT MEADE (Stonebridge): ~1,300 acres of former phosphate mine near
+--     US-17 & Broadway, a ~4.4M sq ft campus at ~1,000MW, $2.6B. Approved
+--     April 15 2026 -- Florida's first approved hyperscale campus and the
+--     only approved data center in the greater Tampa Bay region. Two
+--     lawsuits filed May 14 2026 to void the approval, 1,000+ recall
+--     signatures against city officials, a state Commerce Secretary calling
+--     the plan "fundamentally flawed," and still awaiting a Southwest
+--     Florida Water Management District water permit.
+--   - PROJECT SWAN (Ryan Companies US): 923 Wilkinson Rd / Old Tampa Hwy,
+--     Lakeland -- ~600,000 sq ft, ~100MW on ~60 acres. Lakeland's Land
+--     Development Code does not specifically allow data centers; 50+
+--     residents packed a City Commission meeting; the consultant cancelled
+--     a key Development Review Team meeting; and the City Commission passed
+--     a one-year moratorium 4-3 covering 50+MW projects within city limits
+--     and its utility service area, effective Aug. 3 2026 through Aug. 3
+--     2027. Project is on hold, inactive but technically alive.
+--   - CIELO HAINES CITY (Cielo Digital Infrastructure): Marion Rd & SR-544
+--     East, 74 acres, ~300MW -- suspended for insufficient water
+--     availability.
+-- Polk is also arguably outside this market's scope (separate MSA, and the
+-- market's center point and all three existing rows are in Tampa). Either
+-- way: not a gap to fill with a speculative Potential pin.
+--
+-- ============================================================
+-- STEP 4 -- THE TWO LARGE SITES THAT EXIST, AND WHY BOTH FAIL
+-- ============================================================
+-- Per the strict rule, the metro's large, well-entitled industrial sites
+-- were searched individually against data center / datacenter / hyperscale /
+-- AI campus / compute campus / cloud campus / server farm / digital
+-- infrastructure / rezoning / permit / utility request / land acquisition.
+-- Both of the genuinely DC-scale ones turned up explicit data-center
+-- marketing -- the same disqualifier that excluded Jamestown Mall in the
+-- St. Louis pass and South Pointe Industrial Park in the Omaha pass.
+--
+--   1. UNIVERSITY ENERGY PARK (4145 E State Rd 60, Dover, unincorporated
+--      Hillsborough County) -- on paper the single best Potential candidate
+--      in the metro: ~1,000 acres with over a mile of SR-60 frontage, up to
+--      6.1M sq ft of ENTITLED industrial development plus up to 350,000 sq
+--      ft of commercial/office, on-site CSX rail, approved alternative-
+--      energy uses, and access to I-4, I-75, Port Tampa Bay and Tampa
+--      International. Hillsborough County originally approved a clean
+--      energy plant on ~3,000 acres here in 2010.
+--      EXCLUDED on two independent grounds. First, it is explicitly "being
+--      marketed as a potential data center location" -- Hillsborough
+--      County's own staff fielded resident objections about exactly this at
+--      the August 2026 commission meeting, confirming the marketing and the
+--      social-media attention while also confirming no formal application
+--      has been filed. Documented, site-specific, named data-center interest
+--      puts this in rumor/contested territory, not clean Potential. Second,
+--      it sits in unincorporated Hillsborough, where the use is not
+--      permitted at all (see A above). Either reason alone is sufficient.
+--
+--   2. STALWART BUSINESS PARK (Stalwart Equities; ~410 acres on Paul
+--      Buchman Hwy between Half Mile Rd and Knights Griffin Rd, Plant City,
+--      adjacent to an active CSX line) -- 3.4M sq ft across nine buildings,
+--      approved unanimously by Plant City, with access to natural gas,
+--      electrical utilities and water capacity.
+--      EXCLUDED: the approved project is described in exactly these terms --
+--      "enabling features like a 150-megawatt data center and cold storage
+--      capabilities with dedicated rail service." A site whose own approved
+--      program names a 150MW data center is not a site with no known
+--      data-center activity. (Construction began Oct. 2025, completion
+--      targeted mid-2027, with ~400,000 sq ft already in negotiation.)
+--
+-- ============================================================
+-- STEP 5 -- OTHER JURISDICTIONS AND SITES CHECKED, NOTHING SCORABLE
+-- ============================================================
+--   - CITY OF TAMPA: no city-level data-center moratorium or ordinance was
+--     found either way -- logged as a genuine unknown, not assumed clean.
+--     Immaterial here regardless: the city is fully urbanized and its only
+--     data-center asset is the already-logged operating Franklin Exchange
+--     carrier hotel. No large, available, uncommitted industrial tract
+--     inside city limits surfaced in this research.
+--   - PLANT CITY and TEMPLE TERRACE (the Hillsborough municipalities, which
+--     the county's draft ban would not reach): no municipal moratorium
+--     found for either. Temple Terrace is a small, essentially built-out
+--     inner suburb with no DC-scale land. Plant City's one large approved
+--     industrial park is Stalwart (above), already DC-targeted.
+--   - COUNTY LINE CENTRAL PARK (SW quadrant of US-92 & County Line Rd,
+--     ~1.5 mi south of I-4, across from the Publix Distribution Center,
+--     Plant City FL 33566): ~407.15 acres, PD-zoned for 2.4M sq ft of
+--     industrial plus 30,000 sq ft support commercial, light-industrial
+--     future land use, listed at $8,850,000. No data-center-specific search
+--     hit for this site. This is the closest thing to a clean candidate the
+--     pass produced -- and it is deliberately NOT added, for two honest
+--     reasons: (a) its jurisdiction is unresolved. County Line Road is the
+--     Hillsborough/Polk boundary and the parcel carries a Plant City
+--     mailing address, but nothing found confirms whether it is inside
+--     Plant City limits or in unincorporated Hillsborough -- and that
+--     single fact flips it between "permitted-use question" and "use not
+--     allowed at all." (b) No sourced power, substation, fiber, or
+--     water/sewer capacity figure for this specific site was found at all;
+--     scoring power_grid (the 30-point factor) and fiber_connectivity would
+--     have required inventing numbers, which this pass does not do. Logged
+--     here as the one site worth re-checking if the jurisdiction question
+--     can be answered directly -- same treatment given to the
+--     unscorable-at-this-depth Douglas County NE sites in the Omaha pass.
+--   - Every other large Hillsborough industrial deal found in 2026 is a
+--     conventional logistics project already committed to a different,
+--     smaller-footprint use -- 4Ward Logistics Center (116 acres, East
+--     Tampa, 382,500 sq ft by 2027), Constellation East Tampa Business
+--     Center (19 acres, 7351 Muck Pond Rd, 251,162 sq ft, construction from
+--     May 2026), New Tampa Commerce Center (~10 acres, 9447 Fowler Ave,
+--     Thonotosassa, 136,714 sq ft). Same "looks available but is actually
+--     already spoken for" exclusion applied to Rainwood Industrial Park in
+--     the Omaha pass.
+--   - North Tampa Bay Industrial Park (Pasco EDC) sits inside the Pasco
+--     County moratorium -- not evaluated site-level.
+--   - Not re-checked and not seeded: a Centersquare/Cyxtera facility at
+--     9310 Florida Palm Drive, Hillsborough County, which the Tampa market
+--     seed (20261002000000) already found in aggregator data
+--     (interconnection.fyi, compute-atlas) with no dated news behind it and
+--     deliberately excluded. Still excluded, same reasoning, and in any case
+--     an existing facility is not a Potential site.
+--
+-- ============================================================
+-- STEP 6 -- REGIONAL FUNDAMENTALS, RECORDED HERE RATHER THAN INVENTED
+-- ============================================================
+-- These are real, sourced, metro-wide facts. They are logged in this comment
+-- block precisely BECAUSE there is no candidate row to attach them to --
+-- the alternative (spreading them across a speculative pin as if they were
+-- site-specific) is the exact error this discipline exists to prevent.
+--
+-- POWER -- the one genuinely favorable fundamental, and it is brand new:
+--   TECO (Tampa Electric) filed its large-load tariff with the Florida PSC
+--   on Sept. 30 2026, one day before the statutory deadline, as required by
+--   SB 484 (the Florida Hyperscale Data Center Act, signed May 7 2026,
+--   effective July 1). It creates a new rate class for customers averaging
+--   50MW+ monthly peak demand, requires them to pay for the electric
+--   infrastructure built to serve them plus a share of broader system
+--   costs, mandates contracts of at least 20 years with three years' notice
+--   to terminate and an exit fee covering whatever remains owed on the
+--   generation and wires built for them, permits security deposits or
+--   letters of credit up to $2 million per contracted MW, and caps the
+--   first customer class (LLCS-1) at a combined 1 gigawatt. TECO's filing
+--   anticipates investing in 600MW of new generating capacity tied to
+--   modernization plans at Big Bend Power Station (Apollo Beach) plus 600MW
+--   of energy storage and new transmission. TECO does not serve any
+--   large-load customers today. The PSC has not yet approved the tariff.
+--   Big Bend was already repowered to natural-gas combined cycle in Dec.
+--   2022 (1,090MW from the modernized unit), so the station is a real,
+--   recently-invested generation anchor -- it is also in unincorporated
+--   Hillsborough, where the use is not permitted.
+--   Duke Energy Florida (serving Pinellas, most of Pasco, Hernando, Citrus
+--   and parts of Polk) filed its own large-load tariff earlier, in FPSC
+--   Docket 20260064-EI (docketed April 22 2026): minimum 20-year terms,
+--   minimum monthly bills, mandatory early-termination fees. The Office of
+--   Public Counsel has argued it is non-compliant because Duke stopped
+--   short of proposing an actual rate schedule for large-load customers,
+--   and the PSC sealed Duke's data-center cost projections on Sept. 16
+--   2026. So on the Duke side of the metro, the cost of service for a
+--   hyperscale load is literally undetermined and under dispute as of this
+--   pass.
+--   Net read: the power pillar in this metro is "moderate and newly
+--   structured, not yet proven" -- a real 1GW first-class cap and real
+--   planned generation, but zero large-load customers served, an unapproved
+--   TECO tariff, and a contested Duke tariff.
+--
+-- WATER -- a real, repeatedly binding regional constraint, not a theory:
+--   Southwest Florida Water Management District permitting has already
+--   stopped two of the three named Polk County projects cold -- Fort Meade
+--   is approved but still awaiting its water permit, and Cielo's 300MW
+--   Haines City project is suspended outright for insufficient water
+--   availability. Water impact is also the specific study Hillsborough
+--   commissioners ordered alongside their draft ban. Any future Tampa Bay
+--   candidate has to clear SWFWMD, and the recent record is that large
+--   projects do not.
+--
+-- PHYSICAL/ENVIRONMENTAL RISK -- documented, and structurally entangled:
+--   The brief flagged hurricane/flood risk as a real fundamentals factor,
+--   and this pass found it operating in an unexpected direction. The reason
+--   Hillsborough legally cannot enact its data-center moratorium until Oct.
+--   1 2027 is SB 180, which suspends local moratorium authority in
+--   jurisdictions covered by federal disaster declarations from Hurricanes
+--   Debby, Helene and Milton -- retroactive to Aug. 1 2024. In other words,
+--   the documentary proof that this metro sits in a repeated,
+--   federally-declared hurricane-disaster zone is the same instrument
+--   currently holding the county's ban at bay. That is a genuinely
+--   double-edged fact and it is recorded as found, not spun: the physical
+--   risk is real and federally documented at the metro level, and it is not
+--   automatically disqualifying (TECO's grid and the existing Franklin
+--   Exchange colocation facility both operate in it), but no site-specific
+--   FEMA flood-zone or wind-design-speed data was located for any candidate
+--   this pass, because no candidate survived to the point of needing it.
+--
+-- REGULATORY CONTEXT, state level:
+--   SB 484 (Florida Hyperscale Data Center Act, signed May 7 2026,
+--   effective July 1) defines large-scale data centers at 50+MW, requires
+--   each large-load customer to bear its own full cost of service so it
+--   isn't shifted to the general ratepayer body, creates a permitting
+--   framework protecting aquifers and local water, and -- critically for
+--   this pass -- EXPRESSLY PRESERVES local government authority to deny
+--   projects or impose stricter standards. Florida also raised its
+--   data-center sales-tax exemption threshold from 15MW to 100MW with no
+--   grandfather clause (HB 7031, June 2025), eliminating the exemption for
+--   sub-100MW facilities. So the state incentive picture is narrowing, and
+--   state law affirmatively empowers exactly the local closures documented
+--   above. Statewide, roughly 28 Florida jurisdictions had moratoriums or
+--   bans in force as of late September 2026, with several more proposed --
+--   Florida is among the most restrictive data-center states in the
+--   country right now, and Tampa Bay is the densest cluster of that
+--   restriction.
+--
+-- ============================================================
+-- STEP 7 -- RESULT
+-- ============================================================
+-- ZERO new Potential candidates added for tampa-fl. This is the correct and
+-- honest outcome, and it is the most thoroughly closed of the five markets
+-- checked so far this session:
+--   * Unincorporated Hillsborough County -- the metro's largest industrial
+--     land bank (~15,000 acres) -- does not permit data centers as a land
+--     use at all, and has voted 7-0 to ban them the moment state
+--     preemption lifts on Oct. 1 2027.
+--   * Unincorporated Pinellas County already prohibits large-scale
+--     standalone data centers under existing code.
+--   * Pasco, Zephyrhills, Hernando, Citrus, Manatee, Palmetto, Sarasota,
+--     North Port, Pinellas Park and Lakeland all have enacted moratoriums.
+--   * Polk County, the one county without a moratorium, has three real
+--     named pursuits including Florida's first approved hyperscale campus.
+--   * Both of the metro's genuinely DC-scale entitled sites (University
+--     Energy Park, ~1,000 acres, Dover; Stalwart Business Park, ~410 acres,
+--     Plant City) are already explicitly marketed or programmed for a data
+--     center, which fails the strict no-known-activity bar outright.
+--   * The one site with no DC-specific hit and real acreage (County Line
+--     Central Park, ~407 acres) cannot be scored honestly: its jurisdiction
+--     is unresolved and no power or fiber figure exists for it in any
+--     source found.
+-- Per the brief: zero is a complete result here, not a truncated pass. The
+-- single most actionable follow-up, if Tampa is revisited, is narrow and
+-- answerable: confirm whether County Line Central Park sits inside Plant
+-- City limits or in unincorporated Hillsborough County, and whether Plant
+-- City has adopted any data-center ordinance -- Plant City is the one
+-- jurisdiction in the metro with both large industrial land and a
+-- demonstrated willingness to approve a project that names a 150MW data
+-- center in its own program.
+--
+-- ============================================================
+-- SOURCES CONSULTED (all real, all verified this pass; no rows inserted,
+-- so these are recorded here for traceability rather than in `sources`)
+-- ============================================================
+-- Hillsborough County:
+--   https://www.fox13news.com/news/hillsborough-county-commissioners-vote-draft-one-year-data-center-pause
+--     (FOX 13, 2026-08-05 -- 7-0 vote, one-year draft, zero pending
+--     applications, commissioner quotes) [already in `sources`]
+--   https://www.businessobserverfl.com/news/2026/aug/06/hillsborough-data-centers/
+--     (Business Observer FL, 2026-08-06 -- SB 180 timing, unincorporated
+--     scope)
+--   https://www.tampabaybeacons.com/2026/08/13/hillsborough-county-to-draft-large-scale-data-center-ban/
+--     (2026-08-13 -- University Energy Park "being marketed as a potential
+--     data center location," 1,000 acres, no formal application; Cepeda's
+--     original five-year request; October 2027 effective date)
+--   https://globaldatacenters.net/counties/hillsborough
+--     (tracker -- "data centers are not currently listed uses in the
+--     Hillsborough County Land Development Code"; inquirers told "not
+--     eligible for development at this time")
+--   https://www.tampabay28.com/news/local-news/tampa-metro-west-hillsborough-county/teco-proposes-sweeping-safeguards-as-florida-prepares-for-data-center-growth
+--     ("currently no major data center proposal under review" in
+--     Hillsborough; TECO tariff detail)
+-- SB 180:
+--   https://www.flsenate.gov/Committees/billsummaries/2025/html/180
+--     (official bill summary -- moratorium prohibition, Debby/Helene/Milton,
+--     retroactive to 2024-08-01, through 2027-10-01)
+-- Pinellas:
+--   https://www.businessobserverfl.com/news/2026/aug/29/pinellas-county-closes-door-data-centers/
+--     (2026-08-29 -- resolution reaffirming large-scale standalone data
+--     centers already prohibited in unincorporated Pinellas) [in `sources`]
+--   https://baynews9.com/fl/tampa/news/2026/06/18/data-center-developer-proposes-building-in-pinellas-park
+--     and https://www.fox13news.com/news/boston-developer-files-building-permit-pinellas-park-data-center
+--     (American Tower, 10700 76th Court N) [both in `sources`]
+--   https://www.datacenterdynamics.com/en/news/american-tower-files-to-develop-4mw-edge-data-center-outside-tampa-florida/
+--     (4MW, 17,655 sq ft, 2.3 acres of a 23-acre site, five fiber providers)
+--   https://baynews9.com/fl/tampa/news/2026/08/11/pinellas-park-leaders-ok-one-year-moratorium-on-data-centers
+--     (unanimous one-year moratorium, 2026-08-11)
+-- Pasco:
+--   https://www.wtsp.com/article/news/local/pascocounty/pasco-county-approves-pause-data-centers/67-92575899-c4a1-4581-a798-15b0f7dd47bc
+--   https://www.tampabay.com/news/pasco/2026/07/24/ai-hyperscale-data-centers-county-commission-florida-artificial-intelligence/
+--     (one-year moratorium, unincorporated only, 2.5MW small-facility cap,
+--     kills the I-75/SR-52 proposal)
+--   https://globaldatacenters.net/counties/pasco
+--     (moratorium 2026-07-14 to 2027-07-14; zero tracked projects in the
+--     county; Zephyrhills moratorium)
+-- Hernando / Citrus:
+--   https://www.wtsp.com/article/news/local/hernandocounty/ai-data-center-hernando-county/67-1a9d031f-e2fc-49a9-9129-401536752dd8
+--   https://www.fox13news.com/news/citrus-county-commission-approves-freeze-ai-data-center-rezoning-applications
+--   https://www.tampabay.com/news/environment/2026/03/06/data-center-could-be-coming-greater-tampa-bay-area-locals-are-not-happy/
+--     (Deltona Corporation, 557 -> ~1,356 acres near Holder, withdrawn)
+-- Manatee / Sarasota / North Port / regional roundup:
+--   https://www.datacenterbans.com/state/florida
+--     (Manatee 12-month 2026-09-15; North Port 18-month 2026-09-23;
+--     Lakeland one-year; Marion 12-month 50+MW)
+--   https://savrn.com/data-center-moratorium-tracker/florida
+--     (statewide roll-up: ~28 in force as of late Sept. 2026; SB 484 and
+--     HB 7031 summaries; Hillsborough listed as proposed/SB-180-blocked)
+--   https://tbbwmag.com/2026/09/14/palmetto-data-center-moratorium/
+--   https://baynews9.com/fl/tampa/news/2026/08/31/north-port-commissioners-to-consider-retroactive-1-month-data-center-moratorium
+-- Polk:
+--   https://globaldatacenters.net/counties/polk
+--     (Fort Meade/Stonebridge 1,000MW, ~1,300 acres, 4.4M sq ft, awaiting
+--     SWFWMD water permit; Project Swan/Ryan Companies 100MW, 600,000 sq ft,
+--     ~60 acres, 923 Wilkinson Rd; Cielo Haines City 300MW, 74 acres,
+--     suspended on water; Lakeland moratorium 2026-08-03 to 2027-08-03;
+--     no Polk County moratorium)
+--   https://floridadatacenters.org/polk-county
+--     ($2.6B, approved 2026-04-15, former phosphate mine, two lawsuits
+--     filed 2026-05-14, recall effort)
+--   https://www.wfla.com/news/polk-county/project-swan-what-is-the-proposed-lakeland-data-center/
+--   https://thecitrustea.com/2026/08/03/lakeland-commission-passes-data-center-moratorium-in-4-3-vote/
+--   https://www.tampabay.com/news/florida-politics/2026/04/16/florida-data-center-fort-meade-desantis-utilities-water-ai/
+--     (state Commerce Secretary: plan "fundamentally flawed")
+-- Power / utilities:
+--   https://baynews9.com/fl/tampa/news/2026/10/01/tampa-electric-files-plan-to-protect-customers-from-data-center-costs
+--     (filed 2026-09-30; 50MW class; 20-year contracts; three years'
+--     notice; up to $2M/MW security; LLCS-1 capped at 1GW; TECO serves no
+--     large-load customers today) [already in `sources`]
+--   https://dailyenergyinsider.com/news/53976-tampa-electric-files-large-load-tariff-with-florida-regulators/
+--     (2026-09-30 filing; customers pay all system upgrades)
+--   https://www.tampaelectric.com/mediacenter/2019/Tampa-Electric-Receives-Final-Approval-to-Modernize-Big-Bend-Power-Station/
+--   https://www.sargentlundy.com/projects/big-bend-modernization/
+--     (Big Bend Unit 1 repowered to gas combined cycle, completed Dec.
+--     2022, 1,090MW)
+--   https://mgrid.org/2026/08/28/duke-energy-floridas-first-large-load-tariff-covers-50-mw-customers-and-sets-no-rate-for-them/
+--   https://www.wusf.org/economy-business/2026-08-25/florida-utility-regulators-will-decide-duke-energy-data-center-tariff-protects-residents
+--     (FPSC Docket 20260064-EI, docketed 2026-04-22; OPC non-compliance
+--     argument; cost projections sealed 2026-09-16)
+-- Sites:
+--   https://www.loopnet.com/Listing/4145-E-State-Rd-60-Dover-FL/40193792/
+--   https://www.propertyshark.com/cre/commercial-property/us/fl/tampa/university-energy-park/
+--     (University Energy Park: ~1,000 acres, 1+ mile SR-60 frontage, 6.1M
+--     sq ft entitled industrial, 350,000 sq ft commercial, CSX rail,
+--     approved alternative energy uses)
+--   https://www.constructionowners.com/news/plant-city-greenlights-410-acre-3-4m-square-foot-industrial-development
+--     (Stalwart Business Park: Stalwart Equities, 410 acres, 3.4M sq ft,
+--     nine buildings, Paul Buchman Hwy, CSX-adjacent, approved unanimously
+--     2025-05-20, "enabling features like a 150-megawatt data center")
+--   https://properties.zoomprospector.com/northflorida/property/U.S.-Highway-92-and-County-Line-Road-Plant-City-Florida/403BCCD9-DA12-45D0-B34F-1E424459B069
+--     (County Line Central Park: 407.15 acres, PD for 2.4M sq ft industrial
+--     + 30,000 sq ft support commercial, light-industrial FLU, $8,850,000 --
+--     listing now shows as expired/removed, which is itself part of why it
+--     is not scored)
+--   https://hencre.com/blog/east-tampa-us-301-industrial-corridor-2026
+--   https://tbbwmag.com/2026/04/16/east-tampa-116-acre-industrial-site-sale/
+--   https://tbbwmag.com/2026/04/30/east-tampa-industrial-development/
+--   https://tbbwmag.com/2026/03/04/new-tampa-commerce-center-warehouse/
+--     (the committed conventional-logistics projects, and the ~15,000-acre
+--     unincorporated Hillsborough industrial land figure)
+--   https://tbrpc.org/data-centers/
+--     (Tampa Bay Regional Planning Council's data-center resource hub --
+--     checked for a regional model ordinance; it offers impact guidance and
+--     out-of-region sample ordinances only, no Tampa Bay model ordinance
+--     and no jurisdiction-by-jurisdiction regulatory list)
