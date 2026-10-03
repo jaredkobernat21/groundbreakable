@@ -1,0 +1,60 @@
+-- Quad Cities (Bettendorf-IA, Davenport-IA) "Potential Data Center Site"
+-- pass (2026-10-03), #2 of this session's 14-market queue. Same discipline
+-- as the Kansas City/Nashville/Columbus/Lehigh Valley/Des Moines passes.
+-- NO STATEMENTS IN THIS FILE -- documentation-only record of a pass that
+-- found zero qualifying candidates, for a LAND-fundamentals reason rather
+-- than an activity reason. Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: Davenport already hosts a major, already-logged Planned
+-- project -- Meta's $800M, ~328-acre data center campus (Hillandale Rd &
+-- Enterprise Way, proposed via shell company Vemerald LLC, Iowa Economic
+-- Development Authority-approved) -- confirming the region's fundamentals
+-- are real. Bettendorf has existing smaller operating facilities (Bluebird
+-- Quad Cities Data Center, 2701 Devils Glen Rd, 53,000 sq ft; a Verizon
+-- facility, ~4MW) -- real but modest/older activity, not itself
+-- disqualifying a different, specific, large site on its own.
+--
+-- THE FINDING: unlike every disqualified market so far this session, no
+-- site here was ruled out by a data-center-specific pursuit or a
+-- moratorium -- Scott County, Davenport, and Bettendorf specifically have
+-- NO confirmed data-center moratorium as of this research (a real,
+-- notable POSITIVE differentiator from the ~30 other Iowa counties/cities
+-- that have passed one, per Iowa Capital Dispatch's 2026-08-25 count).
+-- Every candidate site checked instead fails on LAND fundamentals --
+-- genuinely available contiguous acreage is thin everywhere checked:
+--
+--   - EASTERN IOWA INDUSTRIAL CENTER (Davenport, owned/marketed by the
+--     Greater Davenport Redevelopment Corporation -- a real city/county/
+--     private public-private partnership, rail via the Davenport
+--     Industrial Railroad, barge access within 5 miles, no DC-specific
+--     search hit at all): the park totals 200+ acres, but it is already
+--     substantially built out with real existing tenants (Amazon
+--     fulfillment center, Kraft Heinz, Sterilite) -- only 12-18 acres of
+--     currently marketed open lots were found available (Quad Cities
+--     Chamber featured-properties listing; opportunityiowa.gov), well
+--     short of the 85+ contiguous acres every genuine Potential site
+--     logged this session has had.
+--   - FOREST GROVE AREA (Bettendorf): a real 46.23-acre parcel is for
+--     sale (0 Forest Grove Dr), and a ~400-acre land-use study area is
+--     contiguous with Forest Grove Park -- but that broader area's
+--     current direction is toward parkland expansion and a separate
+--     86-acre annexation for housing/an elementary school, not available
+--     industrial acreage (KWQC, "Bettendorf's Forest Grove Park ready to
+--     grow"; qconline.com, city land-use roadmap coverage). 46 acres
+--     alone is below the practical threshold used elsewhere this session.
+--   - RUSSELL INDUSTRIAL PARK (Quad Cities Chamber listing, 95 acres
+--     total): already 3 of 6 planned buildings leased/occupied, a 4th
+--     ready for occupancy -- not genuinely open contiguous acreage.
+--   - RYAN LAND (25 acres, I-80 & Northwest Blvd access): real and level
+--     with utility access, but 25 acres alone is too small on its own for
+--     this session's Land bar.
+--
+-- MidAmerican Energy's statewide Individual Customer Rate for large loads
+-- (15MW standard threshold, or 3MW if the customer builds its own
+-- substation; 10-year minimum contract; "customers pay their own way" for
+-- new substations/transmission) is real and applies to this whole
+-- territory -- a genuine Power-fundamentals signal, just not enough on its
+-- own without a qualifying site to pair it with.
+--
+-- No existing catalyst in bettendorf-ia or davenport-ia was touched by
+-- this migration.
