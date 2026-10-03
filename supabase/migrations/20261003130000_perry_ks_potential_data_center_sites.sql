@@ -1,0 +1,109 @@
+-- Perry, KS (market `perry-ks`, Jefferson County) "Potential Data Center Site"
+-- pass (2026-10-03), #3 of this session's 7-market queue. Same discipline as
+-- every prior pass this session. NO STATEMENTS IN THIS FILE --
+-- documentation-only record of a pass that found zero qualifying candidates.
+-- Safe to apply (a no-op) or never run.
+--
+-- CONTEXT: queried live `catalysts` joined to `markets` for slug 'perry-ks'
+-- before researching. Market row exists (name "Perry") but has ZERO existing
+-- catalyst rows of any type -- nothing to evaluate for conversion, unlike the
+-- KC metro and Omaha passes which started from existing 'rumored' rows. This
+-- pass is a from-scratch county/town-level search.
+--
+-- WHY JEFFERSON COUNTY MATTERED GIVEN THIS SESSION'S KC-METRO WORK: the KC
+-- metro pass (20261002090000 / round 2 at 20261003020000) already found a
+-- real, named, confirmed pursuit in the ADJACENT county -- "Project
+-- Bluestem" (Cloverleaf Infrastructure) in Tonganoxie, Leavenworth County,
+-- ~10+ miles from Perry. That is a separate county and a separate, already-
+-- logged site -- proximity to it is not itself evidence of activity in
+-- Jefferson County, so this pass independently searched Jefferson County on
+-- its own terms rather than assuming spillover.
+--
+-- RESEARCH FINDING -- JEFFERSON COUNTY HAS ITS OWN REAL, NAMED, TWICE-
+-- REPEATED DATA-CENTER/CRYPTO-MINING CONTROVERSY, independent of the
+-- Leavenworth/Tonganoxie situation:
+--   1. Feb 2023: Crypto Colo Center Corp. (on behalf of landowner Dei Vitae
+--      Enterprises LLC) proposed an 81-acre, $1.86M, 35-employee data/crypto
+--      processing center at 8974 N K-92 Highway, about one mile north of
+--      McLouth, KS (Jefferson County) -- metal shipping-container-housed
+--      servers powered by on-site natural-gas generators, in two phases (10
+--      containers/4 generators, then 12 more/4 more). Went to the Jefferson
+--      County Regional Planning Commission (case CU2023-02, hearing at
+--      Oskaloosa City Hall, Feb 27 2023). The McLouth City Council voted to
+--      recommend denial, the applicant withdrew the proposal after heavy
+--      public turnout and opposition, and the County Commission responded
+--      with a 12-month moratorium on new data-center/crypto-mining
+--      applications (jeffcountynews.com's original hearing notice;
+--      kansasreflector.com and wibw.com's coverage of the withdrawal and
+--      moratorium).
+--   2. May 4, 2026: the County Board of Commissioners unanimously adopted
+--      Resolution 2026-010, broadening an existing wind-and-solar
+--      development pause into a combined moratorium covering commercial
+--      wind/solar, cryptocurrency mining, battery energy storage, AND data
+--      centers countywide, specifically so the county can finish updating
+--      its comprehensive plan and zoning rules (Community Development
+--      Director Stephan Metzger's stated rationale, per citizenportal.ai's
+--      direct Kansas/Jefferson County coverage of the vote). This is an
+--      active, current, county-wide anticipatory regulatory posture, not a
+--      one-off closed episode from 2023.
+--   This is the same "anticipatory regulatory activity is itself a
+--   disqualifying signal" pattern already established this session for Cass
+--   County NE, Washington County NE, Nashville, Columbus, and Lehigh Valley
+--   -- except here it is reinforced by an actual real, named prior proposal
+--   (not just a precautionary ordinance process), which is a stronger
+--   disqualifier than any of those cases. The strict "no credible evidence
+--   of activity, ever" bar cannot be cleanly applied to anywhere in this
+--   county right now.
+--
+-- NOTE ON SOURCE DISAMBIGUATION: several search hits for "Jefferson County
+-- data center ordinance/moratorium" during this pass turned out to be about
+-- DIFFERENT Jefferson Counties in other states (Jefferson County, IA --
+-- kyoutv.com, Ottumwa; and a "Jefferson County Council" item -- Kansas
+-- counties are governed by a Board of COMMISSIONERS, not a Council, which
+-- doesn't match). Those were explicitly discarded rather than folded in.
+-- Only sources confirmed Kansas-specific (citizenportal.ai's URL path
+-- literally reads /kansas/jefferson-county/; Kansas Reflector and WIBW
+-- [Topeka, KS] covering McLouth; jeffcountynews.com's hearing notice at
+-- Oskaloosa City Hall, Jefferson County KS's own county seat) were used.
+--
+-- PERRY ITSELF -- no separate basis for a candidate was found even setting
+-- the countywide moratorium history aside:
+--   - No industrial park, shovel-ready site, certified megasite, or notable
+--     large-contiguous-parcel landowner was found marketed in or near Perry,
+--     KS specifically (a dedicated search for a Perry/Jefferson County
+--     industrial park returned nothing on-point -- only out-of-state
+--     Jefferson County results and Perry's own Wikipedia/state-park
+--     entries).
+--   - Perry Lake / Perry Dam, the one major piece of infrastructure near the
+--     town, is a U.S. Army Corps of Engineers flood-control reservoir on the
+--     Delaware River (completed 1966-1970, ~11,000-acre pool, earth-fill
+--     embankment with gated outlet works and a gated spillway) -- built for
+--     flood control, water supply, and recreation. No hydroelectric
+--     generation and no power-transmission infrastructure tied to the dam
+--     was found in any source checked -- it is not a power fundamentals
+--     angle for a data-center candidate.
+--   - Power utility territory is confirmed (findenergy.com / wattbuy.com):
+--     Evergy serves Perry and the large majority of Oskaloosa (the rest via
+--     FreeState Electric) -- the same Evergy Kansas Central large-load
+--     tariff territory (75MW+) already documented in the KC-metro passes.
+--     This confirms Jefferson County is not excluded for lacking any utility
+--     capable of serving a large load in principle -- but utility presence
+--     alone doesn't overcome the real, current, county-wide moratorium and
+--     prior-proposal history above, and no shovel-ready site was found to
+--     pair it with regardless.
+--   - Jefferson County is rural/agricultural in character consistent with
+--     the pattern already seen in other small-town passes this session
+--     (Fayetteville AR, Lawrence KS, Manhattan KS): no large contiguous
+--     industrial-zoned acreage surfaced near Perry town itself to even
+--     construct a site-level candidate from, separate from the activity
+--     question.
+--
+-- RESULT: zero new Potential candidates added for perry-ks. This is a
+-- disqualified-by-real-activity outcome (like Cass/Washington Counties, NE),
+-- not a research gap -- Jefferson County has its own real, named, twice-
+-- documented data-center/crypto-mining controversy and an active, current
+-- county-wide moratorium (Resolution 2026-010, May 2026) independent of the
+-- already-logged Leavenworth County ("Project Bluestem") situation next
+-- door, and no separate industrial park or shovel-ready site was found near
+-- Perry itself to evaluate in isolation from that countywide posture. Per
+-- the brief: zero is the correct, honest outcome here.
