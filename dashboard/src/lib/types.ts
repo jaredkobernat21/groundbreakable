@@ -404,12 +404,26 @@ export type PotentialSiteFactorKey =
   | "water_cooling"
   | "transportation_workforce";
 
+// Evidence confidence (Jared, 2026-10-03) -- a DIFFERENT axis from a
+// pillar's strength label (strong/favorable/etc, "how good is this
+// factor"): this is "how sure are we," independent of how strong or weak
+// the underlying finding is. Optional on each component -- the 4 rows
+// that predate this field simply render without a badge, same
+// backward-compatible pattern as every other optional addition here.
+export type PotentialEvidenceStatus = "verified" | "indicated" | "unknown";
+
 export type PotentialScoreComponent = {
   key: PotentialSiteFactorKey;
   points: number;
   evidence: string[];
   unknowns: string[];
+  status?: PotentialEvidenceStatus;
 };
+
+// Potential Area (a broader zone where conditions are aligning) vs.
+// Potential Site (a specific parcel/assemblage) -- see migration
+// 20261003000000_extend_potential_site_card_fields.sql.
+export type PotentialSiteType = "area" | "site";
 
 // Mirrors lib/catalysts/potentialSiteCriteria.ts's Approval/Infrastructure
 // pillar vocabulary (Jared's 2026-10-02 same-day clarification) -- see that
@@ -495,6 +509,16 @@ export type Catalyst = {
   community_friction_notes: string | null;
   utility_timeline: UtilityTimeline | null;
   utility_timeline_notes: string | null;
+  // 2026-10-03 enhancement -- water_cooling was already a scored factor but
+  // had no notes column; natural_gas/behind-the-meter was never its own
+  // factor at all. Both nullable, both meaningful only for
+  // 'prospective_data_center_site'.
+  water_notes: string | null;
+  natural_gas_notes: string | null;
+  // Nullable, no default -- existing rows were backfilled to 'site' only
+  // where they're already parcel-specific; a future row created without
+  // this in mind simply has no type badge rather than a wrong guess.
+  potential_site_type: PotentialSiteType | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

@@ -341,6 +341,9 @@ const demoCatalysts: CatalystWithSource[] = [
     community_friction_notes: null,
     utility_timeline: null,
     utility_timeline_notes: null,
+    water_notes: null,
+    natural_gas_notes: null,
+    potential_site_type: null,
     source: null,
   },
 ];

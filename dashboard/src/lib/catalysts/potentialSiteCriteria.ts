@@ -222,6 +222,18 @@ export const UTILITY_TIMELINE_LABEL: Record<UtilityTimeline, string> = {
   unknown: "Unknown",
 };
 
+// Evidence confidence (Jared, 2026-10-03) -- a different axis from a
+// pillar's strength label: "how sure are we," independent of "how good is
+// this factor." Optional -- rows that predate this field render without a
+// badge rather than a misleading default.
+export type PotentialEvidenceStatus = "verified" | "indicated" | "unknown";
+
+export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, string> = {
+  verified: "Verified",
+  indicated: "Indicated",
+  unknown: "Unknown",
+};
+
 // Mirrors CatalystScoreComponent's shape (lib/catalysts/score.ts) for
 // consistency, but this is a SEPARATE scoring system with its own rubric --
 // never conflate potential_score with catalyst_score.
@@ -230,6 +242,16 @@ export type PotentialScoreComponent = {
   points: number; // 0..weight, human-assigned per documented evidence
   evidence: string[]; // what was actually found, with real sources
   unknowns: string[]; // what still needs confirmation for this factor
+  status?: PotentialEvidenceStatus; // optional per-factor evidence confidence
+};
+
+// Potential Area (a broader zone where conditions are aligning) vs.
+// Potential Site (a specific parcel/assemblage). Nullable on the row --
+// only set it when genuinely known either way.
+export type PotentialSiteType = "area" | "site";
+export const POTENTIAL_SITE_TYPE_LABEL: Record<PotentialSiteType, string> = {
+  area: "Potential Area",
+  site: "Potential Site",
 };
 
 // Sums a candidate's component scores into the 0-100 Potential Score.

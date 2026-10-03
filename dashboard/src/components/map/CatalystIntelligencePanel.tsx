@@ -20,19 +20,35 @@ import {
   COMMUNITY_FRICTION_LABEL,
   ENTITLEMENT_VELOCITY_LABEL,
   PILLAR_STRENGTH_LABEL,
+  POTENTIAL_EVIDENCE_STATUS_LABEL,
   POTENTIAL_SITE_FACTOR_LABEL,
   POTENTIAL_SITE_FACTOR_WEIGHT,
   POTENTIAL_SITE_PILLAR_FACTORS,
+  POTENTIAL_SITE_TYPE_LABEL,
   UTILITY_TIMELINE_LABEL,
   type PotentialSitePillar,
 } from "@/lib/catalysts/potentialSiteCriteria";
-import type { PotentialScoreComponent } from "@/lib/types";
+import type { PotentialEvidenceStatus, PotentialScoreComponent } from "@/lib/types";
 
 const CONFIDENCE_LABEL: Record<CatalystWithSources["confidence"], string> = {
   verified: "Verified against primary source",
   reported: "Reported by named source",
   unconfirmed: "Unconfirmed — treat as preliminary",
 };
+
+// Small inline confidence badge for a single Potential factor (2026-10-03) --
+// a different axis from a pillar's strength label: "how sure are we," not
+// "how good is this." Optional on each score component, so most existing
+// rows simply never render one.
+function EvidenceBadge({ status }: { status: PotentialEvidenceStatus }) {
+  const style =
+    status === "verified"
+      ? "border-emerald-400/30 text-emerald-300"
+      : status === "indicated"
+        ? "border-amber-400/30 text-amber-300"
+        : "border-white/15 text-white/40";
+  return <span className={`rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide ${style}`}>{POTENTIAL_EVIDENCE_STATUS_LABEL[status]}</span>;
+}
 
 function daysBetween(a: string, b: string): number {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / (24 * 60 * 60 * 1000));
@@ -109,16 +125,61 @@ export function CatalystDetails({
       </div>
       {catalyst.address && <div className="mt-1 text-sm text-white/40">{catalyst.address}</div>}
 
+      {dcStage === "potential" && catalyst.potential_site_type && (
+        <div className="mt-1.5 inline-flex items-center rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
+          {POTENTIAL_SITE_TYPE_LABEL[catalyst.potential_site_type]}
+        </div>
+      )}
+
       {dcStage && <p className="mt-3 text-sm font-medium leading-snug text-white/90">{DC_STAGE_HEADLINE[dcStage]}</p>}
 
       {dcStage === "potential" && (
         <div className="mt-4 border-t border-white/10 pt-4">
+          {/* "Why This Is Surfacing" leads the card, per Jared's 2026-10-03
+              spec -- reuses why_it_matters (the same field every other
+              catalyst type already has) rather than a new column. Rendered
+              only here for this stage; the generic Why It Matters section
+              further down is suppressed for Potential to avoid showing it
+              twice (see that section's condition below). */}
+          {catalyst.why_it_matters && (
+            <div className="mb-4">
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Why This Is Surfacing</p>
+              <p className="text-sm leading-relaxed text-white/80">{catalyst.why_it_matters}</p>
+            </div>
+          )}
+
           {catalyst.potential_score != null && (
             <div className="mb-4">
               <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Potential Score</p>
               <p className="text-lg font-semibold text-white">{catalyst.potential_score} / 100</p>
             </div>
           )}
+
+          {/* Power + Time to Power are the two highest-priority factors
+              (Jared's 2026-10-03 spec: "visually more prominent than
+              secondary factors") -- a glanceable highlight row, with full
+              prose/scoring detail staying in the expandable sections below
+              exactly as before, not duplicated here. */}
+          {(catalyst.power_pillar_label || catalyst.utility_timeline) && (
+            <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <div>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Power</p>
+                <p className="text-base font-semibold text-white">
+                  {catalyst.power_pillar_label ? PILLAR_STRENGTH_LABEL[catalyst.power_pillar_label] : "Unknown"}
+                </p>
+              </div>
+              <div>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Time to Power</p>
+                <p className="text-base font-semibold text-white">
+                  {catalyst.utility_timeline && catalyst.utility_timeline !== "unknown"
+                    ? UTILITY_TIMELINE_LABEL[catalyst.utility_timeline]
+                    : "Unknown / Requires Utility Verification"}
+                </p>
+                {catalyst.utility_timeline_notes && <p className="mt-1 text-xs leading-relaxed text-white/50">{catalyst.utility_timeline_notes}</p>}
+              </div>
+            </div>
+          )}
+
           {catalyst.opportunity_area && (
             <div className="mb-4">
               <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Opportunity Area</p>
@@ -126,11 +187,11 @@ export function CatalystDetails({
             </div>
           )}
 
-          {/* 4 scannable pillars (Jared's 2026-10-02 clarification: keep the
-              map simple, push Approval/Infrastructure depth in here instead
-              of new top-level categories), each expandable into supporting
-              detail -- never shown unless the underlying label is actually
-              on file, so an unscored pillar doesn't render as a false "Unknown". */}
+          {/* 3 remaining scannable pillars (Power's full detail lives here
+              too, alongside the highlight above, not instead of it), each
+              expandable into supporting detail -- never shown unless the
+              underlying label is actually on file, so an unscored pillar
+              doesn't render as a false "Unknown". */}
           <div className="space-y-2">
             {catalyst.power_pillar_label && (
               <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
@@ -140,9 +201,18 @@ export function CatalystDetails({
                 </summary>
                 <div className="mt-2 space-y-2 text-sm text-white/70">
                   {catalyst.power_notes && <p className="leading-relaxed">{catalyst.power_notes}</p>}
+                  {catalyst.natural_gas_notes && (
+                    <p className="leading-relaxed">
+                      <span className="text-white/40">Natural Gas / Behind-the-Meter: </span>
+                      {catalyst.natural_gas_notes}
+                    </p>
+                  )}
                   {potentialComponentsByPillar.power.map((c) => (
-                    <div key={c.key} className="flex justify-between text-xs text-white/50">
-                      <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
+                    <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
+                        {c.status && <EvidenceBadge status={c.status} />}
+                      </span>
                       <span>
                         {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
                       </span>
@@ -162,6 +232,7 @@ export function CatalystDetails({
                   {([
                     ["Land / Expansion", catalyst.land_notes],
                     ["Fiber", catalyst.fiber_notes],
+                    ["Water / Cooling", catalyst.water_notes],
                     ["Environmental / Physical Risk", catalyst.risk_notes],
                   ] as const).map(
                     ([label, value]) =>
@@ -173,8 +244,11 @@ export function CatalystDetails({
                       )
                   )}
                   {potentialComponentsByPillar.site.map((c) => (
-                    <div key={c.key} className="flex justify-between text-xs text-white/50">
-                      <span>{POTENTIAL_SITE_FACTOR_LABEL[c.key]}</span>
+                    <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
+                        {c.status && <EvidenceBadge status={c.status} />}
+                      </span>
                       <span>
                         {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
                       </span>
@@ -187,7 +261,7 @@ export function CatalystDetails({
             {catalyst.approval_pillar_label && (
               <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                 <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                  <span>Approval</span>
+                  <span>Approval / Development Path</span>
                   <span className="text-white/60">{APPROVAL_PILLAR_LABEL[catalyst.approval_pillar_label]}</span>
                 </summary>
                 <div className="mt-2 space-y-2 text-sm text-white/70">
@@ -216,23 +290,17 @@ export function CatalystDetails({
                     </p>
                   )}
                   {catalyst.development_environment_notes && <p className="leading-relaxed">{catalyst.development_environment_notes}</p>}
-                </div>
-              </details>
-            )}
-
-            {catalyst.utility_timeline && (
-              <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                  <span>Infrastructure</span>
-                  <span className="text-white/60">{UTILITY_TIMELINE_LABEL[catalyst.utility_timeline]}</span>
-                </summary>
-                <div className="mt-2 space-y-2 text-sm text-white/70">
-                  {catalyst.utility_timeline_notes && (
-                    <p className="leading-relaxed">
-                      <span className="text-white/40">Utility Timeline: </span>
-                      {catalyst.utility_timeline_notes}
-                    </p>
-                  )}
+                  {potentialComponentsByPillar.approval.map((c) => (
+                    <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
+                        {c.status && <EvidenceBadge status={c.status} />}
+                      </span>
+                      <span>
+                        {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </details>
             )}
@@ -240,7 +308,7 @@ export function CatalystDetails({
 
           {catalyst.unknowns_to_verify.length > 0 && (
             <div className="mt-4">
-              <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Unknowns to Verify</p>
+              <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">What Still Needs Verification</p>
               <ul className="space-y-1 text-sm text-white/70">
                 {catalyst.unknowns_to_verify.map((u, i) => (
                   <li key={i} className="flex gap-2">
@@ -310,7 +378,9 @@ export function CatalystDetails({
         </div>
       )}
 
-      {catalyst.why_it_matters && (
+      {/* Suppressed for Potential -- already rendered at the top of that
+          stage's own block as "Why This Is Surfacing", same field. */}
+      {catalyst.why_it_matters && dcStage !== "potential" && (
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="mb-1 text-[11px] uppercase tracking-wide text-white/35">Why It Matters</p>
           <p className="text-sm leading-relaxed text-white/70">{catalyst.why_it_matters}</p>
