@@ -389,6 +389,8 @@ const demoCatalysts: CatalystWithSource[] = [
     owners: null,
     primary_advantage: null,
     primary_risk: null,
+    developer_assessment: null,
+    developer_takeaway: null,
     source: null,
   },
 ];

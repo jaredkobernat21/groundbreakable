@@ -430,8 +430,17 @@ export type PotentialSiteFactorKey =
 // value.
 // "requires_verification" added 2026-10-04 (buyer-intelligence brief) -- the specific "we know
 // this is a real open question, not just unresearched" case for high-value Power facts
-// (available MW, time-to-power), distinct from the plainer "unknown".
-export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+// (available MW, time-to-power), distinct from the plainer "unknown". "supported" added same day
+// (research-quality brief) -- "multiple credible signals support the conclusion, but it is not
+// formally confirmed" -- a DIFFERENT shade than "reported" (one named party's public claim) or
+// "indicated" (evidence points this way); kept alongside both rather than replacing them, same
+// backward-compatible-widening convention this type has followed since "reported"/"estimated"
+// were added next to the original "indicated".
+export type PotentialEvidenceStatus = "verified" | "supported" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+
+// Final Developer Assessment (2026-10-04 research-quality brief) -- Groundbreakable's own
+// bottom-line recommendation on whether a developer should pursue a Potential site right now.
+export type DeveloperAssessment = "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
 
 // SITE CONTROL (2026-10-04 buyer-intelligence brief) -- a single owner's public-record profile.
 // Replaces the old single `people.owner` object (PotentialSitePeople below) for
@@ -742,6 +751,11 @@ export type Catalyst = {
   owners: OwnerInfo[] | null;
   primary_advantage: string | null;
   primary_risk: string | null;
+  // Final Developer Assessment (2026-10-04 research-quality brief) -- a bottom-line go/no-go
+  // recommendation, distinct from potential_score (how the site looks) and readiness_stage (how
+  // much has been validated). See migration 20261004030000_potential_site_developer_assessment.sql.
+  developer_assessment: DeveloperAssessment | null;
+  developer_takeaway: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

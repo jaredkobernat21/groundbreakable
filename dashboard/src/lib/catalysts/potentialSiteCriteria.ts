@@ -236,16 +236,52 @@ export const UTILITY_TIMELINE_LABEL: Record<UtilityTimeline, string> = {
 // jsonb, so this is a TypeScript-only widening.
 // "requires_verification" added 2026-10-04 (buyer-intelligence brief) -- the specific "we know
 // this is a real open question" case for high-value Power facts (available MW, time-to-power),
-// distinct from the plainer "unknown" (nothing researched at all).
-export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+// distinct from the plainer "unknown" (nothing researched at all). "supported" added same day
+// (research-quality brief): "multiple credible signals support the conclusion, but it is not
+// formally confirmed" -- kept alongside "reported"/"indicated" rather than replacing either, same
+// backward-compatible-widening convention this type has followed from the start.
+export type PotentialEvidenceStatus = "verified" | "supported" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
 
+// Label for requires_verification renamed 2026-10-04 (research-quality brief) to the brief's own
+// exact vocabulary, "Requires Direct Confirmation" -- same underlying DB value, display text only.
 export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, string> = {
   verified: "Verified",
+  supported: "Supported",
   reported: "Reported",
   estimated: "Estimated",
   indicated: "Indicated",
   unknown: "Unknown",
-  requires_verification: "Requires Verification",
+  requires_verification: "Requires Direct Confirmation",
+};
+
+// Final Developer Assessment (2026-10-04 research-quality brief) -- a bottom-line go/no-go
+// recommendation, distinct from potential_score (how the site looks) and readiness_stage (how
+// much has been validated through real work). Never auto-derived -- a researcher's own synthesis
+// across Power/Land/Site Control/Entitlement/BTM Energy/Fiber/Water/Physical Constraints.
+export type DeveloperAssessment = "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
+
+export const DEVELOPER_ASSESSMENT_LABEL: Record<DeveloperAssessment, string> = {
+  strong_pursuit: "Strong Pursuit",
+  pursue: "Pursue",
+  watch: "Watch",
+  weak: "Weak",
+  disqualified: "Disqualified",
+};
+
+export const DEVELOPER_ASSESSMENT_DESCRIPTION: Record<DeveloperAssessment, string> = {
+  strong_pursuit: "Worth immediate developer diligence.",
+  pursue: "Strong enough to advance.",
+  watch: "Interesting, but one or more major unknowns remain.",
+  weak: "Fundamentals do not currently justify deeper diligence.",
+  disqualified: "A major constraint makes the site unsuitable for the target profile.",
+};
+
+export const DEVELOPER_ASSESSMENT_COLOR_HEX: Record<DeveloperAssessment, string> = {
+  strong_pursuit: "#34d399",
+  pursue: "#5a9e4a",
+  watch: "#d9923f",
+  weak: "#9a8c6b",
+  disqualified: "#c0564a",
 };
 
 // Mirrors CatalystScoreComponent's shape (lib/catalysts/score.ts) for

@@ -29,6 +29,9 @@ import {
   computeNextSteps,
   computeReadinessStage,
   computeWhySiteSummary,
+  DEVELOPER_ASSESSMENT_COLOR_HEX,
+  DEVELOPER_ASSESSMENT_DESCRIPTION,
+  DEVELOPER_ASSESSMENT_LABEL,
   ENTITLEMENT_VELOCITY_LABEL,
   INTELLIGENCE_CATEGORY_LABEL,
   ownersOrLegacyOwner,
@@ -490,6 +493,29 @@ export function CatalystDetails({
             <div className="mb-4">
               <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Why This Site?</p>
               <p className="text-sm leading-relaxed text-white/80">{whySiteSummary}</p>
+            </div>
+          )}
+
+          {catalyst.developer_assessment && (
+            <div
+              className="mb-4 flex items-center justify-between rounded-lg border px-3 py-2"
+              style={{
+                borderColor: `${DEVELOPER_ASSESSMENT_COLOR_HEX[catalyst.developer_assessment]}55`,
+                backgroundColor: `${DEVELOPER_ASSESSMENT_COLOR_HEX[catalyst.developer_assessment]}1a`,
+              }}
+            >
+              <div>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Final Developer Assessment</p>
+                <p className="text-sm font-semibold text-white">{DEVELOPER_ASSESSMENT_LABEL[catalyst.developer_assessment]}</p>
+                <p className="mt-0.5 text-xs text-white/50">{DEVELOPER_ASSESSMENT_DESCRIPTION[catalyst.developer_assessment]}</p>
+              </div>
+            </div>
+          )}
+
+          {catalyst.developer_takeaway && (
+            <div className="mb-4">
+              <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Developer Takeaway</p>
+              <p className="text-sm leading-relaxed text-white/80">{catalyst.developer_takeaway}</p>
             </div>
           )}
 
