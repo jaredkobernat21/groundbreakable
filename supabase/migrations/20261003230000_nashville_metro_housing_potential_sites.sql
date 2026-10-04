@@ -1,0 +1,162 @@
+-- Nashville metro "Potential Housing Site" pass, round 1 (2026-10-03).
+-- Second Housing Potential research pass anywhere in the product (after
+-- 20261003210000_kc_metro_housing_potential_sites.sql), covering the
+-- 3-market Nashville metro set (nashville-tn, franklin-tn,
+-- murfreesboro-tn -- this metro is modeled as 3 market rows, not many
+-- per-suburb rows the way KC is).
+--
+-- NO STATEMENTS IN THIS FILE -- documentation-only record of a pass that
+-- found zero qualifying candidates. Safe to apply (a no-op) or never run.
+--
+-- Before researching, queried the live DB directly: confirmed zero
+-- existing `prospective_housing_site` rows in any of the 3 markets
+-- (expected -- this is the first Housing Potential pass here), exactly 2
+-- existing `housing_development` (Planned-tier) rows in Nashville
+-- ("Eastpoint Flats," East Bank affordable housing, under_construction;
+-- "Stephens Valley," a master-planned Bellevue-area community,
+-- under_construction), and 1 existing `prospective_data_center_site` row
+-- in Murfreesboro ("Middle Tennessee Industrial Center," 315 S Rutherford
+-- Blvd -- a data-center site, no housing angle, not touched). None of
+-- these are near any candidate investigated below.
+--
+-- =========================================================================
+-- THE LEAD -- "CHOOSE HOW YOU MOVE" BRT + TRANSIT CENTERS -- DID NOT PAN OUT
+-- =========================================================================
+--
+-- Today's Infrastructure pass (20261003220000) classified this metro's one
+-- real, funded, city-wide transit program -- BRT on Dickerson Pike,
+-- Gallatin Pike, Murfreesboro Pike, and Nolensville Pike, plus new WeGo
+-- transit centers at Donelson and North Nashville -- as 'high' development
+-- impact. Transit-oriented development near new transit infrastructure is
+-- a textbook Housing Potential driver, so this pass investigated both
+-- transit-center areas and all four BRT corridors directly, at the same
+-- site-specific standard used throughout this pass. The lead did not
+-- survive that standard anywhere it was checked -- every concrete signal
+-- found is already a SPECIFIC, named project, which is Planned-tier
+-- territory (or simply already built), not an undiscovered Potential site:
+--
+--   - Donelson Transit Center (4706 Lebanon Pike): the adjacent Donelson
+--     Station property (2705 Lebanon Pike) already has a specific, named,
+--     actively-negotiated redevelopment proposal -- H.G. Hill Realty
+--     Company and Southeast Venture submitted a mixed-use (residential +
+--     retail + structured parking) plan to the Regional Transportation
+--     Authority of Middle Tennessee in 2022; the RTA board granted an
+--     exclusive negotiation period that has since been extended, with a
+--     competing team (Imagine1 / Freeman Webb / Pennrose Properties) also
+--     named in later reporting. This is the exact disqualifier the brief
+--     describes: a specific housing project/proposal already exists at the
+--     one site this lead would otherwise point to. Not added.
+--   - North Nashville Transit Center (Dr. Ernest "Rip" Patton, Jr. Transit
+--     Center, 26th Avenue North & Clarksville Highway, opened August
+--     2024): the immediately adjacent corner is not undiscovered at all --
+--     "26th and Clarksville," an 8-building, 156-unit affordable-housing
+--     development (Urban Housing Solutions), has been built out in phases
+--     at this exact intersection since 2017, completed by 2020, predating
+--     the transit center itself. Separately, "The Riverside," a named
+--     $2.5 billion, 65-acre mixed-use/residential project off West Trinity
+--     Lane, has an active rezoning request nearby in the same North
+--     Nashville submarket. No undiscovered site remains here either. Not
+--     added.
+--   - The four BRT corridors themselves (Dickerson Pike, Gallatin Pike,
+--     Murfreesboro Pike, Nolensville Pike): checked each directly for a
+--     specific underutilized parcel distinct from named activity. Every
+--     corridor is already saturated with specific, named, in-process
+--     housing/mixed-use filings -- Dickerson Pike has at least three
+--     (Wedgewood Avenue's "The Pike" multifamily phase 1; a 1,000+-unit,
+--     100+-acre Ryan Homes project with final site plans already
+--     submitted for phase 1; a Forstone Capital ~12-story mixed-use tower
+--     proposal); Nolensville Pike has multiple approved/pending multifamily
+--     rezonings (a 119-unit SP rezoning approved October 2025 at 6309
+--     Nolensville Pike; a separate 13.8-acre, up to 273-unit proposal);
+--     Gallatin Pike has an adopted corridor-wide Urban Design Overlay
+--     (~215 acres) plus a specific 38-townhome approval at 4102 Gallatin
+--     Pike; Murfreesboro Pike has a 65.32-acre Specific Plan amendment
+--     request at 3839 Murfreesboro Pike for mixed-use development under
+--     its own Urban Design Overlay. This is the same "hot corridor, already
+--     spoken for" pattern the KC pass found in nearly all of its 13
+--     non-Grain-Valley markets -- the corridor-wide access-improvement
+--     signal alone (without an undiscovered site) is explicitly not enough
+--     per the brief, same discipline used to exclude Spring Hill's WWTP
+--     story and Centennial Bridge's diffuse access story in the KC pass.
+--     Not added anywhere on any of the four corridors.
+--
+-- =========================================================================
+-- FRANKLIN, TN -- INDEPENDENT SWEEP, ZERO CANDIDATES
+-- =========================================================================
+--
+-- Franklin's one existing infrastructure row ("Cool Springs Business
+-- Corridor," a data-center power/fiber story) has no housing angle and
+-- wasn't forced into one, per the task's own instruction. Checked
+-- independently for demand/entitlement/infrastructure signals:
+--   - Envision Franklin (the city's 2026-adopted comprehensive plan) and
+--     its Urban Growth Boundary are real, current planning activity, but
+--     describe policy-level growth management (Mack Hatcher Parkway,
+--     Carothers Parkway, Goose Creek Bypass corridors) rather than naming
+--     a specific undiscovered parcel.
+--   - Franklin's major wastewater investment -- the completed $133M Claude
+--     Yates Water Reclamation Facility expansion (12 MGD -> 16 MGD) and the
+--     planned Southeast Wastewater Plant -- is explicitly tied to the
+--     adjacent 200-acre Southeast Park campus (a public park already under
+--     development, "the Clean Water Facility is making the park possible"
+--     per the city's own framing), not to opening a new residential
+--     corridor. This is a citywide/public-facility capacity story, the same
+--     category of signal the KC pass excluded for Spring Hill's WWTP
+--     expansion (real capacity change, no specific new residential site
+--     named). Not added.
+-- Zero candidates in Franklin this pass.
+--
+-- =========================================================================
+-- MURFREESBORO, TN -- INDEPENDENT SWEEP, ZERO CANDIDATES
+-- =========================================================================
+--
+-- Checked independently, careful not to overlap "Middle Tennessee
+-- Industrial Center" (315 S Rutherford Blvd, the existing
+-- prospective_data_center_site -- not housing, and this pass proposed no
+-- land near it):
+--   - Murfreesboro 2035 (the adopted comprehensive plan) designates a
+--     "Future Study Area" (FSA) -- land within the Urban Growth Boundary
+--     but outside current city limits, generally lacking sewer -- exactly
+--     the kind of area a funded sewer extension could convert into a real
+--     Housing Potential candidate, the way Grain Valley's interceptors did
+--     in the KC pass. No specific funded extension opening a NEW,
+--     previously sewer-constrained FSA parcel was found this pass, though.
+--   - The city's Water Resource Recovery Facility underwent a confirmed
+--     50% capacity expansion (to 20 MGD) with further expansion in
+--     preliminary engineering (construction possibly starting 2027) --
+--     explicitly framed as citywide capacity to support growth through
+--     2035/population projections past 503,000 countywide by 2040, not
+--     tied to any specific newly-opened parcel or corridor. Same "real
+--     capacity change, no named site" exclusion as Franklin's plant and
+--     the KC pass's Spring Hill/Blue Springs findings.
+--   - Every specific, named rezoning/annexation signal found in current
+--     city council and planning records this pass (a 17.48-acre annexation
+--     for 39 single-family + 39 townhome units approved July 2026; a
+--     27.9-acre rezoning for 62 single-family + 32 single-family-attached
+--     homes approved January 2026; an 89.1-acre annexation petition along
+--     Old Lebanon Pike/Cherry Lane scheduled for an August 2026 hearing; a
+--     205.21-acre Greystone PRD amendment; a 167.42-acre Clarius Park PUD
+--     rezoning on Northwest Broad Street) is already a specific, named,
+--     actively-moving project or filing -- Planned-tier territory, not an
+--     undiscovered Potential site, same pattern as nearly every KC-metro
+--     market in the prior pass.
+-- Zero candidates in Murfreesboro this pass.
+--
+-- =========================================================================
+-- OVERALL RESULT
+-- =========================================================================
+--
+-- Zero new `prospective_housing_site` candidates across all 3
+-- Nashville-metro markets this pass -- an honest result, not a shortfall.
+-- This metro's housing growth is real, fast, and concentrated exactly
+-- along the corridors this pass's own lead (the BRT program) pointed to,
+-- which is precisely why every concrete site-level signal found there is
+-- already named and moving through each city's own process rather than
+-- sitting as undiscovered opportunity. Worth revisiting if: (1) the
+-- Donelson Station RTA negotiation or a competing team's deal falls
+-- through and the site reopens; (2) Murfreesboro commits sewer funding to
+-- a specific Future Study Area parcel; or (3) Franklin names a specific
+-- residential-serving extension off its Southeast Wastewater Plant beyond
+-- the Southeast Park campus itself.
+--
+-- No existing catalyst in nashville-tn, franklin-tn, or murfreesboro-tn was
+-- touched by this migration.
