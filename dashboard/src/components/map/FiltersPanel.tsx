@@ -13,6 +13,7 @@ import {
   type InfrastructureStatusGroup,
   type InfrastructureType,
 } from "@/lib/catalysts/infrastructureCriteria";
+import { buyerCriteriaActive, defaultBuyerCriteria, type BuyerCriteria } from "@/lib/catalysts/buyerCriteria";
 
 export type TimeFilter = "all" | "new_week" | "new_month" | "active";
 
@@ -77,6 +78,9 @@ export type MapFilters = {
   time: TimeFilter;
   states: Set<string>;
   marketIds: Set<string>;
+  // Buyer Criteria (2026-10-04) -- real site-selection filtering for Potential Data Center
+  // sites, meaningful only when category === "data_center" and dcStages includes "potential".
+  buyerCriteria: BuyerCriteria;
 };
 
 export function defaultMapFilters(): MapFilters {
@@ -92,7 +96,25 @@ export function defaultMapFilters(): MapFilters {
     time: "all",
     states: new Set(),
     marketIds: new Set(),
+    buyerCriteria: defaultBuyerCriteria(),
   };
+}
+
+// Numeric input for a Buyer Criteria threshold -- null when the field is empty, never 0 by
+// default (0 would silently filter as "any value >= 0", i.e. active-but-meaningless).
+function NumberField({ label, value, onChange, placeholder }: { label: string; value: number | null; onChange: (v: number | null) => void; placeholder?: string }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs text-white/60">{label}</span>
+      <input
+        type="number"
+        value={value ?? ""}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+        className="w-full rounded border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white placeholder:text-white/25"
+      />
+    </label>
+  );
 }
 
 const TIME_OPTIONS: { value: TimeFilter; label: string }[] = [
@@ -121,12 +143,18 @@ export default function FiltersPanel({
   filters,
   onChange,
   markets,
+  onViewMatches,
+  matchCount,
 }: {
   open: boolean;
   onClose: () => void;
   filters: MapFilters;
   onChange: (filters: MapFilters) => void;
   markets: Market[];
+  // Buyer Criteria (2026-10-04) -- opens the ranked-matches results list; omitted for callers
+  // (none today) that don't wire up BuyerMatchPanel.
+  onViewMatches?: () => void;
+  matchCount?: number;
 }) {
   if (!open) return null;
 
@@ -200,6 +228,98 @@ export default function FiltersPanel({
                 ))}
               </div>
             </section>
+
+            {filters.dcStages.has("potential") && (
+              <section className="mb-6 border-t border-white/10 pt-4">
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-white/35">Buyer Criteria</p>
+                <p className="mb-3 text-[11px] text-white/30">
+                  Applies only to Potential sites. An unresearched fact never excludes a site — it just won&apos;t show as a ✓ match. Leave blank to skip.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <NumberField
+                    label="Min MW"
+                    value={filters.buyerCriteria.minMw}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, minMw: v } })}
+                    placeholder="e.g. 100"
+                  />
+                  <NumberField
+                    label="Power within (years)"
+                    value={filters.buyerCriteria.maxTimeToPowerYears}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, maxTimeToPowerYears: v } })}
+                    placeholder="e.g. 2"
+                  />
+                  <NumberField
+                    label="Min contiguous acres"
+                    value={filters.buyerCriteria.minContiguousAcres}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, minContiguousAcres: v } })}
+                    placeholder="e.g. 75"
+                  />
+                  <NumberField
+                    label="Max gas distance (mi)"
+                    value={filters.buyerCriteria.maxGasDistanceMiles}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, maxGasDistanceMiles: v } })}
+                    placeholder="e.g. 2"
+                  />
+                  <NumberField
+                    label="Max substation distance (mi)"
+                    value={filters.buyerCriteria.maxSubstationDistanceMiles}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, maxSubstationDistanceMiles: v } })}
+                  />
+                  <NumberField
+                    label="Min transmission voltage (kV)"
+                    value={filters.buyerCriteria.minTransmissionVoltageKv}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, minTransmissionVoltageKv: v } })}
+                  />
+                  <NumberField
+                    label="Max owners"
+                    value={filters.buyerCriteria.maxOwners}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, maxOwners: v } })}
+                    placeholder="e.g. 3"
+                  />
+                  <NumberField
+                    label="Min Data Confidence (%)"
+                    value={filters.buyerCriteria.minDataConfidence}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, minDataConfidence: v } })}
+                  />
+                  <NumberField
+                    label="Min Potential Score"
+                    value={filters.buyerCriteria.minPotentialScore}
+                    onChange={(v) => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, minPotentialScore: v } })}
+                  />
+                </div>
+                <div className="mt-3 space-y-1.5">
+                  <label className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.buyerCriteria.industrialZoningRequired}
+                      onChange={() =>
+                        onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, industrialZoningRequired: !filters.buyerCriteria.industrialZoningRequired } })
+                      }
+                      className="accent-white"
+                    />
+                    Industrial zoning required
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/70">
+                    <input
+                      type="checkbox"
+                      checked={filters.buyerCriteria.excludeFloodplain}
+                      onChange={() => onChange({ ...filters, buyerCriteria: { ...filters.buyerCriteria, excludeFloodplain: !filters.buyerCriteria.excludeFloodplain } })}
+                      className="accent-white"
+                    />
+                    Exclude floodplain-constrained sites
+                  </label>
+                </div>
+                {buyerCriteriaActive(filters.buyerCriteria) && onViewMatches && (
+                  <button
+                    type="button"
+                    onClick={onViewMatches}
+                    className="mt-3 w-full rounded bg-white px-3 py-2 text-xs font-medium text-black hover:bg-white/90"
+                  >
+                    View Ranked Matches{matchCount != null ? ` (${matchCount})` : ""}
+                  </button>
+                )}
+              </section>
+            )}
           </>
         )}
 

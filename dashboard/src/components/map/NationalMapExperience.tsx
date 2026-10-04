@@ -10,11 +10,14 @@ import { CATALYST_STAGE_GROUP, catalystColorGroup } from "@/lib/catalystTypeColo
 import { computeDcStage, type DcStage } from "@/lib/catalysts/dcStage";
 import { computeHousingStage, type HousingStage } from "@/lib/catalysts/housingStage";
 import { infrastructureStatusGroup } from "@/lib/catalysts/infrastructureCriteria";
+import { computeDataConfidence } from "@/lib/catalysts/potentialSiteCriteria";
+import { buyerCriteriaActive, explainBuyerCriteriaMatch, matchesBuyerCriteria } from "@/lib/catalysts/buyerCriteria";
 import NationalCatalystMap, { type NationalCatalystMapHandle } from "./NationalCatalystMap";
 import CatalystIntelligencePanel from "./CatalystIntelligencePanel";
 import MapSearch from "./MapSearch";
 import FiltersPanel, { defaultMapFilters, type CategoryFilterValue, type MapFilters } from "./FiltersPanel";
 import FollowingPanel from "./FollowingPanel";
+import BuyerMatchPanel from "./BuyerMatchPanel";
 import CategoryFilterBar from "./CategoryFilterBar";
 import MobileBottomSheet from "./MobileBottomSheet";
 
@@ -46,6 +49,7 @@ export default function NationalMapExperience({
   const [selectedCatalystId, setSelectedCatalystId] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [followingOpen, setFollowingOpen] = useState(false);
+  const [buyerMatchesOpen, setBuyerMatchesOpen] = useState(false);
   const [filters, setFilters] = useState<MapFilters>(defaultMapFilters());
   const [followedCatalystIds, setFollowedCatalystIds] = useState(new Set(initialFollowedCatalystIds));
   const [followedMarketIds, setFollowedMarketIds] = useState(new Set(initialFollowedMarketIds));
@@ -108,6 +112,12 @@ export default function NationalMapExperience({
           const stageGroup = CATALYST_STAGE_GROUP[c.status];
           if (!stageGroup || !filters.stages.has(stageGroup)) return false;
         }
+        // Buyer Criteria (2026-10-04) -- meaningless for Possible/Planned (they don't carry
+        // these fields); only ever excludes a Potential site, and only when a KNOWN fact
+        // actively fails an active criterion (never for an unresearched/unknown one).
+        if (dcStage === "potential" && buyerCriteriaActive(filters.buyerCriteria)) {
+          if (!matchesBuyerCriteria(c, filters.buyerCriteria, computeDataConfidence(c))) return false;
+        }
         return true;
       }
       if (filters.category === "housing") {
@@ -134,6 +144,21 @@ export default function NationalMapExperience({
       return catalystColorGroup(c) === filters.category;
     });
   }, [baseFilteredCatalysts, filters]);
+
+  // Buyer Criteria ranked matches (2026-10-04) -- every Potential site passing the same
+  // base/state/market filters (dcStageCounts-style, i.e. independent of the dcStages
+  // checkbox selection itself) ranked by match %, for BuyerMatchPanel's "best sites that fit
+  // this buyer's deal profile" list. Computed only when a criterion is actually active.
+  const buyerMatches = useMemo(() => {
+    if (!buyerCriteriaActive(filters.buyerCriteria)) return [];
+    return baseFilteredCatalysts
+      .filter((c) => computeDcStage(c) === "potential")
+      .map((c) => {
+        const { matchPercent, lines } = explainBuyerCriteriaMatch(c, filters.buyerCriteria, computeDataConfidence(c));
+        return { catalystId: c.id, title: c.title, matchPercent, lines };
+      })
+      .sort((a, b) => b.matchPercent - a.matchPercent);
+  }, [baseFilteredCatalysts, filters.buyerCriteria]);
 
   const dcStageCounts = useMemo(() => {
     const counts: Record<DcStage, number> = { potential: 0, possible: 0, planned: 0 };
@@ -458,7 +483,30 @@ export default function NationalMapExperience({
         onOpenFollowing={() => setFollowingOpen(true)}
       />
 
-      <FiltersPanel open={filtersOpen} onClose={() => setFiltersOpen(false)} filters={filters} onChange={setFilters} markets={markets} />
+      <FiltersPanel
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+        markets={markets}
+        matchCount={buyerMatches.length}
+        onViewMatches={() => {
+          setFiltersOpen(false);
+          setBuyerMatchesOpen(true);
+        }}
+      />
+
+      <BuyerMatchPanel
+        open={buyerMatchesOpen}
+        onClose={() => setBuyerMatchesOpen(false)}
+        matches={buyerMatches}
+        onSelectCatalyst={(id) => {
+          handleSelectCatalyst(id);
+          setBuyerMatchesOpen(false);
+          const c = catalysts.find((x) => x.id === id);
+          if (c) mapRef.current?.flyTo([c.longitude, c.latitude], 11);
+        }}
+      />
 
       <FollowingPanel
         open={followingOpen}

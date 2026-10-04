@@ -428,7 +428,34 @@ export type PotentialSiteFactorKey =
 // simply render without a badge. See
 // lib/catalysts/potentialSiteCriteria.ts for the full rationale on each
 // value.
-export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown";
+// "requires_verification" added 2026-10-04 (buyer-intelligence brief) -- the specific "we know
+// this is a real open question, not just unresearched" case for high-value Power facts
+// (available MW, time-to-power), distinct from the plainer "unknown".
+export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+
+// SITE CONTROL (2026-10-04 buyer-intelligence brief) -- a single owner's public-record profile.
+// Replaces the old single `people.owner` object (PotentialSitePeople below) for
+// 'prospective_data_center_site' rows going forward -- a site can have multiple owners, each
+// controlling a different slice of acreage/parcels, which the old singular shape couldn't
+// express. Stored in its own `owners` column (an array), not nested in `people`. Every field
+// optional/public-record-only -- never scrape or expose private personal information.
+export type OwnerInfo = {
+  name?: string;
+  entity?: string;
+  controlled_acreage?: number;
+  parcel_count?: number;
+  mailing_address?: string;
+  registered_agent?: string;
+  public_contact?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+  };
+  ownership_complexity?: string;
+  last_verified?: string;
+  source?: string;
+  notes?: string;
+};
 
 // PEOPLE (Jared's 2026-10-03 brief) -- who actually controls the decisions
 // necessary for a site or project to move forward. Mirrors
@@ -679,6 +706,42 @@ export type Catalyst = {
   // sites.
   related_catalyst_ids: string[];
   opportunities_created_notes: string | null;
+  // ============================================================
+  // Buyer-intelligence brief (2026-10-04, see migration
+  // 20261004000000_potential_data_center_buyer_intelligence.sql) -- granular,
+  // quantified siblings of the existing prose notes columns above
+  // (power_notes/land_notes/natural_gas_notes/fiber_notes/water_notes stay
+  // as-is). Meaningful only for catalyst_type === 'prospective_data_center_site';
+  // null on every other type. Never inferred from a related field (e.g.
+  // transmission proximity never implies available_capacity_status) --
+  // each is its own researched fact or stays null/"requires_verification".
+  // ============================================================
+  serving_utility: string | null;
+  transmission_voltage_kv: number | null;
+  transmission_distance_miles: number | null;
+  substation_distance_miles: number | null;
+  potential_load_mw_low: number | null;
+  potential_load_mw_high: number | null;
+  available_capacity_status: PotentialEvidenceStatus | null;
+  interconnection_notes: string | null;
+  total_acreage: number | null;
+  available_acreage_status: string | null;
+  contiguous_acreage: number | null;
+  parcel_count: number | null;
+  floodplain_status: string | null;
+  floodplain_constrained: boolean | null;
+  zoning_status: string | null;
+  gas_pipeline_distance_miles: number | null;
+  gas_pipeline_operator: string | null;
+  gas_pipeline_diameter_in: string | null;
+  btm_potential_status: string | null;
+  air_permitting_notes: string | null;
+  // SITE CONTROL -- replaces people.owner (singular) going forward; people.owner is still read
+  // as a fallback for rows that predate this column (see ownersOrLegacyOwner() in
+  // lib/catalysts/potentialSiteCriteria.ts).
+  owners: OwnerInfo[] | null;
+  primary_advantage: string | null;
+  primary_risk: string | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };

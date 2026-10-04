@@ -234,7 +234,10 @@ export const UTILITY_TIMELINE_LABEL: Record<UtilityTimeline, string> = {
 // the original, slightly vaguer "evidence points this way"). No DB
 // constraint change needed -- potential_score_components is unstructured
 // jsonb, so this is a TypeScript-only widening.
-export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown";
+// "requires_verification" added 2026-10-04 (buyer-intelligence brief) -- the specific "we know
+// this is a real open question" case for high-value Power facts (available MW, time-to-power),
+// distinct from the plainer "unknown" (nothing researched at all).
+export type PotentialEvidenceStatus = "verified" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
 
 export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, string> = {
   verified: "Verified",
@@ -242,6 +245,7 @@ export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, st
   estimated: "Estimated",
   indicated: "Indicated",
   unknown: "Unknown",
+  requires_verification: "Requires Verification",
 };
 
 // Mirrors CatalystScoreComponent's shape (lib/catalysts/score.ts) for
@@ -312,25 +316,34 @@ export const POTENTIAL_SITE_NEGATIVE_SEARCH_TERMS = [
 // top of them, not a replacement.
 // ============================================================
 
-export type IntelligenceCategory = "energy" | "timeline" | "risk" | "people";
+// Buyer-intelligence brief (2026-10-04): regroups the prior Energy/Timeline/Risk/People framing
+// into the 5 categories a professional data-center buyer actually asks about, per direct
+// developer/site-buyer feedback. Timeline's content folds into Power (Time to Power already sat
+// right next to Power/Energy in the highlight row); Risk splits into Land and Entitlement; People
+// becomes its own non-category section (SITE CONTROL, rendered separately in the panel, same as
+// before). Nothing here changes POTENTIAL_SITE_FACTOR_WEIGHT or sumPotentialScore -- this is
+// still a presentation-layer regroup of the same 8 scored factors, not a rescoring.
+export type IntelligenceCategory = "power" | "land" | "btm_energy" | "connectivity_water" | "entitlement";
 
 export const INTELLIGENCE_CATEGORY_LABEL: Record<IntelligenceCategory, string> = {
-  energy: "Energy",
-  timeline: "Timeline",
-  risk: "Risk",
-  people: "People",
+  power: "Power",
+  land: "Land",
+  btm_energy: "BTM Energy",
+  connectivity_water: "Connectivity + Water",
+  entitlement: "Entitlement",
 };
 
-// Which of the 8 underlying scored factors each category's "expand for
-// details" view shows. Timeline and People have no scored factor of their
-// own: Timeline is driven directly by utility_timeline/entitlement_velocity
-// (categorical judgments, not point-scored), and People is driven by the
-// new `people` jsonb column, not a weighted factor.
+// Which of the 8 underlying scored factors each category's "expand for details" view shows.
+// btm_energy has no scored factor of its own (behind-the-meter gas was always evidence *within*
+// power_grid's checklist, never its own weighted factor) -- it's driven entirely by the new
+// gas_pipeline_*/btm_potential_status columns instead, same "empty array, column-driven" pattern
+// Timeline/People used before this regroup.
 export const POTENTIAL_SITE_CATEGORY_FACTORS: Record<IntelligenceCategory, PotentialSiteFactorKey[]> = {
-  energy: ["power_grid", "water_cooling", "fiber_connectivity"],
-  timeline: [],
-  risk: ["land_expansion", "physical_environmental_risk", "development_entitlement", "government_incentives", "transportation_workforce"],
-  people: [],
+  power: ["power_grid"],
+  land: ["land_expansion", "physical_environmental_risk", "transportation_workforce"],
+  btm_energy: [],
+  connectivity_water: ["fiber_connectivity", "water_cooling"],
+  entitlement: ["development_entitlement", "government_incentives"],
 };
 
 // "Simple visual status" for Time to Power (Jared's brief) -- reuses the
@@ -484,4 +497,99 @@ export function computeWhySiteSummary(catalyst: {
   if (parts.length > 0) return `${parts.join(". ")}.`;
 
   return catalyst.why_it_matters;
+}
+
+// ============================================================
+// Buyer intelligence (Jared's 2026-10-04 brief, direct feedback from a data center developer/
+// site buyer) -- granular Power/Land/BTM-Energy/Site-Control facts, a Data Confidence concept
+// distinct from Potential Score, and multi-owner Site Control. See migration
+// 20261004000000_potential_data_center_buyer_intelligence.sql for the schema side.
+// ============================================================
+
+// Mirrors lib/types.ts's OwnerInfo (this file stays import-free, same convention as every other
+// mirrored type above). Replaces the old single `people.owner` object for
+// 'prospective_data_center_site' rows going forward -- a site can have multiple owners, each
+// controlling a different slice of acreage/parcels. Every field optional, public-record-only.
+export type OwnerInfo = {
+  name?: string;
+  entity?: string;
+  controlled_acreage?: number;
+  parcel_count?: number;
+  mailing_address?: string;
+  registered_agent?: string;
+  public_contact?: { phone?: string; email?: string; website?: string };
+  ownership_complexity?: string;
+  last_verified?: string;
+  source?: string;
+  notes?: string;
+};
+
+// Site Control reads `owners` (new, array) when present, falling back to the legacy single
+// `people.owner` object (wrapped as a 1-element array) for rows that predate this column --
+// never silently dropping a researcher's existing work.
+export function ownersOrLegacyOwner(catalyst: {
+  owners: OwnerInfo[] | null;
+  people: { owner?: OwnerInfo } | null;
+}): OwnerInfo[] {
+  if (catalyst.owners && catalyst.owners.length > 0) return catalyst.owners;
+  if (catalyst.people?.owner) return [catalyst.people.owner];
+  return [];
+}
+
+// Site-level ownership rollup ("Owners: 2", "Ownership Complexity: Low") for the LAND section --
+// a plain count/sum over `owners`, never re-deriving complexity from scratch when a researcher
+// already assigned one per owner.
+export function siteOwnershipSummary(catalyst: { owners: OwnerInfo[] | null; people: { owner?: OwnerInfo } | null }): {
+  ownerCount: number;
+  totalParcels: number | null;
+  complexityLabel: string;
+} {
+  const owners = ownersOrLegacyOwner(catalyst);
+  if (owners.length === 0) return { ownerCount: 0, totalParcels: null, complexityLabel: "Research Pending" };
+
+  const parcelCounts = owners.map((o) => o.parcel_count).filter((n): n is number => n != null);
+  const totalParcels = parcelCounts.length > 0 ? parcelCounts.reduce((a, b) => a + b, 0) : null;
+  const complexityLabel = owners.length === 1 ? "Low" : owners.length <= 3 ? "Moderate" : "High";
+  return { ownerCount: owners.length, totalParcels, complexityLabel };
+}
+
+// DATA CONFIDENCE (Jared's brief): "how much of the important underlying information has
+// actually been verified" -- a DIFFERENT axis from potential_score (how suitable the site
+// appears). Unknown information reduces Data Confidence, never the Potential Score itself.
+// Purely derived, never stored -- recomputed on every render from whichever of the high-value
+// buyer-facing facts are actually populated. Weighted toward Power (the buyer brief's
+// highest-priority question) without pretending to replicate the full 8-factor rubric -- this is
+// a coverage/verification measure, not a second suitability score.
+const DATA_CONFIDENCE_CHECKS: {
+  weight: number;
+  isKnown: (c: {
+    available_capacity_status: PotentialEvidenceStatus | null;
+    utility_timeline: UtilityTimeline | null;
+    contiguous_acreage: number | null;
+    total_acreage: number | null;
+    owners: OwnerInfo[] | null;
+    people: { owner?: OwnerInfo } | null;
+    gas_pipeline_distance_miles: number | null;
+    fiber_notes: string | null;
+  }) => boolean;
+}[] = [
+  { weight: 25, isKnown: (c) => c.available_capacity_status != null && c.available_capacity_status !== "unknown" },
+  { weight: 20, isKnown: (c) => c.utility_timeline != null && c.utility_timeline !== "unknown" },
+  { weight: 20, isKnown: (c) => c.contiguous_acreage != null || c.total_acreage != null },
+  { weight: 15, isKnown: (c) => ownersOrLegacyOwner(c).length > 0 },
+  { weight: 10, isKnown: (c) => c.gas_pipeline_distance_miles != null },
+  { weight: 10, isKnown: (c) => Boolean(c.fiber_notes) },
+];
+
+export function computeDataConfidence(catalyst: {
+  available_capacity_status: PotentialEvidenceStatus | null;
+  utility_timeline: UtilityTimeline | null;
+  contiguous_acreage: number | null;
+  total_acreage: number | null;
+  owners: OwnerInfo[] | null;
+  people: { owner?: OwnerInfo } | null;
+  gas_pipeline_distance_miles: number | null;
+  fiber_notes: string | null;
+}): number {
+  return Math.round(DATA_CONFIDENCE_CHECKS.reduce((sum, check) => sum + (check.isKnown(catalyst) ? check.weight : 0), 0));
 }

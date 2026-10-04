@@ -25,11 +25,13 @@ import {
   APPROVAL_PILLAR_LABEL,
   CITY_RECEPTIVENESS_LABEL,
   COMMUNITY_FRICTION_LABEL,
+  computeDataConfidence,
   computeNextSteps,
   computeReadinessStage,
   computeWhySiteSummary,
   ENTITLEMENT_VELOCITY_LABEL,
   INTELLIGENCE_CATEGORY_LABEL,
+  ownersOrLegacyOwner,
   PILLAR_STRENGTH_LABEL,
   POTENTIAL_EVIDENCE_STATUS_LABEL,
   POTENTIAL_SITE_CATEGORY_FACTORS,
@@ -38,6 +40,7 @@ import {
   POTENTIAL_SITE_TYPE_LABEL,
   READINESS_STAGE_DESCRIPTION,
   READINESS_STAGE_LABEL,
+  siteOwnershipSummary,
   UTILITY_TIMELINE_BUCKET_CAPTION,
   UTILITY_TIMELINE_BUCKET_LABEL,
   type IntelligenceCategory,
@@ -91,6 +94,130 @@ function PeopleFactGroup({ label, facts }: { label: string; facts: [string, stri
         ))}
       </div>
     </div>
+  );
+}
+
+// Compact label:value row shared by the buyer-intelligence accordions (POWER/LAND/BTM ENERGY/
+// CONNECTIVITY + WATER) added 2026-10-04 -- only renders when the fact is actually on file,
+// never a placeholder for an unresearched one.
+function FactRow({ label, value, status }: { label: string; value: string | number | null | undefined; status?: PotentialEvidenceStatus | null }) {
+  if (value == null || value === "") return null;
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-white/40">{label}</span>
+      <span className="flex items-center gap-1.5 text-right text-white/80">
+        {value}
+        {status && <EvidenceBadge status={status} />}
+      </span>
+    </div>
+  );
+}
+
+// SITE CONTROL (2026-10-04 buyer-intelligence brief) -- DC Potential's own ownership section,
+// distinct from the generic PotentialPeopleSection below (still used as-is by Housing Potential
+// and Infrastructure). Iterates `owners[]` (falling back to the legacy single `people.owner` via
+// ownersOrLegacyOwner) so a site with multiple owners shows each one's controlled acreage/parcels
+// separately, per the buyer brief's "who controls the land, and how do I reach them" goal. Utility/
+// Government/Development contacts stay sourced from the same `people` column as before -- only the
+// Owner sub-group's shape changed.
+function DcSiteControlSection({ catalyst }: { catalyst: CatalystWithSources }) {
+  const owners = ownersOrLegacyOwner(catalyst);
+  const summary = siteOwnershipSummary(catalyst);
+
+  return (
+    <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+        <span>Site Control</span>
+        <span className="text-white/60">{owners.length > 0 ? `${summary.ownerCount} Owner${summary.ownerCount === 1 ? "" : "s"}` : "Research Pending"}</span>
+      </summary>
+      <div className="mt-2 space-y-3 text-sm text-white/70">
+        {owners.length === 0 && <p className="text-white/40">Not yet researched — ownership and sale/option willingness is a recommended next step.</p>}
+        {owners.length > 0 && (
+          <div className="flex gap-4 text-xs text-white/50">
+            <span>
+              Owners: <span className="text-white/80">{summary.ownerCount}</span>
+            </span>
+            {summary.totalParcels != null && (
+              <span>
+                Parcels: <span className="text-white/80">{summary.totalParcels}</span>
+              </span>
+            )}
+            <span>
+              Complexity: <span className="text-white/80">{summary.complexityLabel}</span>
+            </span>
+          </div>
+        )}
+        {owners.map((owner, i) => (
+          <div key={i} className={owners.length > 1 ? "border-t border-white/10 pt-2 first:border-t-0 first:pt-0" : undefined}>
+            {owners.length > 1 && <p className="mb-1 text-xs font-medium uppercase tracking-wide text-white/40">Owner {i + 1}</p>}
+            <div className="space-y-1">
+              {([
+                ["Owner", owner.name],
+                ["Entity", owner.entity],
+                ["Controlled Acreage", owner.controlled_acreage != null ? `${owner.controlled_acreage} acres` : undefined],
+                ["Parcels", owner.parcel_count],
+                ["Mailing Address", owner.mailing_address],
+                ["Registered Agent", owner.registered_agent],
+                ["Public Phone", owner.public_contact?.phone],
+                ["Public Email", owner.public_contact?.email],
+                ["Website", owner.public_contact?.website],
+                ["Ownership Complexity", owner.ownership_complexity],
+                ["Last Verified", owner.last_verified],
+                ["Source", owner.source],
+                ["Notes", owner.notes],
+              ] as const).map(([label, value]) =>
+                value != null && value !== "" ? (
+                  <p key={label} className="leading-relaxed">
+                    <span className="text-white/40">{label}: </span>
+                    {value}
+                  </p>
+                ) : null
+              )}
+            </div>
+          </div>
+        ))}
+        {catalyst.people?.utility && (
+          <PeopleFactGroup
+            label="Utility"
+            facts={[
+              ["Utility", catalyst.people.utility.utility],
+              ["Economic Development Contact", catalyst.people.utility.economic_development_contact],
+              ["Large-Load Contact", catalyst.people.utility.large_load_contact],
+              ["Engineer Contact", catalyst.people.utility.engineer_contact],
+              ["Notes", catalyst.people.utility.notes],
+            ]}
+          />
+        )}
+        {catalyst.people?.government && (
+          <PeopleFactGroup
+            label="Government"
+            facts={[
+              ["Municipality", catalyst.people.government.municipality],
+              ["County", catalyst.people.government.county],
+              ["Planning Department", catalyst.people.government.planning_department],
+              ["Economic Development Org", catalyst.people.government.economic_development_org],
+              ["Decision-Making Body", catalyst.people.government.decision_making_body],
+              ["Notes", catalyst.people.government.notes],
+            ]}
+          />
+        )}
+        {catalyst.people?.development && (
+          <PeopleFactGroup
+            label="Development"
+            facts={[
+              ["Developer", catalyst.people.development.developer],
+              ["Broker", catalyst.people.development.broker],
+              ["Site Selection Contact", catalyst.people.development.site_selection_contact],
+              ["EPC", catalyst.people.development.epc],
+              ["Engineering Firm", catalyst.people.development.engineering_firm],
+              ["Energy Developer", catalyst.people.development.energy_developer],
+              ["Gas Provider", catalyst.people.development.gas_provider],
+              ["Notes", catalyst.people.development.notes],
+            ]}
+          />
+        )}
+      </div>
+    </details>
   );
 }
 
@@ -248,7 +375,13 @@ export function CatalystDetails({
   // purely for the "expand into supporting details" view --
   // POTENTIAL_SITE_CATEGORY_FACTORS is the single source of truth for
   // which factor belongs under which category.
-  const potentialComponentsByCategory: Record<IntelligenceCategory, PotentialScoreComponent[]> = { energy: [], timeline: [], risk: [], people: [] };
+  const potentialComponentsByCategory: Record<IntelligenceCategory, PotentialScoreComponent[]> = {
+    power: [],
+    land: [],
+    btm_energy: [],
+    connectivity_water: [],
+    entitlement: [],
+  };
   if (catalyst.potential_score_components) {
     for (const component of catalyst.potential_score_components) {
       for (const category of Object.keys(POTENTIAL_SITE_CATEGORY_FACTORS) as IntelligenceCategory[]) {
@@ -268,6 +401,10 @@ export function CatalystDetails({
   const whyHousingSiteSummary = housingStage === "potential" ? computeWhyHousingSiteSummary(catalyst) : null;
   const readinessStage = isPotentialTier ? computeReadinessStage(catalyst) : null;
   const nextSteps = isPotentialTier ? computeNextSteps(catalyst) : [];
+  // Buyer-intelligence brief (2026-10-04) -- Data Confidence is DC-Potential-only (the fields it
+  // reads, e.g. available_capacity_status/gas_pipeline_distance_miles, are meaningful only for
+  // prospective_data_center_site rows); Housing Potential has no equivalent concept yet.
+  const dataConfidence = dcStage === "potential" ? computeDataConfidence(catalyst) : null;
 
   // Infrastructure brief (2026-10-03) -- NOT a Potential/Planned tier like
   // the two above; a project-delivery lifecycle instead (see
@@ -356,26 +493,33 @@ export function CatalystDetails({
             </div>
           )}
 
-          {catalyst.potential_score != null && (
-            <div className="mb-4">
-              <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Potential Score</p>
-              <p className="text-lg font-semibold text-white">{catalyst.potential_score} / 100</p>
+          {(catalyst.potential_score != null || dataConfidence != null) && (
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              {catalyst.potential_score != null && (
+                <div>
+                  <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Potential Score</p>
+                  <p className="text-lg font-semibold text-white">{catalyst.potential_score} / 100</p>
+                </div>
+              )}
+              {dataConfidence != null && (
+                <div>
+                  <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Data Confidence</p>
+                  <p className="text-lg font-semibold text-white">{dataConfidence}%</p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Energy + Time to Power are the two highest-priority factors
-              (Jared's spec: "visually more prominent than secondary
-              factors") -- a glanceable highlight row, with full prose/
-              scoring detail staying in the expandable sections below, not
-              duplicated here. Time to Power's bucket label (Fast Path/
-              Moderate/Long) reuses the same utility_timeline value as
-              before -- a relabeling, not a new figure -- with a one-time,
-              clearly-general legend caption instead of a fabricated
-              site-specific date range. */}
+          {/* Power + Time to Power are the two highest-priority facts (buyer brief: Power "should
+              be the most important section") -- a glanceable highlight row, with full granular
+              detail (utility/transmission/substation/MW/gas/fiber/water/entitlement) staying in
+              the expandable accordions below, not duplicated here. Time to Power's bucket label
+              (Fast Path/Moderate/Long) reuses the same utility_timeline value as before -- a
+              relabeling, not a new figure. */}
           {(catalyst.power_pillar_label || catalyst.utility_timeline) && (
             <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
               <div>
-                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Energy</p>
+                <p className="mb-0.5 text-[11px] uppercase tracking-wide text-white/35">Power</p>
                 <p className="text-base font-semibold text-white">
                   {catalyst.power_pillar_label ? PILLAR_STRENGTH_LABEL[catalyst.power_pillar_label] : "Unknown"}
                 </p>
@@ -402,41 +546,59 @@ export function CatalystDetails({
             </div>
           )}
 
-          {/* The four primary intelligence categories (Jared's brief) --
-              structurally always present for a Potential site, each with a
-              graceful "not yet researched" fallback rather than
-              disappearing when thin, so the four-category promise is
-              visible even on a lightly-researched row. Every fact rendered
-              here is the exact same note-field content shown under the
-              prior Power/Site/Approval pillar headers -- only the grouping
-              and headers changed, nothing was dropped or reworded. */}
+          {/* The 5 buyer-intelligence categories (Jared's 2026-10-04 brief, direct developer/
+              site-buyer feedback) -- structurally always present for a Potential site, each with
+              a graceful "not yet researched" fallback rather than disappearing when thin. Power/
+              Land/Connectivity+Water/Entitlement keep every prose note field the prior Energy/
+              Timeline/Risk categories already rendered (nothing dropped, only regrouped +
+              relabeled); BTM Energy is the one genuinely new category, surfacing
+              natural_gas_notes (previously buried inside Energy) plus the new gas_pipeline_*
+              columns. */}
           <div className="space-y-2">
             <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                <span>{INTELLIGENCE_CATEGORY_LABEL.energy}</span>
+                <span>{INTELLIGENCE_CATEGORY_LABEL.power}</span>
                 <span className="text-white/60">{catalyst.power_pillar_label ? PILLAR_STRENGTH_LABEL[catalyst.power_pillar_label] : "Unknown"}</span>
               </summary>
               <div className="mt-2 space-y-2 text-sm text-white/70">
+                <FactRow label="Serving Utility" value={catalyst.serving_utility} />
+                <FactRow
+                  label="Transmission"
+                  value={
+                    catalyst.transmission_voltage_kv != null || catalyst.transmission_distance_miles != null
+                      ? [
+                          catalyst.transmission_voltage_kv != null ? `${catalyst.transmission_voltage_kv} kV` : null,
+                          catalyst.transmission_distance_miles != null ? `${catalyst.transmission_distance_miles} mi` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" — ")
+                      : null
+                  }
+                />
+                <FactRow label="Substation" value={catalyst.substation_distance_miles != null ? `${catalyst.substation_distance_miles} mi` : null} />
+                <FactRow
+                  label="Potential Load"
+                  value={
+                    catalyst.potential_load_mw_low != null || catalyst.potential_load_mw_high != null
+                      ? catalyst.potential_load_mw_high != null && catalyst.potential_load_mw_high !== catalyst.potential_load_mw_low
+                        ? `${catalyst.potential_load_mw_low ?? "?"}–${catalyst.potential_load_mw_high} MW`
+                        : `${catalyst.potential_load_mw_low ?? catalyst.potential_load_mw_high} MW`
+                      : null
+                  }
+                  status={catalyst.available_capacity_status}
+                />
+                <FactRow
+                  label="Available Capacity"
+                  value={catalyst.available_capacity_status ? POTENTIAL_EVIDENCE_STATUS_LABEL[catalyst.available_capacity_status] : null}
+                />
+                {catalyst.interconnection_notes && (
+                  <p className="leading-relaxed">
+                    <span className="text-white/40">Interconnection: </span>
+                    {catalyst.interconnection_notes}
+                  </p>
+                )}
                 {catalyst.power_notes && <p className="leading-relaxed">{catalyst.power_notes}</p>}
-                {catalyst.natural_gas_notes && (
-                  <p className="leading-relaxed">
-                    <span className="text-white/40">Natural Gas / Behind-the-Meter: </span>
-                    {catalyst.natural_gas_notes}
-                  </p>
-                )}
-                {catalyst.water_notes && (
-                  <p className="leading-relaxed">
-                    <span className="text-white/40">Water: </span>
-                    {catalyst.water_notes}
-                  </p>
-                )}
-                {catalyst.fiber_notes && (
-                  <p className="leading-relaxed">
-                    <span className="text-white/40">Fiber: </span>
-                    {catalyst.fiber_notes}
-                  </p>
-                )}
-                {potentialComponentsByCategory.energy.map((c) => (
+                {potentialComponentsByCategory.power.map((c) => (
                   <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
                     <span className="flex items-center gap-1.5">
                       {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
@@ -447,48 +609,27 @@ export function CatalystDetails({
                     </span>
                   </div>
                 ))}
-                {!catalyst.power_notes &&
-                  !catalyst.natural_gas_notes &&
-                  !catalyst.water_notes &&
-                  !catalyst.fiber_notes &&
-                  potentialComponentsByCategory.energy.length === 0 && (
-                    <p className="text-white/40">No energy-specific detail on file yet — confirming utility capacity and delivery timing is a recommended next step.</p>
+                {!catalyst.serving_utility &&
+                  !catalyst.transmission_voltage_kv &&
+                  !catalyst.power_notes &&
+                  potentialComponentsByCategory.power.length === 0 && (
+                    <p className="text-white/40">No power-specific detail on file yet — confirming utility capacity and delivery timing is a recommended next step.</p>
                   )}
               </div>
             </details>
 
             <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                <span>{INTELLIGENCE_CATEGORY_LABEL.timeline}</span>
-                <span className="text-white/60">
-                  {catalyst.utility_timeline ? UTILITY_TIMELINE_BUCKET_LABEL[catalyst.utility_timeline] : "Unknown"}
-                </span>
+                <span>{INTELLIGENCE_CATEGORY_LABEL.land}</span>
+                <span className="text-white/60">{catalyst.site_pillar_label ? PILLAR_STRENGTH_LABEL[catalyst.site_pillar_label] : "Unknown"}</span>
               </summary>
               <div className="mt-2 space-y-2 text-sm text-white/70">
-                {catalyst.utility_timeline_notes && (
-                  <p className="leading-relaxed">
-                    <span className="text-white/40">Utility Delivery Timeline: </span>
-                    {catalyst.utility_timeline_notes}
-                  </p>
-                )}
-                {!catalyst.utility_timeline_notes && <p className="text-white/40">No additional timeline detail on file yet beyond the Time to Power assessment above.</p>}
-              </div>
-            </details>
-
-            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
-                <span>{INTELLIGENCE_CATEGORY_LABEL.risk}</span>
-                <span className="flex items-center gap-1.5 text-xs text-white/60">
-                  {catalyst.site_pillar_label && (
-                    <span className="rounded border border-white/15 px-1.5 py-0.5">Site: {PILLAR_STRENGTH_LABEL[catalyst.site_pillar_label]}</span>
-                  )}
-                  {catalyst.approval_pillar_label && (
-                    <span className="rounded border border-white/15 px-1.5 py-0.5">Approval: {APPROVAL_PILLAR_LABEL[catalyst.approval_pillar_label]}</span>
-                  )}
-                  {!catalyst.site_pillar_label && !catalyst.approval_pillar_label && "Unknown"}
-                </span>
-              </summary>
-              <div className="mt-2 space-y-2 text-sm text-white/70">
+                <FactRow label="Opportunity Area" value={catalyst.total_acreage != null ? `~${catalyst.total_acreage} acres` : null} />
+                <FactRow label="Available Land" value={catalyst.available_acreage_status} />
+                <FactRow label="Contiguous Acreage" value={catalyst.contiguous_acreage != null ? `${catalyst.contiguous_acreage} acres` : null} />
+                <FactRow label="Parcels" value={catalyst.parcel_count} />
+                <FactRow label="Zoning" value={catalyst.zoning_status} />
+                <FactRow label="Floodplain" value={catalyst.floodplain_status} />
                 {catalyst.land_notes && (
                   <p className="leading-relaxed">
                     <span className="text-white/40">Land / Expansion: </span>
@@ -501,6 +642,82 @@ export function CatalystDetails({
                     {catalyst.risk_notes}
                   </p>
                 )}
+                {potentialComponentsByCategory.land.map((c) => (
+                  <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
+                    <span className="flex items-center gap-1.5">
+                      {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
+                      {c.status && <EvidenceBadge status={c.status} />}
+                    </span>
+                    <span>
+                      {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                    </span>
+                  </div>
+                ))}
+                {!catalyst.total_acreage && !catalyst.land_notes && potentialComponentsByCategory.land.length === 0 && (
+                  <p className="text-white/40">No land-specific detail on file yet — confirming contiguous available acreage is a recommended next step.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>{INTELLIGENCE_CATEGORY_LABEL.btm_energy}</span>
+                <span className="text-white/60">{catalyst.btm_potential_status ?? "Unknown"}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                <FactRow label="Natural Gas" value={catalyst.gas_pipeline_distance_miles != null ? `${catalyst.gas_pipeline_distance_miles} mi` : null} />
+                <FactRow label="Operator" value={catalyst.gas_pipeline_operator} />
+                <FactRow label="Pipeline Diameter" value={catalyst.gas_pipeline_diameter_in} />
+                <FactRow label="BTM Potential" value={catalyst.btm_potential_status} />
+                <FactRow label="Air Permitting" value={catalyst.air_permitting_notes} />
+                {catalyst.natural_gas_notes && <p className="leading-relaxed">{catalyst.natural_gas_notes}</p>}
+                {!catalyst.gas_pipeline_distance_miles && !catalyst.natural_gas_notes && (
+                  <p className="text-white/40">No behind-the-meter gas detail on file yet — pipeline distance/operator is a recommended next step.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>{INTELLIGENCE_CATEGORY_LABEL.connectivity_water}</span>
+                <span className="text-white/60">{catalyst.fiber_notes || catalyst.water_notes ? "Logged" : "Unknown"}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
+                {catalyst.fiber_notes && (
+                  <p className="leading-relaxed">
+                    <span className="text-white/40">Fiber: </span>
+                    {catalyst.fiber_notes}
+                  </p>
+                )}
+                {catalyst.water_notes && (
+                  <p className="leading-relaxed">
+                    <span className="text-white/40">Water: </span>
+                    {catalyst.water_notes}
+                  </p>
+                )}
+                {potentialComponentsByCategory.connectivity_water.map((c) => (
+                  <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
+                    <span className="flex items-center gap-1.5">
+                      {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
+                      {c.status && <EvidenceBadge status={c.status} />}
+                    </span>
+                    <span>
+                      {c.points} / {POTENTIAL_SITE_FACTOR_WEIGHT[c.key]}
+                    </span>
+                  </div>
+                ))}
+                {!catalyst.fiber_notes && !catalyst.water_notes && potentialComponentsByCategory.connectivity_water.length === 0 && (
+                  <p className="text-white/40">No connectivity or water detail on file yet — fiber carrier presence and large-volume water capacity are worth confirming.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                <span>{INTELLIGENCE_CATEGORY_LABEL.entitlement}</span>
+                <span className="text-white/60">{catalyst.approval_pillar_label ? APPROVAL_PILLAR_LABEL[catalyst.approval_pillar_label] : "Unknown"}</span>
+              </summary>
+              <div className="mt-2 space-y-2 text-sm text-white/70">
                 {catalyst.entitlement_velocity && (
                   <p className="leading-relaxed">
                     <span className="text-white/40">Entitlement Velocity — {ENTITLEMENT_VELOCITY_LABEL[catalyst.entitlement_velocity]}: </span>
@@ -526,7 +743,7 @@ export function CatalystDetails({
                   </p>
                 )}
                 {catalyst.development_environment_notes && <p className="leading-relaxed">{catalyst.development_environment_notes}</p>}
-                {potentialComponentsByCategory.risk.map((c) => (
+                {potentialComponentsByCategory.entitlement.map((c) => (
                   <div key={c.key} className="flex items-center justify-between text-xs text-white/50">
                     <span className="flex items-center gap-1.5">
                       {POTENTIAL_SITE_FACTOR_LABEL[c.key]}
@@ -540,8 +757,25 @@ export function CatalystDetails({
               </div>
             </details>
 
-            <PotentialPeopleSection people={catalyst.people} />
+            <DcSiteControlSection catalyst={catalyst} />
           </div>
+
+          {(catalyst.primary_advantage || catalyst.primary_risk) && (
+            <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+              {catalyst.primary_advantage && (
+                <div>
+                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-emerald-300/70">Primary Advantage</p>
+                  <p className="text-sm leading-relaxed text-white/80">{catalyst.primary_advantage}</p>
+                </div>
+              )}
+              {catalyst.primary_risk && (
+                <div>
+                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-300/70">Primary Risk</p>
+                  <p className="text-sm leading-relaxed text-white/80">{catalyst.primary_risk}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <PotentialReadinessSection readinessStage={readinessStage!} readinessNotes={catalyst.readiness_notes} />
           <PotentialNextStepsSection nextSteps={nextSteps} />
