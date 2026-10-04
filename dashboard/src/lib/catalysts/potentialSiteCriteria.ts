@@ -693,6 +693,28 @@ const DATA_CONFIDENCE_CHECKS: {
   { weight: 10, isKnown: (c) => Boolean(c.fiber_notes) },
 ];
 
+// Presentation update (Jared, 2026-10-04): developer-facing UI shows current conclusions only,
+// never research-process commentary -- the full pass-by-pass history stays in the migration
+// files' git history, not in the live panel. See migration
+// 20261004100000_potential_site_presentation_fields.sql for ownership_coverage's schema.
+export type OwnershipCoverage = "full" | "partial" | "research_pending";
+
+export const OWNERSHIP_COVERAGE_LABEL: Record<OwnershipCoverage, string> = {
+  full: "Full",
+  partial: "Partial",
+  research_pending: "Research Pending",
+};
+
+// "Data Center Restrictions" (ENTITLEMENT section) -- a clean one-line derivation from the
+// existing community_friction categorical judgment, never from the verbose *_notes prose (which
+// stays internal). low/unknown read as "None Identified" (the honest default -- absence of found
+// opposition, not a guarantee none exists); moderate/high read as a short flag, not an essay.
+export function dataCenterRestrictionsLabel(communityFriction: CommunityFriction | null): string {
+  if (communityFriction === "moderate") return "Local Opposition Documented";
+  if (communityFriction === "high") return "Significant Opposition Documented";
+  return "None Identified";
+}
+
 export function computeDataConfidence(catalyst: {
   available_capacity_status: PotentialEvidenceStatus | null;
   utility_timeline: UtilityTimeline | null;

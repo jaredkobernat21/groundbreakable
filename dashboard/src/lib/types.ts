@@ -762,6 +762,11 @@ export type Catalyst = {
   owners: OwnerInfo[] | null;
   primary_advantage: string | null;
   primary_risk: string | null;
+  // Presentation update (2026-10-04) -- see migration
+  // 20261004100000_potential_site_presentation_fields.sql. Existence/type fact only, never
+  // implies capacity, distance, or voltage.
+  nearest_substation_name: string | null;
+  ownership_coverage: "full" | "partial" | "research_pending" | null;
   // Final Developer Assessment (2026-10-04 research-quality brief) -- a bottom-line go/no-go
   // recommendation, distinct from potential_score (how the site looks) and readiness_stage (how
   // much has been validated). See migration 20261004030000_potential_site_developer_assessment.sql.
