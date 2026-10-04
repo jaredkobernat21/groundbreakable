@@ -432,11 +432,22 @@ export type PotentialSiteFactorKey =
 // this is a real open question, not just unresearched" case for high-value Power facts
 // (available MW, time-to-power), distinct from the plainer "unknown". "supported" added same day
 // (research-quality brief) -- "multiple credible signals support the conclusion, but it is not
-// formally confirmed" -- a DIFFERENT shade than "reported" (one named party's public claim) or
-// "indicated" (evidence points this way); kept alongside both rather than replacing them, same
-// backward-compatible-widening convention this type has followed since "reported"/"estimated"
-// were added next to the original "indicated".
-export type PotentialEvidenceStatus = "verified" | "supported" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+// formally confirmed." "partially_resolved"/"unknown_after_public_record_search" added same day
+// (deep public-record research update) -- see lib/catalysts/potentialSiteCriteria.ts (the source
+// of truth this type mirrors) for the full escalation-hierarchy rationale behind each. All kept
+// alongside the original values rather than replacing any of them, same backward-compatible-
+// widening convention this type has followed since "reported"/"estimated" were added next to the
+// original "indicated".
+export type PotentialEvidenceStatus =
+  | "verified"
+  | "supported"
+  | "partially_resolved"
+  | "reported"
+  | "estimated"
+  | "indicated"
+  | "unknown"
+  | "unknown_after_public_record_search"
+  | "requires_verification";
 
 // Final Developer Assessment (2026-10-04 research-quality brief) -- Groundbreakable's own
 // bottom-line recommendation on whether a developer should pursue a Potential site right now.

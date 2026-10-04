@@ -71,7 +71,7 @@ function EvidenceBadge({ status }: { status: PotentialEvidenceStatus }) {
   const style =
     status === "verified"
       ? "border-emerald-400/30 text-emerald-300"
-      : status === "reported" || status === "indicated" || status === "estimated"
+      : status === "supported" || status === "reported" || status === "indicated" || status === "estimated" || status === "partially_resolved"
         ? "border-amber-400/30 text-amber-300"
         : "border-white/15 text-white/40";
   return <span className={`rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide ${style}`}>{POTENTIAL_EVIDENCE_STATUS_LABEL[status]}</span>;

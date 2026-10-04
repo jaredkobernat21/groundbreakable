@@ -238,19 +238,36 @@ export const UTILITY_TIMELINE_LABEL: Record<UtilityTimeline, string> = {
 // this is a real open question" case for high-value Power facts (available MW, time-to-power),
 // distinct from the plainer "unknown" (nothing researched at all). "supported" added same day
 // (research-quality brief): "multiple credible signals support the conclusion, but it is not
-// formally confirmed" -- kept alongside "reported"/"indicated" rather than replacing either, same
-// backward-compatible-widening convention this type has followed from the start.
-export type PotentialEvidenceStatus = "verified" | "supported" | "reported" | "estimated" | "indicated" | "unknown" | "requires_verification";
+// formally confirmed." "partially_resolved" and "unknown_after_public_record_search" added same
+// day (deep public-record research update): "partially_resolved" is for a field where the
+// escalation hierarchy found SOME of the answer but not all of it (e.g. a named substation found,
+// but not its voltage); "unknown_after_public_record_search" is deliberately distinct from the
+// bare "unknown" -- it asserts the full escalation hierarchy was actually run, not skipped, and a
+// field should earn this value rather than defaulting to it. All four additions are kept
+// alongside the original values rather than replacing any of them, same backward-compatible-
+// widening convention this type has followed from the start.
+export type PotentialEvidenceStatus =
+  | "verified"
+  | "supported"
+  | "partially_resolved"
+  | "reported"
+  | "estimated"
+  | "indicated"
+  | "unknown"
+  | "unknown_after_public_record_search"
+  | "requires_verification";
 
 // Label for requires_verification renamed 2026-10-04 (research-quality brief) to the brief's own
 // exact vocabulary, "Requires Direct Confirmation" -- same underlying DB value, display text only.
 export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, string> = {
   verified: "Verified",
   supported: "Supported",
+  partially_resolved: "Partially Resolved",
   reported: "Reported",
   estimated: "Estimated",
   indicated: "Indicated",
   unknown: "Unknown",
+  unknown_after_public_record_search: "Unknown After Public-Record Search",
   requires_verification: "Requires Direct Confirmation",
 };
 
@@ -338,6 +355,65 @@ export const POTENTIAL_SITE_NEGATIVE_SEARCH_TERMS = [
   "data center utility request",
   "data center land acquisition",
 ] as const;
+
+// ============================================================
+// Deep public-record research standard (Jared, 2026-10-04 "deep public-record research update,"
+// calibrated against what a proper Bonner Springs pass should have found: a Johnson County parcel
+// record for 4101 Powell Ave LLC at taxbill.jocogov.org, a named/addressed Evergy substation
+// (Whippoorwill, 120 S. 110th St, approved under city Ordinance 2605/SUP-03-25) surfaced via a
+// legal-notice PDF, and city planning-agenda/comprehensive-plan documents carrying parcel/zoning/
+// floodplain detail). CORE RULE: "Requires Direct Confirmation" is the END of the public research
+// process, not a shortcut around it -- a researcher (human or agent) must exhaust the escalation
+// levels below for a field before declaring it unknown. Applies to every Potential-tier research
+// pass, not just Bonner Springs -- that was the calibration example, not a one-off.
+//
+// ESCALATION HIERARCHY -- work through these in order per field before giving up on it:
+//   LEVEL 1 -- General web: exact site + infrastructure terms, several phrasings.
+//   LEVEL 2 -- Official government: city, county, assessor, GIS, planning, zoning, ordinances,
+//              agendas, legal notices, comprehensive plans.
+//   LEVEL 3 -- Utility/infrastructure: electric utility, gas pipeline operator, fiber provider,
+//              water/wastewater utility, RTO/ISO.
+//   LEVEL 4 -- Regulatory: state utility commission, FERC, PHMSA, EPA, FEMA.
+//   LEVEL 5 -- Derived research: cross-reference parcel locations, legal descriptions, streets,
+//              plats, and infrastructure maps against each other.
+//
+// PARCEL RESEARCH WORKFLOW (before marking Site Control/ownership unresolved): identify streets/
+// addresses/plat names inside the opportunity boundary -> search the county assessor/GIS by
+// address, parcel ID, owner, legal description, AND plat/subdivision name (not just a park-level
+// name search) -> collect parcel ID/address/legal description/acreage/owner/mailing address/
+// property type/assessed value per parcel -> group by ownership entity -> roll up total
+// acreage/contiguous acreage/largest owner/total owners/total parcels. "Ownership unresolved"
+// is only a valid conclusion after this workflow was actually run, not after one failed
+// park-level search.
+//
+// SUBSTATION/POWER WORKFLOW (before marking power infrastructure unavailable): confirm likely
+// serving utility -> search named substations in the city/corridor -> search planning/zoning
+// records for new substations, expansions, transmission projects, easements -> search utility
+// capital-project pages, tariff filings, RTO/ISO documents, state commission filings, legal
+// notices/ordinances, comprehensive plans, economic-development pages. For each substation found,
+// collect name/utility/address/approval date/source/approximate distance/project type
+// (distribution vs. transmission vs. unknown) -- never infer voltage from the word "substation"
+// alone, and never infer MW headroom merely because a substation exists nearby.
+//
+// PUBLICLY CONFIRMABLE (push research further before calling these unknown): parcel ownership,
+// parcel IDs, mailing address, legal description, approximate acreage, zoning, floodplain,
+// service-territory evidence, named substations + addresses, utility ownership, transmission
+// projects, planned substations, utility tariffs, large-load rate structures, public
+// infrastructure projects, gas pipeline operator/proximity, fiber carrier presence, municipal
+// water/wastewater providers.
+//
+// OFTEN GENUINELY NOT PUBLIC (fine to land on Requires Direct Confirmation for these): actual
+// available substation headroom, exact MW available to the subject parcel, a binding
+// energization date, final interconnection cost, firm gas deliverability, fiber last-mile
+// engineering availability, guaranteed water capacity, landowner willingness to sell. Do not mix
+// these two categories -- the first group deserves real research effort, the second doesn't need
+// to be re-attempted every pass.
+//
+// STATUS VOCABULARY for this standard: VERIFIED / SUPPORTED / PARTIALLY RESOLVED / ESTIMATED /
+// UNKNOWN AFTER PUBLIC-RECORD SEARCH / REQUIRES DIRECT CONFIRMATION -- "unknown after public-
+// record search" is deliberately distinct from a bare "unknown": it asserts the escalation
+// hierarchy was actually run, not skipped.
+// ============================================================
 
 // ============================================================
 // Energy / Timeline / Risk / People (Jared's 2026-10-03 product brief) --
