@@ -1,338 +1,574 @@
-# Potential Data Center Site — Research & Presentation Spec
-
-Consolidated methodology for researching and presenting `prospective_data_center_site` catalysts
-(the "Potential" tier of the Data Center product). Built incrementally on 2026-10-04 across the
-KC metro sites (Bonner Springs, Eisenhower Road, K-7/McIntyre Road), the 4 additional sites
-(National Road Business Park, Middle Tennessee Industrial Center, Ohio Crossroads, Ashland
-Business Park), and a dedicated refinement pass on Bonner Springs. This file is the reference for
-running the same standard on every future site — read it before starting a new pass, not just
-before writing the migration.
-
-Code lives in `dashboard/src/lib/catalysts/potentialSiteCriteria.ts` (source of truth for all
-types/labels/scoring) and `dashboard/src/lib/types.ts` (mirrors the same types, kept import-free
-by convention). The developer-facing panel is
-`dashboard/src/components/map/CatalystIntelligencePanel.tsx`. Schema lives in
-`supabase/migrations/` — search for `prospective_data_center_site` to find every touched row.
-
-## 1. The core distinction: research depth vs. presentation
-
-Two completely separate concerns, never conflated:
-
-- **Research depth** — how hard you dig before declaring something unknown. Governed by §2
-  below. Never weaken this to make the presentation shorter.
-- **Presentation** — what the developer-facing panel actually shows. Governed by §5 below.
-  Never let a verbose research trail leak into the panel.
-
-The resolution to "deep research vs. clean presentation" is: **research notes (the prose
-`*_notes` columns) carry full research-process detail and are no longer rendered in the panel at
-all** — they're internal/historical. The panel renders only structured columns and a small number
-of clean, short, researcher-written fields (`why_this_site`, `primary_advantage`, `primary_risk`,
-`developer_takeaway`, `next_steps`, `unknowns_to_verify`). The full pass-by-pass research
-narrative — what was tried, what a prior pass got wrong, what a geocode mismatch looked like —
-lives permanently in the **migration files themselves and git history**. That's the audit trail;
-no separate admin UI was built for it, because migrations + git already are that record. Write
-your migration's header comment like you're leaving notes for the next researcher, not like
-you're writing a commit message nobody will read.
-
-## 2. Research discipline: exhaust before declaring unknown
-
-**Core rule**: "Requires Direct Confirmation" / "Unknown" is the END of the public-record research
-process, not a shortcut around it. Don't stop after one general web search. Don't assume a field
-is unknowable because the first source didn't have it.
-
-### Escalation hierarchy — work through these in order per fact before giving up on it
-
-1. **General web** — exact site + infrastructure terms, several phrasings.
-2. **Official government** — city, county, assessor, GIS, planning, zoning, ordinances, agendas,
-   legal notices, comprehensive plans.
-3. **Utility/infrastructure** — electric utility, gas pipeline operator, fiber provider,
-   water/wastewater utility, RTO/ISO.
-4. **Regulatory** — state utility commission, FERC, PHMSA, EPA, FEMA.
-5. **Derived research** — cross-reference parcel locations, legal descriptions, streets, plats,
-   and infrastructure maps against each other.
-
-### Parcel research workflow (before marking Site Control/ownership unresolved)
-
-Identify streets/addresses/plat names inside the opportunity boundary → search the county
-assessor/GIS by address, parcel ID, owner, legal description, AND plat/subdivision name (not just
-a park-level name search) → collect parcel ID/address/legal description/acreage/owner/mailing
-address/property type per parcel → group by ownership entity → roll up total acreage/contiguous
-acreage/largest owner/total owners/total parcels.
-
-Real finds this way: Johnson County's `taxbill.jocogov.org` (a real public tax-bill lookup),
-Wyandotte County's ArcGIS REST service (`gisweb.wycokck.org/arcgis/rest/services/GISPUB/...`),
-Leavenworth County's Aumentum portal (login-gated, but has a "Parcel Search Public" link worth
-pursuing further). **Geocoding gotcha**: always sanity-check a geocode result's returned city/zip
-before querying a GIS service against it — one Bonner Springs attempt geocoded to Shawnee, KS
-(wrong city entirely) and was correctly discarded rather than queried against bad coordinates.
-"Cannot Be Resolved This Pass" is the honest result when a real tool exists but a correct query
-wasn't achieved — never silently force a fit.
-
-### Substation/power research workflow (before marking power infrastructure unavailable)
-
-Confirm likely serving utility → search named substations in the city/corridor → search
-planning/zoning records for new substations, expansions, transmission projects, easements →
-search utility capital-project pages, tariff filings, RTO/ISO documents, state commission
-filings, legal notices/ordinances, comprehensive plans, economic-development pages. For each
-substation found, collect name/utility/address/approval date/source/approximate
-distance/project type (distribution vs. transmission vs. unknown). **Never infer voltage from the
-word "substation" alone, and never infer MW headroom merely because a substation exists nearby.**
-
-### Publicly confirmable vs. often genuinely not public
-
-Push research further before calling these "unknown": parcel ownership, parcel IDs, mailing
-address, legal description, approximate acreage, zoning, floodplain, service-territory evidence,
-named substations + addresses, utility ownership, transmission projects, planned substations,
-utility tariffs, large-load rate structures, gas pipeline operator/proximity, fiber carrier
-presence, municipal water/wastewater providers.
-
-Fine to land on "Requires Direct Confirmation" for these without exhaustive effort: actual
-available substation headroom, exact MW available to the subject parcel, a binding energization
-date, final interconnection cost, firm gas deliverability, fiber last-mile engineering
-availability, guaranteed water capacity, landowner willingness to sell.
-
-### Confidence vocabulary (`PotentialEvidenceStatus` in `potentialSiteCriteria.ts`)
-
-`verified` / `supported` / `partially_resolved` / `reported` / `estimated` / `indicated` /
-`unknown` / `unknown_after_public_record_search` / `requires_verification`
-
-- **Verified** — directly supported by authoritative evidence.
-- **Supported** — multiple credible signals, not formally confirmed.
-- **Partially Resolved** — the escalation hierarchy found some of the answer, not all of it.
-- **Estimated** — Groundbreakable's own derived estimate from available evidence, labeled as such.
-- **Unknown** — nothing researched at all.
-- **Unknown After Public-Record Search** — deliberately distinct from bare "Unknown": asserts the
-  full escalation hierarchy was actually run, not skipped. Earn this value; don't default to it.
-- **Requires Direct Confirmation** (DB value `requires_verification`) — likely needs a utility/
-  owner/developer phone call or a formal study; the honest end-state for genuinely non-public facts.
-
-Never invent or infer a number from an adjacent fact (never infer MW from transmission voltage
-proximity, never infer available acreage from total park acreage, never infer gas capacity from
-pipeline proximity alone).
-
-## 3. Power as a gate, not just a weighted factor
-
-The single most important structural lesson from the Bonner Springs refinement pass: a strong
-0–100 Potential Score can still mean "not power-qualified." Power doesn't get to be fully
-compensated for by strong land/water/entitlement scores — it's tracked as its own gate.
-
-### `power_qualification` (column, type `PowerQualification`)
-
-`unqualified` → `infrastructure_indicated` → `utility_path_indicated` → `capacity_indicated` →
-`capacity_confirmed`
-
-- **Unqualified** — large-load path not established.
-- **Infrastructure Indicated** — relevant power infrastructure exists nearby.
-- **Utility Path Indicated** — public utility plans/tariffs/upgrades support a plausible
-  large-load pathway (e.g. a real, named large-load tariff + queue process exists, but nothing
-  capacity-specific is confirmed for this site). This is where most researched sites currently
-  land — don't be afraid of it.
-- **Capacity Indicated** — credible evidence suggests a meaningful large-load opportunity.
-- **Capacity Confirmed** — utility-specific capacity has been directly confirmed. Reserve this for
-  a real, named MW figure tied to the specific site, not a territory-wide tariff's existence.
-
-Never auto-derive this from `potential_score` or `power_pillar_label`. Assign it honestly from
-what was actually found.
-
-### Target Load Profile — demand side vs. supply side
-
-Two different axes that must never be conflated:
-
-- `target_load_mw_low` / `target_load_mw_high` — the DEMAND side: what a buyer needs. Default
-  (when both are null) is **50–100+ MW** for the Potential tier (`DEFAULT_TARGET_LOAD_MW_LABEL`
-  in code) — a Potential site is presumed evaluated against a large-scale load unless a
-  researcher has recorded a specific smaller target for that row.
-- `potential_load_mw_low` / `potential_load_mw_high` — the SUPPLY side: what research has actually
-  confirmed the site/utility can deliver (e.g. Ohio Crossroads' real, modest 2.7 MW figure).
-
-The whole point of keeping these separate is preventing a small verified MW figure from reading
-as sufficient for a hyperscale target just because *a* number exists. `expansion_requirement`
-(`minor`/`significant`/`major`/`unknown`) captures how much new infrastructure a researcher
-believes would be needed to close that gap, when knowable.
-
-### Development Gates (`development_gates`, jsonb)
-
-A decision screen across 8 categories, NOT a replacement for the detailed sections underneath it:
-`power`, `land`, `site_control`, `entitlement`, `btm_gas`, `fiber`, `water`, `environmental` → one
-of `green` (sufficiently supported) / `yellow` (promising but unresolved) / `red` (material
-weakness/unqualified) / `gray` (insufficient research).
-
-Important: a category can be `green` on its underlying quality (`site_pillar_label: "strong"`)
-while its *gate* is `yellow` (ownership/parcel completeness unresolved) — these are different
-axes. "Strong land, incomplete parcel roster" is a real, coherent state, not a contradiction.
-
-### Final Developer Assessment (`DeveloperAssessment`)
-
-`discovered` → `screen` → `strong_pursuit` / `pursue` / `watch` / `weak` / `disqualified`
-
-- **Discovered** — identified; no diligence performed yet.
-- **Screen** — strong non-power fundamentals justify a utility and site-control screen, but the
-  site is not yet power-qualified. Use this instead of forcing "Pursue" just because the score
-  cleared some threshold. This is the single biggest behavior change from earlier in this effort:
-  Bonner Springs moved from "Pursue" to "Screen" specifically because `power_qualification`
-  never got past `utility_path_indicated`, even though its score (72) would have read as strong.
-- **Strong Pursuit** / **Pursue** — worth real diligence now.
-- **Watch** — interesting, but a major unknown (often a live, unresolved regulatory process —
-  e.g. an active moratorium that hasn't been decided) remains.
-- **Weak** — fundamentals (often a confirmed-but-modest MW ceiling) don't yet justify deeper work.
-- **Disqualified** — a major constraint makes the site unsuitable.
-
-Never pick the assessment by score threshold alone. Check `power_qualification` and
-`development_gates` first; let them gate the assessment, not the other way around.
-
-## 4. The narrative-must-never-outrun-the-structured-fact rule
-
-This is the exact bug the Bonner Springs refinement pass caught and fixed: `developer_takeaway`
-claimed "water and wastewater capacity are confirmed with available headroom" while the real,
-structured fact was `water_capacity_status = 'capacity_indicated'` (city-wide MGD/utilization
-numbers exist, but no load-specific allocation study). The prose oversold what the data supported.
-
-**Rule going forward**: before writing any developer-facing prose field (`why_this_site`,
-`primary_advantage`, `primary_risk`, `developer_takeaway`), check it against every structured
-status field it touches (`available_capacity_status`, `water_capacity_status`,
-`power_qualification`, `ownership_coverage`, etc.) and make sure the prose never claims more
-confidence than the structured field says. When in doubt, the structured field is the source of
-truth; rewrite the prose to match it, not the other way around.
-
-`WaterCapacityStatus`: `infrastructure_verified` (the plant exists, no capacity figure at all) /
-`capacity_verified` (a specific large-load capacity figure has been directly confirmed) /
-`capacity_indicated` (city-wide headroom numbers exist and suggest room, but no load-specific
-study) / `requires_confirmation`. Most researched sites so far land on `capacity_indicated` —
-that's normal and honest, not a research failure.
-
-## 5. Presentation standard — what the panel actually shows
-
-The developer-facing panel answers: *what's known, why it matters, what's strong, what's risky,
-what's still unconfirmed, what to do next.* It is a professional early-stage site-intelligence
-brief, not a transcript of the research process.
-
-**Never show in the panel** (these phrases specifically, and the mindset behind them): "this pass
-found," "we were able to identify," "this resolves the earlier uncertainty," "prior research
-showed," "research pending" as a bare dead-end, "the last pass missed," "Claude should research,"
-"query the GIS directly" (an internal task, not a developer action).
-
-**Prefer** → **over**:
-- "Evergy serves the opportunity area." → "After reviewing tariff documents, we were able to
-  confirm that Evergy serves the park."
-- "Two ownership groups have been identified." → "This pass identified two owners that were not
-  found previously."
-- "Available MW requires utility confirmation." → "No public evidence was found in this pass
-  confirming MW."
-- "Full parcel assemblage remains partially resolved." → "A correctly bounded GIS query was not
-  completed."
-
-**Panel structure** (top to bottom, per `CatalystIntelligencePanel.tsx`'s `dcStage === "potential"`
-branch): site thesis (`why_this_site`, 1–2 sentences, no address repetition) → Final Developer
-Assessment banner → Potential Score / Data Confidence → Development Gates grid → Power (incl.
-Target Load Profile, Nearby Substation + type, Transmission, Available MW, Time to Power, Utility
-Expansion Signals) → Land → Site Control → BTM Energy (Local Gas Utility vs. Transmission Pipeline
-Operator kept distinct) → Connectivity + Water (Known Carriers, Fiber Assessment, Water Provider,
-Large-Volume Capacity driven by `water_capacity_status`) → Entitlement → Location + Access →
-Primary Advantage / Primary Risk → Readiness → Developer Takeaway → Next Actions → What Still
-Needs Confirmation → Sources.
-
-Sections render open by default (not collapsed `<details>`) so the site reads in **30–60 seconds**
-without clicking; a developer can still collapse any section. Every "always-shown" fact uses a
-graceful fallback string ("Requires Utility Confirmation", "Not Yet Identified", "Under
-Verification") rather than disappearing when unresolved — except Location + Access, which is
-informational-only and fine to omit a row entirely when genuinely not found (never overweight
-location relative to power/land).
-
-**No duplication across sections** — each has one job:
-- **Site Thesis** — why this site matters (1–2 sentences).
-- **Primary Advantage** — the single strongest reason to care.
-- **Primary Risk** — the single biggest problem (name it, don't hedge into vagueness).
-- **Developer Takeaway** — 3–5 sentences: what's interesting, what's verified, the biggest
-  unresolved issue, what should happen next. This is the one place a short synthesis is allowed to
-  repeat the gist of Advantage/Risk — but write it as a decision summary, not a rephrasing.
-- **Next Actions** — 3–5 items, developer-facing, externally-actionable only (utility inquiries,
-  owner contact, operator/carrier confirmation). Never list a Groundbreakable-internal research
-  task (e.g. "query the county GIS") as a developer action.
-- **What Still Needs Confirmation** — bare noun phrases, no parenthetical justification essay.
-
-## 6. Scoring discipline
-
-`potential_score` stays the existing 8-factor weighted sum (`sumPotentialScore()` — unchanged
-mechanics). `power_grid` (weight 30) remains the largest single factor. When a pass surfaces real
-new evidence, update that factor's `points` and write the reasoning into its `evidence`/`unknowns`
-arrays inside `potential_score_components` (this JSON blob is internal — never rendered directly
-to the developer anymore, so it's fine for it to carry as much research detail as useful).
-
-**Don't inflate the score to match optimism.** A pass that genuinely found mixed results (some
-facts better, some worse, or just better-labeled) should produce a *small* score change, or none
-at all — that's an honest outcome, not a sign nothing happened. Two real examples: Eisenhower
-Road's score stayed flat (71 → 71) because land availability got worse news (nearly-full park)
-exactly offsetting water capacity getting better news; Bonner Springs moved only 71 → 72 on one
-real new fact (a verified gas delivery point), with everything else just getting clearer labels,
-not new points.
-
-`computeDataConfidence()` is a separate, purely-derived 0–100 "how much of the important stuff is
-actually known" measure — never stored, recomputed from field presence every render. Unknown
-information lowers Data Confidence, never the Potential Score itself ("unknown ≠ bad").
-
-## 7. Schema reference (as of 2026-10-04)
-
-All on `catalysts`, meaningful only for `catalyst_type = 'prospective_data_center_site'`:
-
-**Power**: `serving_utility`, `nearest_substation_name`, `nearest_substation_type`,
-`transmission_voltage_kv`, `transmission_distance_miles`, `substation_distance_miles`,
-`potential_load_mw_low/high` (supply), `target_load_mw_low/high` (demand, defaults to 50–100+ MW
-when null), `expansion_requirement`, `available_capacity_status`, `power_qualification`,
-`utility_expansion_signals`, `interconnection_notes` (internal), `power_notes` (internal).
-
-**Land**: `total_acreage`, `available_acreage_status`, `contiguous_acreage`, `parcel_count`,
-`zoning_status`, `land_notes` (internal).
-
-**Site Control**: `owners` (jsonb array — see `OwnerInfo`), `ownership_coverage`
-(`full`/`partial`/`research_pending`), `people.owner` (legacy single-owner fallback, see
-`ownersOrLegacyOwner()`).
-
-**BTM Energy**: `gas_pipeline_operator` (LOCAL distribution utility — e.g. Atmos Energy),
-`gas_transmission_operator` (separate upstream TRANSMISSION pipeline company — e.g. Southern
-Star — do not conflate the two), `gas_pipeline_distance_miles`, `gas_pipeline_diameter_in`,
-`btm_potential_status`, `air_permitting_notes`, `natural_gas_notes` (internal).
-
-**Connectivity + Water**: `fiber_carriers` (text array), `fiber_notes` (short clean assessment,
-not internal-only — this one IS rendered), `water_notes` (short clean provider line, rendered),
-`water_capacity_status` (the real source of truth for capacity claims — see §4).
-
-**Entitlement**: `zoning_status` (shared with Land), `approval_pillar_label`, `floodplain_status`,
-`floodplain_constrained`, `entitlement_velocity`/`city_receptiveness`/`community_friction` (+
-their `*_notes`, internal), `incentives_notes` / `development_environment_notes` (internal).
-
-**Location + Access**: `location_access` jsonb — `kc_metro_position`, `interstate_name`,
-`interstate_distance_miles`, `k7_distance_miles`, `airport_distance_miles`,
-`airport_drive_minutes`, `rail`, `industrial_context`, `residential_buffer_miles`. All optional;
-never overweight relative to power/land.
-
-**Decision layer**: `potential_score` / `potential_score_components` (explainable 8-factor sum),
-`development_gates` (jsonb, 8 keys → green/yellow/red/gray), `developer_assessment`,
-`developer_takeaway`, `primary_advantage`, `primary_risk`, `why_this_site`, `readiness_stage` /
-`readiness_notes`, `next_steps[]`, `unknowns_to_verify[]`, `why_still_potential`.
-
-## 8. Process for running this pass on a new site
-
-1. **Check what's already there.** Read the row's full history across every migration that's
-   touched it (search the title in `supabase/migrations/`). Don't re-derive known facts.
-2. **Research** using the escalation hierarchy (§2) for whatever's genuinely unresolved. A single
-   fork (if delegating) can usually do the promotion-of-known-facts + escalation-research +
-   clean-writeup in one pass for a site that's never been touched; a narrower fork is fine for a
-   refinement pass on a site that's already been researched once.
-3. **Assign the decision layer honestly**: `power_qualification` first (it's the gate), then
-   `development_gates`, then `developer_assessment` — in that order, not score-first.
-4. **Write clean presentation text** per §5 for every rendered field, and check it against §4
-   before finalizing.
-5. **Write the migration**: full research narrative in the header comment (this is the permanent
-   audit trail — write it for a future researcher, not a changelog bot), then the `update
-   catalysts` statement with short/clean field values. Insert new `sources` rows only when you
-   have a real, specific URL — never a placeholder.
-6. **Validate before reporting**: apostrophes escaped (`''`) everywhere inside the actual SQL body
-   (comments don't need escaping — `--` runs to end of line regardless), every jsonb block parses
-   and (for `potential_score_components`) sums to the declared `potential_score`, every
-   `source_type` value is one of `agency_document`/`agency_gis`/`press_release`/`news`/
-   `public_record`/`other` (check constraint), `tsc --noEmit` and `npm run build` clean if any code
-   changed.
-7. **Report findings, then wait for explicit go-ahead before `supabase db push`** — this is a live
-   production database. Commit/push to git only after the DB push, and only the files actually
-   touched (check `git status` — this repo tends to carry unrelated uncommitted work from other
-   threads; never sweep it into your commit).
+# Groundbreakable — Data Center Potential Master Spec
+
+Standing context for all Groundbreakable work related to: Potential Data Center site discovery,
+qualification, research, scoring, ownership/parcel research, power infrastructure research,
+buyer filtering, developer site intelligence, and Potential-site UI/data updates.
+
+Authored by Jared (2026-10-05) as the canonical consolidation of the research-quality,
+public-record-escalation, and presentation-simplification work done on 2026-10-04. Supersedes the
+narrower draft this file previously held — nothing substantive was dropped; see the
+**Implementation Appendix** at the end for how this maps onto the actual schema/code, and for two
+places where the already-shipped implementation is slightly more granular than this spec's text
+(flagged explicitly, not silently reconciled either direction).
+
+The goal of the Potential category is to identify and preliminarily qualify data-center sites
+BEFORE a known project exists. Groundbreakable should do as much preliminary diligence as
+credible public information allows. The user should see conclusions and actionable
+intelligence — not Groundbreakable's unfinished research queue.
+
+## 1. Definition of a Potential Data Center site
+
+A Potential Data Center site is: a specific site, parcel assemblage, industrial area, or tightly
+defined opportunity area where land, power, entitlement, connectivity, energy, water, and other
+fundamentals create a credible case for future data-center development, but where there is no
+credible evidence that a specific data-center project is already being pursued there.
+
+Potential answers: *"Where could a data center realistically work before a known project
+exists?"*
+
+Potential is NOT: a rumor; a planned data center; simply "land near transmission"; an entire metro
+area with no site logic; an infrastructure project by itself. Potential should represent a
+site-specific development thesis.
+
+## 2. Category distinction
+
+- **Potential** — a Groundbreakable-discovered site with credible fundamentals and no known
+  specific data-center activity.
+- **Possible** — upstream infrastructure or market changes that may create future data-center
+  feasibility (new substations, transmission expansion, generation additions, gas infrastructure,
+  utility capacity programs, water/sewer expansion, major industrial infrastructure).
+- **Planned** — evidence of an actual data-center project (land acquisition, option agreement,
+  rezoning, site plan, incentives, interconnection tied to a project, planning filing, public
+  announcement).
+
+Nearby Planned or Possible activity can strengthen a Potential thesis, but it does NOT change the
+Potential site itself to Planned.
+
+## 3. Core buyer questions
+
+Every Potential site should help answer: Can I realistically get power here? What power
+infrastructure is actually nearby? Is there evidence of utility expansion? How much power might
+be feasible? How soon might power be deliverable? Is there enough contiguous developable land?
+Who owns it? How fragmented is site control? Is BTM generation plausible? Is natural gas nearby?
+Is fiber nearby? Is water/wastewater adequate or expandable? Can the site be entitled? Is the
+political/community environment workable? Are there environmental or physical fatal flaws? What
+is actually verified vs. inferred? What could kill the deal? What action should a developer take
+next?
+
+## 4. Primary intelligence categories
+
+Organize each Potential site around: Power; Land + Site Control; BTM Energy; Connectivity; Water
++ Wastewater; Entitlement + Community; Physical + Environmental; Deliverability. These are
+attributes of the site, not separate dashboard categories.
+
+## 5. Power — highest priority
+
+Power should receive the greatest research depth and scoring weight. Research: likely serving
+utility; exact service territory where possible; neighboring service territories; nearest
+substations (name, utility owner, address/location, distance); transmission line proximity;
+transmission voltage; nearby/planned generation; planned substations; substation expansions;
+transmission upgrades; utility capital plans; IRPs; utility economic-development programs;
+large-load tariffs; data-center tariffs; RTO/ISO projects; regulatory filings; interconnection
+activity; known large-load projects nearby; public utility capacity statements; public
+constraints; publicly visible time-to-power indicators.
+
+**Always separate**: Physical Infrastructure / Available Capacity / Time to Power. Never infer
+available MW because a substation or transmission line is nearby. Never infer a firm energization
+date from infrastructure proximity.
+
+```
+Serving Utility          Evergy — SUPPORTED
+Nearest Substation       Whippoorwill Substation — VERIFIED
+Transmission             345 kV corridor nearby — VERIFIED
+Available MW             REQUIRES UTILITY CONFIRMATION
+Time to Power            REQUIRES UTILITY CONFIRMATION
+```
+
+## 6. Power research escalation
+
+Do not give up after a normal web search.
+
+1. **General search** — exact site + utility + substation terms.
+2. **City/county** — planning commission packets, city council agendas, ordinances, special-use
+   permits, zoning cases, public notices, comprehensive plans, capital plans.
+3. **Utility** — utility website, tariff PDFs, service territory, economic development,
+   transmission plans, IRPs, capital projects.
+4. **Regulatory/RTO** — state utility commission, FERC, RTO/ISO, transmission planning documents,
+   dockets, interconnection reports.
+5. **Cross-reference** — substation names, street addresses, permit numbers, project names,
+   transmission corridors, nearby large-load projects.
+
+Only after exhausting relevant pathways should a field remain **Unknown** or **Requires Direct
+Confirmation**.
+
+## 7. Land + Site Control
+
+Ownership and parcel structure are first-class intelligence. Research: parcel IDs; parcel
+boundaries; legal descriptions; total/vacant/developed/contiguous/likely-usable acreage; owner of
+each parcel; ownership entity; mailing address; registered agent; purchase date if useful; related
+entities; listing status; broker; public business contact paths; development status;
+plat/subdivision name; zoning.
+
+Never assume "265-acre industrial park" means "265 acres available." Separate: Total Area /
+Vacant Area / Contiguous Area / Developable Area.
+
+## 8. Parcel/ownership research protocol
+
+Before saying ownership is unresolved: (1) establish the best-supported site boundary; (2)
+identify streets within the opportunity area; (3) identify plat/subdivision names; (4) search
+county GIS; (5) search county assessor; (6) search tax records; (7) search recorder/deed data if
+accessible; (8) search by address, parcel ID, owner, legal description, and plat name; (9) collect
+parcel ID/address/legal description/acreage/owner/mailing address/development status; (10) group
+parcels by owner; (11) calculate parcel count, owner count, largest owner, acreage by owner,
+contiguous assemblage; (12) search entity records for owner LLCs; (13) search for public business
+phone/email/website, registered agent, broker/listing contact.
+
+Use only legitimate public information. Do not expose non-public personal information.
+
+## 9. Site Control output
+
+Summarize: Total Identified Parcels; Total Identified Acreage; Vacant/Available Acreage; Largest
+Contiguous Assemblage; Number of Owners; Largest Owner; Acreage Controlled by Largest Owner;
+Ownership Complexity (**Low** = few owners/easy assemblage; **Moderate** = several owners/
+manageable assemblage; **High** = fragmented ownership). If only part of the park is resolved, say
+**Partially Resolved** — never "Research Pending" after a full research pass.
+
+## 10. BTM Energy
+
+Research: natural gas transmission pipelines; pipeline proximity/operator/diameter/pressure if
+public; compressor stations; nearby gas generation; industrial gas infrastructure; BTM generation
+precedent; air/emissions permitting; state environmental requirements; local generator
+restrictions. Always separate **Pipeline Proximity** from **Available Gas Capacity**.
+
+```
+Natural Gas Pipeline        0.9 miles — VERIFIED
+Operator                    Southern Star — VERIFIED
+Diameter                    24" — VERIFIED
+Available Delivery Capacity REQUIRES OPERATOR CONFIRMATION
+BTM Potential                SUPPORTED
+```
+
+## 11. Connectivity
+
+Research: long-haul fiber; dark fiber; metro fiber; known carriers; telecom corridors; nearby
+carrier hotels; IX facilities; municipal fiber; industrial fiber; nearby data centers; redundant
+route potential. Try to identify actual carrier names — don't stop at "fiber needs verification"
+if carrier presence can be researched. Separate **Carrier/Route Presence** from **Last-Mile
+Service Availability**.
+
+## 12. Water + Wastewater
+
+Research: water/wastewater provider; treatment facilities; water/sewer mains and sizes if public;
+treatment capacity; capital improvement plans; future expansions; industrial service; water
+rights; drought constraints; municipal capacity studies. Separate **Infrastructure Exists** from
+**Available Capacity**.
+
+## 13. Entitlement + Community
+
+Research: current zoning; permitted uses; conditional/special-use requirements; comprehensive
+plan; rezoning need; approval process/sequence/timeline; data-center-specific ordinances;
+moratoriums; setbacks; noise restrictions; generator rules; screening requirements; recent
+approvals/denials; planning commission activity; local political posture; community
+opposition/support; incentives; industrial precedent. Classify: **Favorable / Neutral /
+Challenging / Hostile / Unknown**, and explain why.
+
+## 14. Physical + Environmental
+
+Research: FEMA floodplain; wetlands; waterways; topography; brownfields; contamination; protected
+lands; residential proximity; schools; hospitals; rail; highways; airport constraints; seismic;
+wildfire; regional physical hazards. Identify possible fatal flaws clearly.
+
+## 15. Deliverability
+
+Synthesize power/time-to-power/ownership/entitlement/gas/fiber/water/community/environmental
+risk. Always provide: **Primary Advantage**, **Primary Risk**, **Major Blocker**, **Next Critical
+Diligence Step**.
+
+## 16. Research status rules
+
+- **Verified** — supported by direct authoritative evidence.
+- **Supported** — supported by credible evidence, but not formally confirmed.
+- **Partially Resolved** — part of the answer is verified, some component remains unresolved.
+- **Estimated** — reasonable Groundbreakable-derived estimate.
+- **Unknown After Public-Record Search** — relevant public research pathways were exhausted
+  without a reliable answer.
+- **Requires Direct Confirmation** — the answer genuinely requires utility/operator/owner/
+  engineering contact.
+
+Do NOT use "Research Pending" as a finished user-facing status.
+
+## 17. Absence-of-evidence rule
+
+Do not confuse lack of public evidence with a negative conclusion. No public MW figure does NOT
+mean no capacity. No fiber record does NOT mean no fiber. No gas-capacity record does NOT mean no
+capacity. No announced data center does NOT mean the site is weak. Use **Unknown** or **Requires
+Direct Confirmation** where appropriate.
+
+## 18. Source priority
+
+County GIS/assessor/recorder → city planning/zoning → municipal ordinances → public notices →
+utility sources → RTO/ISO → state utility commission → utility IRPs → economic development
+agencies → Secretary of State/entity records → FEMA → EPA → USGS → Army Corps → PHMSA → pipeline
+operator records → water/wastewater utilities → planning agendas/minutes → capital-improvement
+plans → fiber/carrier sources → official property listings → developer/company sources →
+reputable news → other credible secondary sources. Prefer primary sources whenever practical.
+
+## 19. Search rules
+
+For every Potential site, search multiple query variants — don't stop after one failed search.
+
+- **Site**: `"[site name]"`, `"[site name] industrial park"`, `"[site address]"`, `"[site name]
+  development"`
+- **Parcels**: `"[site name] parcel"`, `"[site name] owner"`, `"[site name] GIS"`, `"[site name]
+  legal description"`, `"[street] property"`, `"[plat name] parcel"`
+- **Power**: `"[city] substation"`, `"[utility] substation [city]"`, `"[site] transmission"`,
+  `"[utility] transmission [city]"`, `"[city] special use permit substation"`, `"[city] ordinance
+  substation"`, `"[utility] large load tariff"`, `"[utility] IRP"`, `"[RTO] transmission [city]"`
+- **Gas**: `"[site] gas pipeline"`, `"[pipeline operator] map"`, `"[city] natural gas
+  transmission"`
+- **Fiber**: `"[site] fiber"`, `"[industrial park] fiber"`, `"[city] Zayo"`, `"[city] Lumen"`,
+  `"[city] dark fiber"`
+- **Water**: `"[city] water capacity"`, `"[city] wastewater capacity"`, `"[city] capital
+  improvement plan"`, `"[industrial park] sewer"`
+- **Entitlement**: `"[city] data center ordinance"`, `"[city] zoning map"`, `"[site] planning
+  commission"`, `"[site] special use permit"`
+- **Ownership**: `"[owner LLC]"`, `"[owner LLC] secretary of state"`, `"[owner LLC] contact"`
+
+Use site-restricted searches where helpful.
+
+## 20. Boundary research rule
+
+If exact opportunity boundaries are unclear, do not stop. Build the best-supported boundary using
+official site descriptions, parcel legal descriptions, plat names, road boundaries, GIS,
+industrial park maps, planning documents, assessor records. Classify the boundary: **Verified /
+Supported / Estimated**. Then continue parcel research using that boundary.
+
+## 21. Bonner Springs calibration example
+
+Use Bonner Springs Industrial Park as an example of what a complete pass should attempt. Public
+research has shown that information can be found through: City of Bonner Springs Industrial Park
+materials; Johnson County parcel/property records; Bonner Springs planning documents; public
+ordinances; public notices; Evergy tariffs; city utility materials. Publicly discoverable:
+industrial park location; approximate total acreage; zoning; floodplain status; specific parcels;
+parcel owners; legal descriptions; mailing addresses; Evergy serving Bonner Springs generally;
+named Evergy substation projects; public substation addresses; planning approval records.
+
+**Do not classify parcel ownership, service territory, or substation information as unresolved
+until those pathways have been explored.** A named substation can often be confirmed publicly even
+when voltage, headroom, available MW, and firm energization cannot.
+
+## 22. Next Steps rule
+
+Groundbreakable should not give the developer homework that Groundbreakable could do itself.
+
+**Bad**: find the owner; look up zoning; check floodplain; determine utility territory; search
+for gas pipelines; identify nearby substations. (Groundbreakable should research those.)
+
+**Good**: request a utility large-load assessment; request actual MW availability; request an
+energization timeline; contact the landowner regarding sale/option; request gas deliverability;
+request a fiber last-mile quote; commission a wetlands/environmental study; begin engineering/
+interconnection diligence.
+
+## 23. What Still Needs Verification
+
+After a complete research pass, this should be short — mostly: actual MW headroom; firm
+energization date; utility upgrade requirements; interconnection cost; gas delivery capacity;
+water capacity; fiber last mile; owner willingness; geotechnical conditions; environmental
+testing; engineering feasibility. Never a backlog of unfinished public research.
+
+## 24. Potential Score
+
+Preserve the existing Groundbreakable Potential Score. Weight roughly: Power (highest) → Land +
+Site Control (very high) → Entitlement (high) → BTM Energy / Connectivity / Water (meaningful) →
+Physical/Environmental (penalty/fatal-flaw factor). Do not automatically punish unknown data as
+bad. Separate **Potential Score** from **Data Confidence**.
+
+## 25. Data Confidence
+
+Reflects how well-supported the site thesis is. Increase when: parcel boundaries verified,
+ownership verified, utility territory supported, substations identified, transmission confirmed,
+zoning confirmed, source quality strong, multiple primary sources agree. Keep lower when:
+boundaries approximate, ownership incomplete, service territory ambiguous, power inferred, sources
+conflict, critical facts rely on secondary reporting.
+
+## 26. Buyer search/filtering
+
+Support filters: minimum MW target; maximum time-to-power; minimum contiguous acreage; maximum
+gas distance; maximum substation distance; minimum transmission voltage; maximum owner count;
+ownership complexity; industrial zoning; avoid floodplain; fiber requirement; water requirement;
+BTM requirement; geography; Potential Score; Data Confidence. Users combine filters (e.g. "100+ MW,
+power within 24 months, 75+ contiguous acres, gas within 2 miles, max 3 owners, industrial
+zoning"). Return ranked sites; explain why each matched. **Never hide negative factors to improve
+the match score.**
+
+## 27. Readiness
+
+Use: **Discovery** (credible convergence identified) → **Screened** (core public-record diligence
+completed) → **Qualified** (most major public diligence supports advancement) → **Advanced
+Diligence** (direct utility/owner/engineering diligence underway). Do not call a site "ready"
+based only on desk research.
+
+## 28. Final Site Assessment
+
+Assign: **Strong Pursuit** (immediate deeper diligence justified) / **Pursue** (strong enough to
+advance) / **Watch** (interesting but major uncertainty remains) / **Weak** (insufficient
+fundamentals) / **Disqualified** (major fatal flaw). Then a concise **Developer Takeaway** (3–5
+sentences max) answering: why the site matters; strongest verified fact; biggest unresolved risk;
+gating next step.
+
+## 29. UX/Display
+
+Do not turn the site panel into a research report. Keep the main UI concise. Prioritize: Site /
+Location / Site Thesis → Potential Score / Data Confidence → Power / Time to Power → Land / Site
+Control → BTM Energy → Connectivity + Water → Entitlement → Primary Advantage / Primary Risk →
+Readiness → Next Steps / What Still Needs Verification → Sources. Use progressive disclosure for
+deeper technical detail.
+
+## 30. Source storage
+
+For important claims, store: source title, organization, URL, document date, Groundbreakable
+verification date, source type, confidence, field/category supported. Do not use one broad news
+article to support unrelated claims — tie sources to specific facts.
+
+## 31. Updating existing sites
+
+1. Read existing verified data first. 2. Preserve valid facts. 3. Search missing fields. 4.
+Replace stale facts. 5. Resolve conflicting sources. 6. Upgrade confidence where warranted. 7.
+Downgrade confidence where new evidence weakens a claim. 8. Update Potential Score. 9. Update Data
+Confidence. 10. Rewrite primary advantage/risk. 11. Rewrite next steps. 12. Shorten the
+verification list. 13. Add new sources. **Never wipe good existing research.**
+
+## 32. Non-fabrication rules
+
+Never invent: MW capacity; headroom; energization date; pipeline capacity; water capacity; fiber
+availability; ownership; acreage; zoning; seller willingness; interconnection status; substation
+voltage. If evidence does not support it, say so.
+
+## 33. Data-center buyer mindset
+
+Think like a powered-land buyer or site selector. Not "is there a line nearby?" but "is there
+evidence this infrastructure could realistically support a large load?" Not "is there land?" but
+"is there enough contiguous, controllable, developable land?" Not "is the site industrial?" but
+"can a data center actually be entitled here?" Not "is gas nearby?" but "is BTM generation
+realistically plausible?" Not "is fiber nearby?" but "can redundant carrier-grade connectivity
+plausibly reach the site?"
+
+## 34. Final standard
+
+A completed Potential Data Center site should let a developer quickly understand: what the site
+is; why Groundbreakable identified it; what power infrastructure exists; what is and is not known
+about deliverability; how much land may actually be available; who owns the relevant parcels; how
+complex site control is; whether BTM generation is plausible; what fiber/water infrastructure
+exists; whether entitlement appears workable; what physical/environmental risks exist; how
+credible the evidence is; what could kill the deal; what genuinely still requires direct
+confirmation; what action should happen next.
+
+**Research first. Cross-reference second. Escalate third. Declare unknown last.**
+**"Requires Direct Confirmation" is the end of public research, not the shortcut around it.**
+
+---
+
+# Add-on Spec — Developer-Facing Presentation
+
+This add-on supplements the master spec above. It does **not** replace the research, sourcing,
+scoring, ownership, power, site-control, filtering, or diligence rules — it governs how completed
+Potential-site intelligence is *presented* to developers. The underlying research stays deep and
+detailed; the developer-facing experience stays concise, professional, current-state, and
+decision-oriented.
+
+## A1. Core presentation principle
+
+The developer-facing Potential site shows: current best intelligence; why the site matters; what
+is verified; what remains uncertain; what could kill the deal; what action should happen next. It
+does **not** expose Groundbreakable's internal research process. The site should feel like a
+professional early-stage site intelligence brief, not a research diary.
+
+## A2. Never show internal research commentary
+
+Never display: "this pass found," "this clears up the previous pass," "prior research showed,"
+"earlier uncertainty," "this resolves what was previously unknown," "we found," "we were able to
+identify," "this pass confirmed," "could not complete this pass," "query the GIS," "further
+research should," "Groundbreakable previously believed," "previous searches missed," "research
+workflow," "search methodology." These may live in admin/research notes, never the developer panel.
+
+## A3. Current state only
+
+| Bad | Good |
+|---|---|
+| "This pass resolved the previous Evergy-vs-BPU uncertainty." | "Serving Utility: Evergy — Supported" |
+| "We found two owners through county records." | "Identified Ownership Groups: 2" |
+| "The prior pass incorrectly listed Kansas Gas Service." | "Natural Gas Provider: Atmos Energy" |
+
+Never explain corrections unless the developer specifically asks about research history.
+
+## A4. Admin/research layer vs. developer view
+
+**Admin/research layer** retains: prior values; conflicting evidence; research history; search
+failures; source notes; methodology; unresolved queries; why confidence changed; changes between
+passes. **Developer view** shows: current conclusion; supporting status; key site metrics; major
+risks; next actions; concise sources. Do not mix the two.
+
+## A5. Developer-facing hierarchy
+
+Potential Data Center → Site Name → Location → Short Site Thesis → Final Developer Assessment →
+Potential Score / Data Confidence → Power / Time to Power → Land / Site Control → BTM Energy →
+Connectivity + Water → Entitlement → Primary Advantage → Primary Risk → Readiness → Developer
+Takeaway → Next Actions → What Still Needs Confirmation → Sources. Don't force a section to
+display if it has no useful information.
+
+## A6. Short Site Thesis
+
+~1–2 sentences. Explains why the site is relevant. Don't repeat the address or explain research
+history. *"Established industrial site with favorable entitlement conditions, nearby utility
+infrastructure, and partial site-control visibility. Large-load power deliverability remains the
+primary gating item."*
+
+## A7. Final Developer Assessment
+
+Strong Pursuit / Pursue / Watch / Weak / Disqualified, with ~one sentence of support. *"PURSUE —
+Strong enough to advance to utility and site-control diligence."* No long narrative in the card.
+
+## A8. Developer Takeaway
+
+3–5 sentences max, answering only: why interesting; strongest supported facts; primary unresolved
+risk; what's next. Never discuss prior passes, previous mistakes, internal changes, or which
+searches succeeded/failed.
+
+## A9. Potential Score + Data Confidence
+
+Keep prominent, no lengthy explanation beneath the numbers (detailed scoring logic may be
+expandable). Potential Score = apparent quality of the opportunity. Data Confidence = strength/
+completeness of evidence.
+
+## A10–A16. Category presentation
+
+Power, Land, Site Control, BTM Energy, Connectivity, Water + Wastewater, and Entitlement each
+render as short labeled values, not prose — see the master spec's own per-category examples
+(§5, §7/§9, §10, §11, §12, §13). Never equate infrastructure presence with confirmed capacity
+(Water especially). Entitlement keeps political/community analysis concise unless it's a material
+project risk.
+
+## A17–A18. Primary Advantage / Primary Risk
+
+1–2 sentences each. Primary Risk names the single biggest gating issue (a second may be added if
+truly material). No research methodology here.
+
+## A19. Readiness
+
+Discovery / Screened / Qualified / Advanced Diligence, with a concise description each. No
+internal workflow status exposed.
+
+## A20. Next Actions
+
+3–5 items, developer/utility/owner/operator/engineering/formal-diligence actions only — never a
+Groundbreakable-internal research task.
+
+## A21. What Still Needs Confirmation
+
+Short items (Available MW, firm energization timeline, largest contiguous available acreage,
+seller willingness, gas deliverability, fiber last-mile service, water capacity) — never an
+explanation of how/why Groundbreakable failed to resolve them.
+
+## A22. Source presentation
+
+Available but visually secondary; detailed links/claim-level citations expand on demand. Don't
+clutter the primary narrative with source explanations.
+
+## A23. Structured data over prose
+
+`Serving Utility: Evergy` beats *"The utility currently believed to serve this opportunity area is
+Evergy based on several public records."* `Identified Owners: 2` beats *"Two parcel owners have
+currently been identified."* `Available MW: Requires Utility Confirmation` beats *"No public
+source was identified that provides a specific MW availability figure."*
+
+## A24. Language style
+
+Factual, neutral, direct, professional, development-oriented, concise. Avoid conversational
+commentary, research narration, self-referential language, unnecessary caveats, repeated
+explanations, internal terminology.
+
+## A25. Developer relevance filter
+
+Before displaying any sentence, ask: *"Does this help a developer decide whether to advance,
+reject, or investigate this site?"* If no, don't show it in the default developer view — it may
+stay in admin/research notes.
+
+## A26. Length standard
+
+Scannable in ~30–60 seconds. Labels, short values, concise paragraphs, expandable detail — never
+an essay.
+
+## A27. Progressive disclosure
+
+Default view: decision-critical intelligence. Expanded view: technical detail, research notes,
+sources. Admin view: full research history and methodology. Don't display everything at once.
+
+## A28. Research-update rule
+
+Internally: record what changed and why. Externally: simply update the site to the new current
+state. *(Internal: "Previous utility territory ambiguity resolved through tariff and planning
+records." Developer view: "Serving Utility: Evergy — Supported.")* Never expose the internal
+change log unless specifically requested.
+
+## A29. Presentation of uncertainty
+
+Verified / Supported / Partially Resolved / Estimated / Unknown / Requires Direct Confirmation —
+concise, not hidden, not turned into explanatory paragraphs. `Available MW: Requires Utility
+Confirmation` beats several sentences explaining why public records lack a capacity figure.
+
+## A30. Final presentation standard
+
+Quickly communicate: what is this site; why does it matter; what are the strongest facts; how good
+is the opportunity; how confident are we; what is the main risk; what is still unconfirmed; what
+should happen next. Everything else belongs in expandable detail or internal research notes. The
+research can be complex. The presentation should not be.
+
+---
+
+## Implementation Appendix (how this maps onto the actual codebase)
+
+Code: `dashboard/src/lib/catalysts/potentialSiteCriteria.ts` (source of truth for types/labels/
+scoring) and `dashboard/src/lib/types.ts` (mirrors the same types). Panel:
+`dashboard/src/components/map/CatalystIntelligencePanel.tsx`. Buyer filtering:
+`dashboard/src/lib/catalysts/buyerCriteria.ts` + `dashboard/src/components/map/FiltersPanel.tsx`/
+`BuyerMatchPanel.tsx`. Schema: `supabase/migrations/` — search `prospective_data_center_site`.
+
+**Confidence vocabulary** (`PotentialEvidenceStatus`): `verified` / `supported` /
+`partially_resolved` / `reported` / `estimated` / `indicated` / `unknown` /
+`unknown_after_public_record_search` / `requires_verification` (DB value for "Requires Direct
+Confirmation"). `reported`/`indicated` predate this spec and are kept for backward compatibility
+with older rows — treat `supported`/`partially_resolved`/`unknown_after_public_record_search` as
+the ones to use going forward.
+
+**Power-as-a-gate extension (already implemented, 2026-10-04 Bonner Springs refinement pass —
+kept, not superseded by this spec's simpler Power treatment in §5/§10 above)**: `power_qualification`
+(`unqualified` / `infrastructure_indicated` / `utility_path_indicated` / `capacity_indicated` /
+`capacity_confirmed`) treats power as a gate a strong score can't fully compensate for.
+`target_load_mw_low/high` (demand side, defaults to 50–100+ MW when null) is kept distinct from
+`potential_load_mw_low/high` (supply side — what's actually been confirmed deliverable).
+`development_gates` (jsonb: power/land/site_control/entitlement/btm_gas/fiber/water/environmental
+→ green/yellow/red/gray) is the decision-screen grid rendered near the top of the panel.
+`nearest_substation_type` (distribution/transmission/unknown) and `gas_transmission_operator`
+(the upstream pipeline company, kept distinct from `gas_pipeline_operator`, the local distribution
+utility) are both real, populated fields. **Use these alongside this spec's Power/BTM sections,
+not instead of them.**
+
+**Two discrepancies between this spec's text and the live schema were raised with Jared on
+2026-10-05 and resolved as follows — both decisions are now live:**
+
+1. **Readiness stages — RESOLVED: code updated to match this spec.** `ReadinessStage` is now
+   exactly the 4 stages this spec specifies: `discovery` / `screened` / `qualified` /
+   `advanced_diligence` (previously 5: `discovery`/`qualified`/`feasibility`/`controlled`/
+   `de_risked`). "Qualified" moved from position 2 to position 3 in the real progression. No live
+   row had ever used anything but the null/discovery default, so this was a clean rename+reorder
+   with no data migration needed — see
+   `supabase/migrations/20261005000000_readiness_stage_four_stage_collapse.sql` for the DB
+   check-constraint update alongside the `ReadinessStage` type/label/description changes in
+   `potentialSiteCriteria.ts`/`types.ts`.
+2. **Final Developer Assessment — RESOLVED: kept `discovered`/`screen` alongside this spec's 5
+   states.** `DeveloperAssessment` stays at 7 values. `discovered` (identified, no diligence yet)
+   and `screen` (strong non-power fundamentals justify a utility/site-control screen, but not yet
+   power-qualified) are real, already-used production values — **Bonner Springs Industrial Park
+   is currently assessed `screen`** specifically because `power_qualification` never cleared
+   `utility_path_indicated`. Treat them as additional granularity ahead of "Pursue," not a
+   conflict with this spec's 5-state list.

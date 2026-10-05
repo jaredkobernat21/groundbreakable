@@ -590,7 +590,15 @@ export type PotentialSitePeople = {
 // fundamentals look on paper. Never auto-advanced; see
 // lib/catalysts/potentialSiteCriteria.ts's computeReadinessStage for the
 // null-defaults-to-"discovery" convention.
-export type ReadinessStage = "discovery" | "qualified" | "feasibility" | "controlled" | "de_risked";
+// Collapsed from the original 5-stage set (discovery/qualified/feasibility/
+// controlled/de_risked) to this 4-stage set on 2026-10-05 per Jared's Data
+// Center Potential master spec (docs/POTENTIAL_DATA_CENTER_RESEARCH_SPEC.md
+// section 27) -- "qualified" moves from position 2 to position 3 in the real
+// progression; no live row ever used anything but the null/discovery
+// default, so this was a safe rename+reorder, not a data migration. See
+// migration 20261005000000_readiness_stage_four_stage_collapse.sql for the
+// DB check-constraint update.
+export type ReadinessStage = "discovery" | "screened" | "qualified" | "advanced_diligence";
 
 export type PotentialScoreComponent = {
   key: PotentialSiteFactorKey;

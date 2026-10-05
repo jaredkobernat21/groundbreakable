@@ -645,22 +645,30 @@ export type PotentialSitePeople = {
 // entitlement/environmental picture has actually been validated through
 // real conversations and work. Stages must depend on actual supporting
 // evidence and are never auto-advanced.
-export type ReadinessStage = "discovery" | "qualified" | "feasibility" | "controlled" | "de_risked";
+// Collapsed from the original 5-stage set (discovery/qualified/feasibility/
+// controlled/de_risked) to this 4-stage set on 2026-10-05 per Jared's Data
+// Center Potential master spec (docs/POTENTIAL_DATA_CENTER_RESEARCH_SPEC.md
+// section 27/A19) -- "qualified" moves from position 2 to position 3 in the
+// real progression (it's now "most major PUBLIC diligence supports
+// advancement," downstream of the new "screened" stage, not upstream of
+// feasibility conversations). No live row ever used anything but the
+// null/discovery default, so this was a safe rename+reorder -- see migration
+// 20261005000000_readiness_stage_four_stage_collapse.sql for the DB
+// check-constraint update.
+export type ReadinessStage = "discovery" | "screened" | "qualified" | "advanced_diligence";
 
 export const READINESS_STAGE_LABEL: Record<ReadinessStage, string> = {
   discovery: "Discovery",
+  screened: "Screened",
   qualified: "Qualified",
-  feasibility: "Feasibility",
-  controlled: "Controlled",
-  de_risked: "De-Risked",
+  advanced_diligence: "Advanced Diligence",
 };
 
 export const READINESS_STAGE_DESCRIPTION: Record<ReadinessStage, string> = {
-  discovery: "Groundbreakable has identified an interesting convergence of infrastructure, land, location, or market signals.",
-  qualified: "Desktop diligence supports further investigation.",
-  feasibility: "Owner, utility, city, environmental, or development conversations or studies have begun.",
-  controlled: "A developer or investor has some form of site control -- an option, LOI, or contract.",
-  de_risked: "Major power, land, entitlement, environmental, and timeline questions have been materially validated.",
+  discovery: "Groundbreakable has identified a credible convergence of infrastructure, land, location, or market signals.",
+  screened: "Core public-record diligence has been completed.",
+  qualified: "Most major public diligence supports advancement.",
+  advanced_diligence: "Direct utility, owner, or engineering diligence is underway.",
 };
 
 // Null on a row means exactly what Discovery means: Groundbreakable has
