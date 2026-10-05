@@ -1,0 +1,34 @@
+-- Tonganoxie, KS and Basehor, KS -- Potential Data Center Site discovery pass (Jared's 2026-10-05
+-- "run a pass across Kansas" directive, docs/POTENTIAL_DATA_CENTER_RESEARCH_SPEC.md methodology).
+-- NO STATEMENTS IN THIS FILE -- documentation-only record of a real discovery attempt that found
+-- zero qualifying candidates in either market, same pattern as the KC-metro round 2/3 zero-result
+-- passes (20261003020000, 20261003170000). Safe to apply (a no-op) or never run.
+--
+-- TONGANOXIE: zero-result, disqualified by site-adjacent activity, not a research gap. The only
+-- developable industrial land found (Tonganoxie Business Park's 2 shovel-ready lots + an adjacent
+-- 12.98-acre corner site) sits directly adjacent to the already-logged Project Bluestem
+-- (Cloverleaf Infrastructure) data_center catalyst -- a ~1,000-acre, up-to-1.2GW proposal at
+-- "Tailgate Ranch" near the Tonganoxie/Eudora I-70 interchange. Critically, a NEW Evergy
+-- substation is being built specifically adjacent to the Business Park via a city annexation
+-- explicitly tied to serving this corridor's data-center load (the same substation effort also
+-- serves the De Soto project). The only available land sits inside the infrastructure footprint
+-- built FOR the confirmed pursuit, with documented mass community opposition (1,000+ attendees at
+-- an August 2026 meeting) -- too much real, site-adjacent activity for the "zero known activity"
+-- bar to apply, same disqualifying logic already used for Lenexa/Edgerton in the original KC-metro
+-- pass. No separate clean candidate exists in this small market.
+--
+-- BASEHOR: zero-result, one real candidate found and rejected on entitlement grounds, not
+-- forced in. Negative search is clean (no DC/hyperscale/AI-campus hits for Basehor specifically).
+-- The existing "Basehor 134-Acre Annexation" catalyst matches a real, specific, currently-listed
+-- property -- 132.99 acres at 147th St & Leavenworth Rd, MLS #2635660, $5,360,000, good
+-- I-70/I-435 access, ~20 mi from MCI, Evergy Kansas Central territory (same large-load tariff
+-- mechanism as every KC-metro Potential site). However it is zoned RR 2.5 (Rural Residential) --
+-- marketing material lists commercial/industrial only as a POSSIBLE future use, not a completed
+-- rezoning, unlike every existing KC-metro Potential site, which already has actual industrial
+-- zoning in place. No substation, transmission line, or water/sewer capacity figure was found
+-- specific to this tract; city sewer has documented equipment-reliability issues with no
+-- published capacity figures. Land, clean utility territory, and zero DC activity are real
+-- positives, but the entitlement story (unzoned, no rezoning underway) is meaningfully weaker
+-- than the established conversion bar -- not converted, per the master spec's "quality over
+-- quantity, do not force a weak candidate in" discipline. Worth a future revisit if a rezoning
+-- application is ever filed for this specific tract.

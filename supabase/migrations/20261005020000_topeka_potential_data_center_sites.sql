@@ -1,0 +1,43 @@
+-- Topeka, KS -- Potential Data Center Site discovery pass (Jared's 2026-10-05 "run a pass across
+-- Kansas" directive, docs/POTENTIAL_DATA_CENTER_RESEARCH_SPEC.md methodology). NO STATEMENTS IN
+-- THIS FILE -- documentation-only record of a real discovery attempt. Zero qualifying candidates,
+-- for an unusually clean-cut reason: the entire Topeka/Shawnee County market is currently
+-- disqualified by active regulatory moratoriums, not a research gap or a lack of fundamentals.
+-- Safe to apply (a no-op) or never run.
+--
+-- CANDIDATES CHECKED AND WHY EACH IS EXCLUDED:
+--
+-- 1. Compass Datacenters site (3303 SW 77th St, Wakarusa) -- already logged in this DB as
+--    confirmed Planned ('data_center', planning_entitlement). Re-confirmed via KSNT
+--    (https://www.ksnt.com/news/local-news/company-submits-data-center-proposal-in-shawnee-county/):
+--    600+ acres, 400MW/10 buildings, CUP filed July 24 2026, flagged "incomplete" Aug 4.
+--
+-- 2. Central Crossing Commerce Park (SW 49th St & I-335/Hwy 75) -- CONFIRMED this pass to be the
+--    actual Project Deep Blue site (already logged in this DB as 'potential_data_center'/Possible).
+--    dystopeka.com's own Shawnee County data-center timeline confirms Evergy made direct contact
+--    about this project at this specific park -- it is also GO Topeka's own listed shovel-ready
+--    site, which means the one clean-looking shovel-ready industrial park in GO Topeka's own
+--    database is the Possible-tier site already on file, not a new Potential candidate.
+--
+-- 3. Forbes Field / Topeka Regional Airport Business Center (incl. the adjacent Harlan Industrial
+--    Park, 107 ac) -- NEW FINDING, not yet in this database at any tier. The Metropolitan Topeka
+--    Airport Authority (MTAA) has a real, named, active proposal: 75-80MW on 30-40 acres near
+--    Forbes Field, outside city limits, application planned spring 2027
+--    (dystopeka.com/topeka-data-center-forbes-field-council-meetings/). This disqualifies the
+--    whole Forbes Field vicinity (Harlan Industrial Park is explicitly adjacent to the airport)
+--    under the same "too much real DC-specific activity in the immediate area" standard applied
+--    elsewhere. FLAGGED FOR JARED: this is real, active, confirmed activity that belongs in the
+--    database as a Possible or Planned catalyst -- it was out of scope for this Potential-
+--    discovery pass (which only logs sites with ZERO known activity) and was deliberately not
+--    inserted here; a separate, dedicated pass should log it properly with its own sourcing.
+--
+-- 4. REGULATORY MORATORIUM, COMPREHENSIVE AND MARKET-WIDE: City of Topeka enacted a 12-month
+--    data-center moratorium, in effect since July 2026 and confirmed still active by the Mayor in
+--    an August 2026 council session. Shawnee County separately enacted its own 6-month moratorium
+--    on data-center applications countywide -- including unincorporated areas -- effective
+--    through Feb 17, 2027. Between the two, there is currently NO jurisdiction in this market,
+--    city or county, accepting new data-center land-use applications at all. Any other site's
+--    entitlement picture would be identically blocked regardless of its own land/power
+--    fundamentals -- this is why no further industrial-park search in Shawnee County was pursued
+--    beyond the 3 candidates above once this was confirmed. Worth revisiting once either
+--    moratorium lifts or expires (county moratorium runs through Feb 17, 2027).
