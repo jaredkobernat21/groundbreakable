@@ -275,9 +275,13 @@ export const POTENTIAL_EVIDENCE_STATUS_LABEL: Record<PotentialEvidenceStatus, st
 // recommendation, distinct from potential_score (how the site looks) and readiness_stage (how
 // much has been validated through real work). Never auto-derived -- a researcher's own synthesis
 // across Power/Land/Site Control/Entitlement/BTM Energy/Fiber/Water/Physical Constraints.
-export type DeveloperAssessment = "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
+// "discovered"/"screen" added 2026-10-04 (Bonner Springs refinement brief): a site can score well
+// and still not be power-qualified -- "screen" names that honestly instead of forcing "pursue."
+export type DeveloperAssessment = "discovered" | "screen" | "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
 
 export const DEVELOPER_ASSESSMENT_LABEL: Record<DeveloperAssessment, string> = {
+  discovered: "Discovered",
+  screen: "Screen",
   strong_pursuit: "Strong Pursuit",
   pursue: "Pursue",
   watch: "Watch",
@@ -286,6 +290,8 @@ export const DEVELOPER_ASSESSMENT_LABEL: Record<DeveloperAssessment, string> = {
 };
 
 export const DEVELOPER_ASSESSMENT_DESCRIPTION: Record<DeveloperAssessment, string> = {
+  discovered: "Identified; no diligence performed yet.",
+  screen: "Strong non-power fundamentals justify a utility and site-control screen before advancing further.",
   strong_pursuit: "Worth immediate developer diligence.",
   pursue: "Strong enough to advance.",
   watch: "Interesting, but one or more major unknowns remain.",
@@ -294,12 +300,118 @@ export const DEVELOPER_ASSESSMENT_DESCRIPTION: Record<DeveloperAssessment, strin
 };
 
 export const DEVELOPER_ASSESSMENT_COLOR_HEX: Record<DeveloperAssessment, string> = {
+  discovered: "#6b7280",
+  screen: "#5b8fb0",
   strong_pursuit: "#34d399",
   pursue: "#5a9e4a",
   watch: "#d9923f",
   weak: "#9a8c6b",
   disqualified: "#c0564a",
 };
+
+// POWER QUALIFICATION (2026-10-04 Bonner Springs refinement brief) -- power treated as a GATE,
+// not just another weighted score factor. Never auto-derived from potential_score.
+export type PowerQualification = "unqualified" | "infrastructure_indicated" | "utility_path_indicated" | "capacity_indicated" | "capacity_confirmed";
+
+export const POWER_QUALIFICATION_LABEL: Record<PowerQualification, string> = {
+  unqualified: "Unqualified",
+  infrastructure_indicated: "Infrastructure Indicated",
+  utility_path_indicated: "Utility Path Indicated",
+  capacity_indicated: "Capacity Indicated",
+  capacity_confirmed: "Capacity Confirmed",
+};
+
+export const POWER_QUALIFICATION_DESCRIPTION: Record<PowerQualification, string> = {
+  unqualified: "Large-load path not established.",
+  infrastructure_indicated: "Relevant power infrastructure exists nearby.",
+  utility_path_indicated: "Public utility plans/tariffs/upgrades support a plausible large-load pathway.",
+  capacity_indicated: "Credible evidence suggests a meaningful large-load opportunity.",
+  capacity_confirmed: "Utility-specific capacity has been directly confirmed.",
+};
+
+export type SubstationType = "distribution" | "transmission" | "unknown";
+
+export const SUBSTATION_TYPE_LABEL: Record<SubstationType, string> = {
+  distribution: "Distribution",
+  transmission: "Transmission",
+  unknown: "Unknown",
+};
+
+export type ExpansionRequirement = "minor" | "significant" | "major" | "unknown";
+
+export const EXPANSION_REQUIREMENT_LABEL: Record<ExpansionRequirement, string> = {
+  minor: "Minor",
+  significant: "Significant",
+  major: "Major",
+  unknown: "Unknown",
+};
+
+// WATER CAPACITY STATUS (2026-10-04 Bonner Springs refinement brief) -- the structured fact
+// developer-facing narrative (water_notes, developer_takeaway) must never claim more than.
+export type WaterCapacityStatus = "infrastructure_verified" | "capacity_verified" | "capacity_indicated" | "requires_confirmation";
+
+export const WATER_CAPACITY_STATUS_LABEL: Record<WaterCapacityStatus, string> = {
+  infrastructure_verified: "Infrastructure Verified",
+  capacity_verified: "Capacity Verified",
+  capacity_indicated: "Capacity Indicated",
+  requires_confirmation: "Requires Utility Confirmation",
+};
+
+// DEVELOPMENT GATES (2026-10-04 Bonner Springs refinement brief) -- a decision screen, not a
+// replacement for the detailed category sections underneath it.
+export type DevelopmentGateStatus = "green" | "yellow" | "red" | "gray";
+
+export const DEVELOPMENT_GATE_STATUS_LABEL: Record<DevelopmentGateStatus, string> = {
+  green: "Green",
+  yellow: "Yellow",
+  red: "Red",
+  gray: "Gray",
+};
+
+export const DEVELOPMENT_GATE_STATUS_COLOR_HEX: Record<DevelopmentGateStatus, string> = {
+  green: "#5a9e4a",
+  yellow: "#d9923f",
+  red: "#c0564a",
+  gray: "#6b7280",
+};
+
+export type DevelopmentGateKey = "power" | "land" | "site_control" | "entitlement" | "btm_gas" | "fiber" | "water" | "environmental";
+
+export const DEVELOPMENT_GATE_KEY_LABEL: Record<DevelopmentGateKey, string> = {
+  power: "Power",
+  land: "Land",
+  site_control: "Site Control",
+  entitlement: "Entitlement",
+  btm_gas: "BTM Gas",
+  fiber: "Fiber",
+  water: "Water",
+  environmental: "Environmental",
+};
+
+export const DEVELOPMENT_GATE_ORDER: DevelopmentGateKey[] = ["power", "land", "site_control", "entitlement", "btm_gas", "fiber", "water", "environmental"];
+
+export type DevelopmentGates = Partial<Record<DevelopmentGateKey, DevelopmentGateStatus>>;
+
+export type LocationAccess = {
+  kc_metro_position?: string;
+  interstate_name?: string;
+  interstate_distance_miles?: number;
+  k7_distance_miles?: number;
+  airport_distance_miles?: number;
+  airport_drive_minutes?: number;
+  rail?: string;
+  industrial_context?: string;
+  residential_buffer_miles?: number;
+};
+
+// Target Load Profile (2026-10-04 Bonner Springs refinement brief) -- the DEMAND side (what a
+// buyer needs) vs. potential_load_mw_low/high (the SUPPLY side -- what's been confirmed
+// deliverable). Comparing the two is what prevents a small verified MW figure from reading as
+// sufficient for a hyperscale target. Default applies whenever a row's own target_load_mw_* is
+// null -- a Potential site is presumed evaluated against a large-scale load unless a researcher
+// has recorded a specific smaller target.
+export const DEFAULT_TARGET_LOAD_MW_LOW = 50;
+export const DEFAULT_TARGET_LOAD_MW_LABEL = "50–100+ MW";
 
 // Mirrors CatalystScoreComponent's shape (lib/catalysts/score.ts) for
 // consistency, but this is a SEPARATE scoring system with its own rubric --

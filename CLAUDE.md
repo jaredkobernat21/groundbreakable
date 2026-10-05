@@ -32,6 +32,13 @@ This repo contains three things:
   Plans, Opportunities, and Catalysts data gets discovered, collected, normalized, scored, and kept
   current, and it distinguishes what already exists (reuse) from what's orphaned (wire up) from
   what's genuinely missing (build).
+- Before running a research/refinement pass on any `prospective_data_center_site` (Potential Data
+  Center) catalyst, or touching its rendering in
+  `dashboard/src/components/map/CatalystIntelligencePanel.tsx` — read
+  `docs/POTENTIAL_DATA_CENTER_RESEARCH_SPEC.md` first. It's the escalation-hierarchy research
+  standard, the power-as-a-gate/Development Gates decision model, the narrative-must-never-
+  outrun-the-structured-fact rule, and the full schema reference this product area accumulated
+  across its 2026-10-04 passes.
 
 ## Before touching the database
 

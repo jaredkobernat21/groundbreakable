@@ -28,18 +28,28 @@ import {
   computeReadinessStage,
   computeWhySiteSummary,
   dataCenterRestrictionsLabel,
+  DEFAULT_TARGET_LOAD_MW_LABEL,
   DEVELOPER_ASSESSMENT_COLOR_HEX,
   DEVELOPER_ASSESSMENT_DESCRIPTION,
   DEVELOPER_ASSESSMENT_LABEL,
+  DEVELOPMENT_GATE_KEY_LABEL,
+  DEVELOPMENT_GATE_ORDER,
+  DEVELOPMENT_GATE_STATUS_COLOR_HEX,
+  DEVELOPMENT_GATE_STATUS_LABEL,
+  EXPANSION_REQUIREMENT_LABEL,
   ownersOrLegacyOwner,
   OWNERSHIP_COVERAGE_LABEL,
   PILLAR_STRENGTH_LABEL,
   POTENTIAL_EVIDENCE_STATUS_LABEL,
   POTENTIAL_SITE_TYPE_LABEL,
+  POWER_QUALIFICATION_DESCRIPTION,
+  POWER_QUALIFICATION_LABEL,
   READINESS_STAGE_DESCRIPTION,
   READINESS_STAGE_LABEL,
   siteOwnershipSummary,
+  SUBSTATION_TYPE_LABEL,
   UTILITY_TIMELINE_BUCKET_LABEL,
+  WATER_CAPACITY_STATUS_LABEL,
 } from "@/lib/catalysts/potentialSiteCriteria";
 import {
   DEVELOPMENT_IMPACT_LEVEL_LABEL,
@@ -492,15 +502,68 @@ export function CatalystDetails({
             </div>
           )}
 
+          {/* DEVELOPMENT GATES (2026-10-04 Bonner Springs refinement brief) -- a decision screen
+              across the 8 categories below, not a replacement for their detail. Power is a GATE,
+              not just another weighted score factor -- this is what keeps a 70+ Potential Score
+              from reading as "power is solved" when it isn't. */}
+          {catalyst.development_gates && (
+            <div className="mb-4">
+              <p className="mb-1.5 text-[11px] uppercase tracking-wide text-white/35">Development Gates</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {DEVELOPMENT_GATE_ORDER.filter((key) => catalyst.development_gates?.[key]).map((key) => {
+                  const status = catalyst.development_gates![key]!;
+                  return (
+                    <div
+                      key={key}
+                      className="rounded border px-1.5 py-1 text-center"
+                      style={{ borderColor: `${DEVELOPMENT_GATE_STATUS_COLOR_HEX[status]}55`, backgroundColor: `${DEVELOPMENT_GATE_STATUS_COLOR_HEX[status]}1a` }}
+                    >
+                      <div className="text-[9px] uppercase tracking-wide text-white/50">{DEVELOPMENT_GATE_KEY_LABEL[key]}</div>
+                      <div className="text-[10px] font-semibold" style={{ color: DEVELOPMENT_GATE_STATUS_COLOR_HEX[status] }}>
+                        {DEVELOPMENT_GATE_STATUS_LABEL[status]}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <details open className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
                 <span>Power</span>
-                <span className="text-white/60">{catalyst.power_pillar_label ? PILLAR_STRENGTH_LABEL[catalyst.power_pillar_label] : "Unknown"}</span>
+                <span className="text-white/60">
+                  {catalyst.power_qualification ? POWER_QUALIFICATION_LABEL[catalyst.power_qualification] : "Unqualified"}
+                </span>
               </summary>
               <div className="mt-2 space-y-2 text-sm text-white/70">
+                {catalyst.power_qualification && (
+                  <p className="text-xs leading-relaxed text-white/50">{POWER_QUALIFICATION_DESCRIPTION[catalyst.power_qualification]}</p>
+                )}
+                <div className="rounded border border-white/10 bg-white/[0.03] px-2 py-1.5">
+                  <p className="mb-1 text-[10px] uppercase tracking-wide text-white/35">Target Data Center Load Profile</p>
+                  <FactRow
+                    label="Target Load"
+                    value={
+                      catalyst.target_load_mw_low != null || catalyst.target_load_mw_high != null
+                        ? catalyst.target_load_mw_high != null && catalyst.target_load_mw_high !== catalyst.target_load_mw_low
+                          ? `${catalyst.target_load_mw_low ?? "?"}–${catalyst.target_load_mw_high} MW`
+                          : `${catalyst.target_load_mw_low ?? catalyst.target_load_mw_high} MW`
+                        : DEFAULT_TARGET_LOAD_MW_LABEL
+                    }
+                  />
+                  <FactRow
+                    label="Expansion Requirement"
+                    value={catalyst.expansion_requirement ? EXPANSION_REQUIREMENT_LABEL[catalyst.expansion_requirement] : "Unknown"}
+                  />
+                </div>
                 <FactRow label="Serving Utility" value={catalyst.serving_utility ?? "Requires Utility Confirmation"} />
                 <FactRow label="Nearby Substation" value={catalyst.nearest_substation_name ?? "Not Yet Identified"} />
+                <FactRow
+                  label="Substation Type"
+                  value={catalyst.nearest_substation_type ? SUBSTATION_TYPE_LABEL[catalyst.nearest_substation_type] : "Unknown"}
+                />
                 <FactRow
                   label="Transmission"
                   value={
@@ -533,6 +596,7 @@ export function CatalystDetails({
                       : "Requires Utility Confirmation"
                   }
                 />
+                <FactRow label="Utility Expansion Signals" value={catalyst.utility_expansion_signals ?? "None Identified"} />
               </div>
             </details>
 
@@ -557,12 +621,15 @@ export function CatalystDetails({
                 <span className="text-white/60">{catalyst.btm_potential_status ?? "Unknown"}</span>
               </summary>
               <div className="mt-2 space-y-2 text-sm text-white/70">
-                <FactRow label="Natural Gas Provider" value={catalyst.gas_pipeline_operator ?? "Requires Confirmation"} />
+                <FactRow label="Local Gas Utility" value={catalyst.gas_pipeline_operator ?? "Requires Confirmation"} />
+                <FactRow label="Transmission Pipeline Operator" value={catalyst.gas_transmission_operator ?? "Not Yet Identified"} />
                 <FactRow
-                  label="Transmission Pipeline Proximity"
+                  label="Nearest Transmission Pipeline"
                   value={catalyst.gas_pipeline_distance_miles != null ? `${catalyst.gas_pipeline_distance_miles} mi` : "Under Verification"}
                 />
-                <FactRow label="BTM Potential" value={catalyst.btm_potential_status ?? "Unknown"} />
+                <FactRow label="Pipeline Diameter" value={catalyst.gas_pipeline_diameter_in ?? "Not Public"} />
+                <FactRow label="BTM Suitability" value={catalyst.btm_potential_status ?? "Unknown"} />
+                <FactRow label="Gas Deliverability" value="Requires Operator Confirmation" />
               </div>
             </details>
 
@@ -572,10 +639,20 @@ export function CatalystDetails({
                 <span className="text-white/60">{catalyst.fiber_notes || catalyst.water_notes ? "Logged" : "Unknown"}</span>
               </summary>
               <div className="mt-2 space-y-2 text-sm text-white/70">
-                <FactRow label="Known Fiber Presence" value={catalyst.fiber_notes ?? "Requires Carrier Confirmation"} />
+                <FactRow
+                  label="Known Carriers"
+                  value={catalyst.fiber_carriers.length > 0 ? catalyst.fiber_carriers.join(", ") : "None Identified"}
+                />
+                <FactRow label="Fiber Assessment" value={catalyst.fiber_notes ?? "Requires Carrier Confirmation"} />
                 <FactRow label="Last-Mile Availability" value="Requires Carrier Confirmation" />
                 <FactRow label="Water + Wastewater Provider" value={catalyst.water_notes ?? "Requires Utility Confirmation"} />
-                <FactRow label="Large-Volume Capacity" value="Requires Utility Confirmation" />
+                {/* Fixes a real contradiction risk (Jared's brief, §10): this status is the single
+                    source of truth for water capacity confidence -- narrative fields (water_notes,
+                    developer_takeaway) must never claim more than this says. */}
+                <FactRow
+                  label="Large-Volume Capacity"
+                  value={catalyst.water_capacity_status ? WATER_CAPACITY_STATUS_LABEL[catalyst.water_capacity_status] : "Requires Utility Confirmation"}
+                />
               </div>
             </details>
 
@@ -594,6 +671,48 @@ export function CatalystDetails({
                 <FactRow label="Data Center Restrictions" value={dataCenterRestrictionsLabel(catalyst.community_friction)} />
               </div>
             </details>
+
+            {/* LOCATION + ACCESS (2026-10-04 Bonner Springs refinement brief) -- informational
+                context, deliberately not overweighted in scoring relative to power/land. */}
+            {catalyst.location_access && (
+              <details open className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-white">
+                  <span>Location + Access</span>
+                  <span className="text-white/60">{catalyst.location_access.industrial_context ?? "—"}</span>
+                </summary>
+                <div className="mt-2 space-y-2 text-sm text-white/70">
+                  <FactRow label="Kansas City Metro" value={catalyst.location_access.kc_metro_position} />
+                  <FactRow
+                    label={catalyst.location_access.interstate_name ?? "Nearest Interstate"}
+                    value={catalyst.location_access.interstate_distance_miles != null ? `${catalyst.location_access.interstate_distance_miles} mi` : undefined}
+                  />
+                  <FactRow label="K-7 Highway" value={catalyst.location_access.k7_distance_miles != null ? `${catalyst.location_access.k7_distance_miles} mi` : undefined} />
+                  <FactRow
+                    label="Kansas City International Airport"
+                    value={
+                      catalyst.location_access.airport_distance_miles != null
+                        ? [
+                            `${catalyst.location_access.airport_distance_miles} mi`,
+                            catalyst.location_access.airport_drive_minutes != null ? `${catalyst.location_access.airport_drive_minutes} min` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" / ")
+                        : undefined
+                    }
+                  />
+                  <FactRow label="Rail" value={catalyst.location_access.rail ?? "None Identified"} />
+                  <FactRow label="Industrial Context" value={catalyst.location_access.industrial_context} />
+                  <FactRow
+                    label="Residential Buffer"
+                    value={
+                      catalyst.location_access.residential_buffer_miles != null
+                        ? `${catalyst.location_access.residential_buffer_miles} mi to nearest significant residential area`
+                        : undefined
+                    }
+                  />
+                </div>
+              </details>
+            )}
           </div>
 
           {(catalyst.primary_advantage || catalyst.primary_risk) && (

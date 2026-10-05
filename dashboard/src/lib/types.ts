@@ -451,7 +451,60 @@ export type PotentialEvidenceStatus =
 
 // Final Developer Assessment (2026-10-04 research-quality brief) -- Groundbreakable's own
 // bottom-line recommendation on whether a developer should pursue a Potential site right now.
-export type DeveloperAssessment = "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
+// "discovered"/"screen" added 2026-10-04 (Bonner Springs refinement brief) -- a site can have a
+// strong Potential Score and still not be power-qualified; "screen" names that state explicitly
+// instead of forcing a premature "pursue." "discovered" is the floor (identified, no diligence
+// done at all yet) -- both inserted ahead of "pursue" in the real progression, kept alongside the
+// original 5 values rather than replacing any of them, same widening convention as every other
+// vocabulary extension this effort has made.
+export type DeveloperAssessment = "discovered" | "screen" | "strong_pursuit" | "pursue" | "watch" | "weak" | "disqualified";
+
+// POWER QUALIFICATION (2026-10-04 Bonner Springs refinement brief) -- whether a large-load power
+// PATH has been established, treated as a gate rather than just another weighted score factor.
+// Never auto-derived from potential_score or power_pillar_label -- a researcher's own synthesis
+// across serving utility, substation type/distance, transmission voltage, utility tariffs/capital
+// plans, and confirmed capacity.
+export type PowerQualification = "unqualified" | "infrastructure_indicated" | "utility_path_indicated" | "capacity_indicated" | "capacity_confirmed";
+
+// Distinguishes "a substation exists nearby" from "that substation can serve a large continuous
+// load" -- existence/type only, never implies capacity or distance (those are separate columns).
+export type SubstationType = "distribution" | "transmission" | "unknown";
+
+export type ExpansionRequirement = "minor" | "significant" | "major" | "unknown";
+
+// WATER CAPACITY STATUS (2026-10-04 Bonner Springs refinement brief) -- the structured fact that
+// developer-facing narrative (water_notes, developer_takeaway) must never claim more than.
+export type WaterCapacityStatus = "infrastructure_verified" | "capacity_verified" | "capacity_indicated" | "requires_confirmation";
+
+// DEVELOPMENT GATES (2026-10-04 Bonner Springs refinement brief) -- a decision screen across the
+// 8 categories a Potential site's full detail already covers, NOT a replacement for that detail.
+export type DevelopmentGateStatus = "green" | "yellow" | "red" | "gray";
+
+export type DevelopmentGates = {
+  power?: DevelopmentGateStatus;
+  land?: DevelopmentGateStatus;
+  site_control?: DevelopmentGateStatus;
+  entitlement?: DevelopmentGateStatus;
+  btm_gas?: DevelopmentGateStatus;
+  fiber?: DevelopmentGateStatus;
+  water?: DevelopmentGateStatus;
+  environmental?: DevelopmentGateStatus;
+};
+
+// LOCATION + ACCESS (2026-10-04 Bonner Springs refinement brief) -- informational context, never
+// overweighted in scoring relative to power/land. Every field optional -- a researcher fills in
+// only what was actually found.
+export type LocationAccess = {
+  kc_metro_position?: string;
+  interstate_name?: string;
+  interstate_distance_miles?: number;
+  k7_distance_miles?: number;
+  airport_distance_miles?: number;
+  airport_drive_minutes?: number;
+  rail?: string;
+  industrial_context?: string;
+  residential_buffer_miles?: number;
+};
 
 // SITE CONTROL (2026-10-04 buyer-intelligence brief) -- a single owner's public-record profile.
 // Replaces the old single `people.owner` object (PotentialSitePeople below) for
@@ -772,6 +825,24 @@ export type Catalyst = {
   // much has been validated). See migration 20261004030000_potential_site_developer_assessment.sql.
   developer_assessment: DeveloperAssessment | null;
   developer_takeaway: string | null;
+  // Power-as-a-gate + Development Gates (2026-10-04 Bonner Springs refinement brief) -- see
+  // migration 20261004160000_potential_site_power_gates_fields.sql.
+  power_qualification: PowerQualification | null;
+  nearest_substation_type: SubstationType | null;
+  utility_expansion_signals: string | null;
+  // Separate from gas_pipeline_operator (the LOCAL distribution utility) -- the upstream
+  // TRANSMISSION pipeline company, a genuinely different entity.
+  gas_transmission_operator: string | null;
+  // Target Load Profile -- the DEMAND side (what a buyer needs), deliberately separate from
+  // potential_load_mw_low/high (the SUPPLY side -- what's been confirmed deliverable). Null means
+  // "use the Potential-tier default of 50-100+ MW," not "no target."
+  target_load_mw_low: number | null;
+  target_load_mw_high: number | null;
+  expansion_requirement: ExpansionRequirement | null;
+  fiber_carriers: string[];
+  water_capacity_status: WaterCapacityStatus | null;
+  location_access: LocationAccess | null;
+  development_gates: DevelopmentGates | null;
 };
 
 export type CatalystWithSource = Catalyst & { source: Source | null };
